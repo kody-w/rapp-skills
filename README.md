@@ -14,6 +14,7 @@ RAPP runtime capabilities remain **agents**, not skills.
 | Skill | Purpose | RAPP conversion target |
 |---|---|---|
 | [`deep-research`](deep-research/SKILL.md) | Evidence-first research using independent collection, experiment, verification, and synthesis tracks | `deep_research_agent.py` |
+| [`rapp1-compliance-sweep`](rapp1-compliance-sweep/SKILL.md) | Literal file/archive RAPP/1 rev-5 audits, target-owned remediation, trust-aware verdicts, and estate recursion | `rapp1_compliance_sweep_agent.py` |
 
 ## Use
 
