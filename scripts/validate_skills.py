@@ -16,6 +16,7 @@ ALLOWED_FIELDS = {
     "compatibility",
     "metadata",
     "allowed-tools",
+    "disable-model-invocation",
 }
 
 
