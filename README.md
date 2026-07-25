@@ -1,6 +1,8 @@
 # RAPP Skills
 
-Portable [Agent Skills](https://agentskills.io/) for non-RAPP agent systems.
+Portable **[Toasted Skills](https://kody-w.github.io/rapp-toaster/)** for non-RAPP agent
+systems — `SKILL.md` compatible everywhere, and additionally anchored, portable,
+and provable.
 Each capability lives in its own directory with a standards-compatible
 `SKILL.md`.
 
