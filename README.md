@@ -9,6 +9,63 @@ prototyped here for broad compatibility, then converted into a single-file
 `*_agent.py` implementation with its actual source and manifest preserved.
 RAPP runtime capabilities remain **agents**, not skills.
 
+## Every skill here is toasted
+
+A raw `SKILL.md` is **bread**: prose with no canonical form underneath it.
+Nothing anchors what it accepts or what it runs, so moving it between platforms
+is a lossy re-render — the prose survives and the implied contract quietly
+changes. That failure accumulates: every hop looks plausible, the file still
+reads correctly, and twenty hops later the capability means something else with
+no commit to blame.
+
+**Toasting** is the one-time pass that ends that. It scans each skill's own
+prose, derives whatever deterministic layer is actually evidenced there (typed
+parameters and ordered commands, never invented — a placeholder mentioned in a
+sentence is documentation, not an input), and freezes the result as a canonical
+record the file carries with it. From that stake onward the skill is measurable.
+
+Every skill in this repo is toasted, and each ships its `*_agent.py` launchpad
+beside it — the "converted into a single-file implementation" this README has
+always promised, now actually produced rather than described.
+
+| | |
+|---|---|
+| skills | 22, all toasted |
+| derived | 23 typed parameters, 65 ordered steps |
+| yielded nothing derivable | 4 — reported, not hidden |
+| launchpad agents | 22, each runs standalone with `python3 <file>.py --tool` |
+| capability preserved | 110 conversion routes checked, all pass |
+| drift | 1,584 conversions — none |
+
+### Why this matters more than tidiness
+
+A toasted skill is **portable without being migrated**. It stays a perfectly
+normal `SKILL.md` that any skill-aware host installs, and it is *additionally* a
+single-file agent, a standard tool contract, and a thing that can be proven
+unchanged since review. Nothing was converted away; nothing was deprecated.
+
+That last property is the one that matters in production. Skills execute against
+real systems with real credentials, and agents are increasingly permitted to
+rewrite them. Without a canonical record, *"does this capability still mean what
+it meant when we approved it?"* has no answer. With one, it is a byte comparison.
+
+### Contributing
+
+Prototype in prose, then toast before opening a PR:
+
+```bash
+toaster.py toast <skill>/SKILL.md     # derive + anchor; idempotent
+toaster.py soak  <skill>/SKILL.md     # prove it does not drift
+```
+
+Frontmatter stays within the canonical set (`name`, `description`, `license`,
+`compatibility`, `metadata`, `allowed-tools`, `disable-model-invocation`) so
+these remain importable by the RAR **RAPP Skill Bridge**. Toasting adds no
+frontmatter fields — the canonical record rides as an HTML comment, invisible to
+every renderer.
+
+Implementation: [kody-w/rapp-toaster](https://github.com/kody-w/rapp-toaster).
+
 ## Skills
 
 | Skill | Purpose | RAPP conversion target |
