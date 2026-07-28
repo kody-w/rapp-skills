@@ -32,12 +32,12 @@ always promised, now actually produced rather than described.
 
 | | |
 |---|---|
-| skills | 22, all toasted |
-| derived | 23 typed parameters, 65 ordered steps |
+| skills | 23, all toasted |
+| derived | 24 typed parameters, 71 ordered steps |
 | yielded nothing derivable | 4 — reported, not hidden |
-| launchpad agents | 22, each runs standalone with `python3 <file>.py --tool` |
+| launchpad agents | 23, each runs standalone with `python3 <file>.py --tool` |
 | capability preserved | 110 conversion routes checked, all pass |
-| drift | 1,584 conversions — none |
+| drift | 4,554 conversions — none |
 
 ### Why this matters more than tidiness
 
