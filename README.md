@@ -37,7 +37,8 @@ always promised, now actually produced rather than described.
 | yielded nothing derivable | 4 — reported, not hidden |
 | launchpad agents | 22, each runs standalone with `python3 <file>.py --tool` |
 | capability preserved | 110 conversion routes checked, all pass |
-| drift | 1,584 conversions — none |
+| round trip | raw → skill → agent → skill → agent, 22/22 capability-identical |
+| drift | 4,356 conversions — none |
 
 ### Why this matters more than tidiness
 
@@ -59,6 +60,20 @@ Prototype in prose, then toast before opening a PR:
 toaster.py toast <skill>/SKILL.md     # derive + anchor; idempotent
 toaster.py soak  <skill>/SKILL.md     # prove it does not drift
 ```
+
+Then prove the loop still closes — that a skill converted to an agent and back
+is the same capability, not merely a similar-looking file:
+
+```bash
+python3 scripts/roundtrip_fidelity.py
+```
+
+It walks every skill through `raw → skill → agent → skill → agent`, asserting
+capability identity at each hop and byte-exactness on the home format. Note that
+`toaster.py roundtrip` will report DRIFT on the *derived* side of the loop — that
+is the capsule's append-only `provenance` trail growing by one entry per hop, the
+ledger working rather than fidelity lost. `roundtrip_fidelity.py` is the check
+that distinguishes the two.
 
 Frontmatter stays within the canonical set (`name`, `description`, `license`,
 `compatibility`, `metadata`, `allowed-tools`, `disable-model-invocation`) so
@@ -141,6 +156,7 @@ instruction file.
 
 ```bash
 python3 scripts/validate_skills.py
+python3 scripts/roundtrip_fidelity.py    # needs toaster.py; see Contributing
 ```
 
 The staging-to-RAPP mapping is documented in
