@@ -37,11 +37,16 @@ from pathlib import Path
 
 # The two artifacts toasting adds to a SKILL.md. Removing both returns the file
 # to raw bread -- prose with nothing canonical underneath it.
+#
+# Both markers are anchored to a whole line, because a skill is allowed to
+# *document* them: matching them mid-sentence made a prose mention of the begin
+# and end markers look like a real block, so the strip removed the sentence and
+# left the actual blocks in place.
 GENERATED_BLOCK = re.compile(
-    r"\n?<!-- toaster:generated:begin -->.*?<!-- toaster:generated:end -->\n?",
-    re.S,
+    r"\n?^<!-- toaster:generated:begin -->$.*?^<!-- toaster:generated:end -->$\n?",
+    re.S | re.M,
 )
-CAPSULE = re.compile(r"\n?<!-- rci-capsule:v1:[^>]*-->\n?", re.S)
+CAPSULE = re.compile(r"\n?^<!-- rci-capsule:v1:[^>]*-->$\n?", re.S | re.M)
 
 # Fields a consumer of the skill would notice losing. `provenance` and the
 # `preserved` blob are deliberately excluded: they are route metadata, and
@@ -144,7 +149,7 @@ def check_skill(skill_md: Path, tk, workdir: Path) -> tuple[list[str], dict]:
     text = CAPSULE.sub("", GENERATED_BLOCK.sub("", skill_md.read_text("utf-8")))
     raw_path = workdir / f"{slug}_raw_SKILL.md"
     raw_path.write_text(text.rstrip() + "\n", encoding="utf-8")
-    if "rci-capsule" in text or "toaster:generated" in text:
+    if GENERATED_BLOCK.search(text) or CAPSULE.search(text):
         problems.append("raw: strip left toaster artifacts behind")
 
     raw = tk.load(str(raw_path), "skill")

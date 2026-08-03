@@ -32,12 +32,12 @@ always promised, now actually produced rather than described.
 
 | | |
 |---|---|
-| skills | 22, all toasted |
-| derived | 23 typed parameters, 65 ordered steps |
+| skills | 23, all toasted |
+| derived | 24 typed parameters, 68 ordered steps |
 | yielded nothing derivable | 4 — reported, not hidden |
-| launchpad agents | 22, each runs standalone with `python3 <file>.py --tool` |
+| launchpad agents | 23, each runs standalone with `python3 <file>.py --tool` |
 | capability preserved | 110 conversion routes checked, all pass |
-| round trip | raw → skill → agent → skill → agent, 22/22 capability-identical |
+| round trip | raw → skill → agent → skill → agent, 23/23 capability-identical |
 | drift | 4,356 conversions — none |
 
 ### Why this matters more than tidiness
@@ -51,6 +51,20 @@ That last property is the one that matters in production. Skills execute against
 real systems with real credentials, and agents are increasingly permitted to
 rewrite them. Without a canonical record, *"does this capability still mean what
 it meant when we approved it?"* has no answer. With one, it is a byte comparison.
+
+### Using the agent on a host that only reads SKILL.md
+
+Shipping the `*_agent.py` is not the same as a host using it — most read the
+markdown and improvise the procedure while the deterministic contract sits
+unused beside them. [`rapp-agent-bridge`](rapp-agent-bridge/SKILL.md) closes
+that: install it once and it teaches the host to run the agent where code
+execution exists (Claude Code, Cowork) and to read the generated blocks where it
+does not (Copilot Studio, Microsoft Scout). Both routes reach the same commands,
+because both come from the same capsule.
+
+The agent is a planner, not an executor — `perform()` substitutes the typed
+parameters into the ordered steps and returns them as JSON without running
+anything, so calling it has no side effects.
 
 ### Contributing
 
@@ -99,6 +113,7 @@ Implementation: [kody-w/rapp-toaster](https://github.com/kody-w/rapp-toaster).
 | Skill | Purpose | RAPP conversion target |
 |---|---|---|
 | [`deep-research`](deep-research/SKILL.md) | Evidence-first research using independent collection, experiment, verification, and synthesis tracks | `deep_research_agent.py` |
+| [`rapp-agent-bridge`](rapp-agent-bridge/SKILL.md) | Teaches any skill-aware host to consume the `*_agent.py` beside a toasted skill instead of improvising its procedure | `rapp_agent_bridge_agent.py` |
 | [`rapp1-compliance-sweep`](rapp1-compliance-sweep/SKILL.md) | Literal file/archive RAPP/1 rev-5 audits, target-owned remediation, trust-aware verdicts, and estate recursion | `rapp1_compliance_sweep_agent.py` |
 
 ## Workflow skills (RAPP working set)
