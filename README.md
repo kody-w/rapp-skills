@@ -75,6 +75,17 @@ is the capsule's append-only `provenance` trail growing by one entry per hop, th
 ledger working rather than fidelity lost. `roundtrip_fidelity.py` is the check
 that distinguishes the two.
 
+Point it at a folder of never-toasted skills to test the loop's actual entry —
+bread the toaster has never seen, so nothing was tuned to make it pass:
+
+```bash
+python3 scripts/roundtrip_fidelity.py ~/.claude/skills --raw
+```
+
+Raw mode additionally proves toasting is idempotent and that each emitted agent
+runs standalone — a capability record can compare clean while the agent it emits
+raises on import, and only executing it catches that.
+
 Frontmatter stays within the canonical set (`name`, `description`, `license`,
 `compatibility`, `metadata`, `allowed-tools`, `disable-model-invocation`) so
 these remain importable by the RAR **RAPP Skill Bridge**. Toasting adds no
