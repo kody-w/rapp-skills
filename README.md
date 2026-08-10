@@ -52,6 +52,31 @@ real systems with real credentials, and agents are increasingly permitted to
 rewrite them. Without a canonical record, *"does this capability still mean what
 it meant when we approved it?"* has no answer. With one, it is a byte comparison.
 
+### The engine
+
+The toasting described above is not a story about a tool that lives somewhere
+else — [`toast.py`](toast.py) is in this repository, so every claim on this page
+is reproducible here:
+
+```bash
+python3 toast.py roundtrip <skill>/<name>_agent.py   # prove fidelity, exit 1 on drift
+python3 toast.py convert <path> --to skill           # agent.py -> SKILL.md + linked agent
+python3 toast.py convert <path> --to agent           # SKILL.md -> agent.py
+python3 toast.py inspect <path>                      # capsule status, identity, provenance
+python3 toast.py selftest                            # prove every verdict can fire
+```
+
+Stdlib-only Python 3.9+, fully offline: no pip install, no network, no
+credentials. It parses agent files with `ast` and never imports or executes them
+to read them.
+
+All 23 launchpad agents in this repository round-trip byte-identical under it,
+and it is wire-compatible with the reference
+[toaster](https://github.com/kody-w/rapp-toaster) in both directions — a skill
+emitted by one restores byte-identically through the other. Exit codes: `0`
+verified, `1` drift or refusal, `2` raw bread (a capsule-less `SKILL.md` has no
+byte-exact return trip yet). Only `1` means drift.
+
 ### Using the agent on a host that only reads SKILL.md
 
 Shipping the `*_agent.py` is not the same as a host using it — most read the
