@@ -5,3 +5,8 @@
 *.yaml text eol=lf
 *.sh text eol=lf
 *.json text eol=lf
+
+# This is a provenance-locked mirror. Preserve upstream bytes exactly,
+# including CRLF and authored whitespace, so catalog hashes and capsules remain
+# valid after checkout on every platform.
+cat-agent-skills/** -text -eol

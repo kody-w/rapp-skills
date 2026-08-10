@@ -73,9 +73,42 @@ committed capability it:
 2. restores the agent from the companion `SKILL.md` and compares bytes;
 3. runs `--tool` and validates the emitted function contract.
 
-There are 23 committed capability pairs. The converter under `engine/` is the
-24th `SKILL.md`, but it is infrastructure and is not counted as a converted
+There are **99 verified capability pairs**: 23 RAPP-native pairs at the
+repository root and 76 assimilated CAT Agent Skills under
+[`cat-agent-skills/`](cat-agent-skills/). The converter under `engine/` is the
+100th `SKILL.md`, but it is infrastructure and is not counted as a converted
 capability pair.
+
+## CAT Agent Skills catalog
+
+[`cat-agent-skills/`](cat-agent-skills/) is the worked demonstration of this
+pattern at ecosystem scale. It imports every actual Agent Skill from
+`microsoft/cat-agent-skills`, preserves the complete agent-facing bundle, and
+places the synthesized RAPP cartridge beside the final capsule-bearing
+`SKILL.md`.
+
+```text
+cat-agent-skills/
+├── catalog.json
+├── README.md
+└── <76 skill directories>/
+    ├── SKILL.md
+    ├── <slug>_agent.py
+    └── scripts/ references/ assets/ ... when present
+```
+
+The catalog records source commit/path/hash, final skill and agent hashes,
+tool-contract counts, supporting files, and the five non-skill submissions
+that were deliberately excluded. All 76 source skills currently lack an
+explicit `## Parameters` schema, so their agents are honestly recorded as
+untyped launchpads instead of receiving invented contracts. Each launchpad was
+also executed with `{}` and returned the preserved source instructions for its
+host to follow. Rebuild it with:
+
+```bash
+python3 scripts/import_cat_agent_skills.py \
+  --source /path/to/cat-agent-skills
+```
 
 ## Skills
 

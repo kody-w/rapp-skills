@@ -1,0 +1,194 @@
+---
+name: "blog-content-auditor"
+description: "Use this skill when the user asks to audit, review, score, rationalise, prioritise, refresh, or improve blog posts, article libraries, newsletters, or thought-leadership content."
+---
+
+# Blog Content Auditor
+
+Use this skill to audit individual blog posts or a wider blog library and produce a prioritised improvement plan.
+
+## Scope options
+
+The skill can handle:
+
+- A single post supplied as text or a URL.
+- A list of posts supplied by the user.
+- A blog index if the agent has suitable web or content access.
+- Draft posts before publication.
+- Existing thought-leadership libraries that need rationalisation.
+
+## Evidence rules
+
+- Audit only posts that are supplied or accessible.
+- Do not invent traffic, ranking, engagement, conversion, recency, or SEO performance data.
+- If the user wants performance analysis and no analytics are available, state that analytics were not available and assess editorial quality only.
+- Quote or reference specific observed features when justifying recommendations.
+
+## Default audit dimensions
+
+Score each post from 0 to 5 for:
+
+1. **Reader promise** - Is the post clear about why the reader should care?
+2. **Opening strength** - Does the opening create relevance quickly?
+3. **Argument shape** - Is there a coherent point of view, not just a list of observations?
+4. **Evidence and examples** - Are claims supported by examples, experience, references, or practical detail?
+5. **Structure and scanability** - Is the post easy to navigate?
+6. **Distinctiveness** - Does it avoid generic commentary?
+7. **Next action** - Does the post help the reader think or act differently?
+
+## Workflow
+
+1. Identify the available posts and the audit objective.
+2. Read each accessible post fully enough to assess the dimensions.
+3. Score each dimension with evidence.
+4. Identify content that should be kept, refreshed, merged, expanded, or retired.
+5. Produce a prioritised editorial backlog.
+6. If relevant, identify themes missing from the current library.
+
+## Single-post output
+
+```markdown
+## Blog audit summary
+
+Overall score: [x]/5
+Recommended action: [Keep / Refresh / Rewrite / Merge / Retire]
+
+## Scorecard
+
+| Dimension | Score /5 | Evidence | Recommended improvement |
+|---|---:|---|---|
+
+## Highest-value improvements
+
+1. [Improvement]
+2. [Improvement]
+3. [Improvement]
+
+## Suggested revised angle
+
+[Suggested angle]
+```
+
+## Library output
+
+```markdown
+## Blog library audit summary
+
+| Post | Overall score /5 | Recommended action | Reason |
+|---|---:|---|---|
+
+## Priority backlog
+
+| Priority | Post | Action | Rationale | Effort |
+|---|---|---|---|---|
+
+## Content gaps
+
+- [Gap]
+```
+
+
+## References
+
+This skill includes supporting reference material. Read the relevant reference file when the task needs additional structure, rubric detail, examples, or checklist support.
+
+- `references/blog-audit-rubric.md` - use this when additional structure, examples, or checks are useful for the task.
+
+## Quality checklist
+
+Before responding, check:
+
+- The audit does not claim performance data unless supplied.
+- Recommendations are tied to evidence.
+- The user can see what to improve first.
+- The output separates editorial judgement from measurable analytics.
+
+<!-- toaster:generated:begin -->
+
+## Run this — do not improvise
+
+This capability's deterministic implementation is a RAPP single-file agent, linked beside this file as `blog_content_auditor_agent.py` and embedded as the fenced Python below (sha256 f1c55c3b3c489628…; a byte-exact copy is also vaulted in the capsule comment at the end of this file). On a host with sandbox execution, run the linked file directly — if it is missing, write the fence contents verbatim to `blog_content_auditor_agent.py` first:
+
+```bash
+python3 blog_content_auditor_agent.py '{"key": "value"}'      # arguments as one JSON object
+echo '{"key": "value"}' | python3 blog_content_auditor_agent.py   # or on stdin
+python3 blog_content_auditor_agent.py --tool                      # emit the JSON tool contract
+```
+
+Treat stdout as a tool result. If it reports missing or unresolved inputs, stop and collect them. If it returns `steps`, execute those steps in order exactly as returned; if it returns `instructions`, follow them with the supplied inputs. Otherwise use the result verbatim. Do not invent behavior beyond that output. On a host without code execution, treat the Parameters schema and the code below as the exact specification and never paraphrase a step. Never edit inside the generated markers; a converter-equipped host can instead restore the original file checksum-verified with the installed `rapp-agent-converter/scripts/toast.py convert SKILL.md --to agent`.
+
+````python  # rapp:deterministic
+"""BlogContentAuditor -- Use this skill when the user asks to audit, review, score, rationalise, prioritise, refresh, or improve blog posts, article libraries, newsletters, or thought-leadership content.
+
+Generated by the rapp skill from blog-content-auditor. The RCI capsule at the bottom of this file carries the full original; `toast.py convert` restores it byte-exact."""
+
+import json
+import re
+import sys
+
+try:
+    from agents.basic_agent import BasicAgent
+except ImportError:  # running OUTSIDE a brainstem -- stay executable anyway.
+    class BasicAgent:  # noqa: D101 - minimal stand-in, same contract
+        def __init__(self, name=None, metadata=None):
+            if name:
+                self.name = name
+            if metadata:
+                self.metadata = metadata
+
+        def perform(self, **kwargs):
+            return "Not implemented."
+
+        def system_context(self):
+            return None
+
+        def to_tool(self):
+            return {"type": "function", "function": {
+                "name": self.name,
+                "description": self.metadata.get("description", ""),
+                "parameters": self.metadata.get("parameters", {})}}
+
+# The procedural layer, verbatim from the source capability.
+INSTRUCTIONS = '# Blog Content Auditor\n\nUse this skill to audit individual blog posts or a wider blog library and produce a prioritised improvement plan.\n\n## Scope options\n\nThe skill can handle:\n\n- A single post supplied as text or a URL.\n- A list of posts supplied by the user.\n- A blog index if the agent has suitable web or content access.\n- Draft posts before publication.\n- Existing thought-leadership libraries that need rationalisation.\n\n## Evidence rules\n\n- Audit only posts that are supplied or accessible.\n- Do not invent traffic, ranking, engagement, conversion, recency, or SEO performance data.\n- If the user wants performance analysis and no analytics are available, state that analytics were not available and assess editorial quality only.\n- Quote or reference specific observed features when justifying recommendations.\n\n## Default audit dimensions\n\nScore each post from 0 to 5 for:\n\n1. **Reader promise** - Is the post clear about why the reader should care?\n2. **Opening strength** - Does the opening create relevance quickly?\n3. **Argument shape** - Is there a coherent point of view, not just a list of observations?\n4. **Evidence and examples** - Are claims supported by examples, experience, references, or practical detail?\n5. **Structure and scanability** - Is the post easy to navigate?\n6. **Distinctiveness** - Does it avoid generic commentary?\n7. **Next action** - Does the post help the reader think or act differently?\n\n## Workflow\n\n1. Identify the available posts and the audit objective.\n2. Read each accessible post fully enough to assess the dimensions.\n3. Score each dimension with evidence.\n4. Identify content that should be kept, refreshed, merged, expanded, or retired.\n5. Produce a prioritised editorial backlog.\n6. If relevant, identify themes missing from the current library.\n\n## Single-post output\n\n```markdown\n## Blog audit summary\n\nOverall score: [x]/5\nRecommended action: [Keep / Refresh / Rewrite / Merge / Retire]\n\n## Scorecard\n\n| Dimension | Score /5 | Evidence | Recommended improvement |\n|---|---:|---|---|\n\n## Highest-value improvements\n\n1. [Improvement]\n2. [Improvement]\n3. [Improvement]\n\n## Suggested revised angle\n\n[Suggested angle]\n```\n\n## Library output\n\n```markdown\n## Blog library audit summary\n\n| Post | Overall score /5 | Recommended action | Reason |\n|---|---:|---|---|\n\n## Priority backlog\n\n| Priority | Post | Action | Rationale | Effort |\n|---|---|---|---|---|\n\n## Content gaps\n\n- [Gap]\n```\n\n\n## References\n\nThis skill includes supporting reference material. Read the relevant reference file when the task needs additional structure, rubric detail, examples, or checklist support.\n\n- `references/blog-audit-rubric.md` - use this when additional structure, examples, or checks are useful for the task.\n\n## Quality checklist\n\nBefore responding, check:\n\n- The audit does not claim performance data unless supplied.\n- Recommendations are tied to evidence.\n- The user can see what to improve first.\n- The output separates editorial judgement from measurable analytics.'
+
+# Ordered commands lifted verbatim from the capability's own documentation.
+STEPS = []
+
+
+class BlogContentAuditorAgent(BasicAgent):
+    def __init__(self):
+        self.name = 'BlogContentAuditor'
+        self.metadata = {
+          "name": "BlogContentAuditor",
+          "description": "Use this skill when the user asks to audit, review, score, rationalise, prioritise, refresh, or improve blog posts, article libraries, newsletters, or thought-leadership content.",
+          "parameters": {
+            "type": "object",
+            "properties": {},
+            "required": []
+          }
+        }
+        super().__init__(name=self.name, metadata=self.metadata)
+
+    def perform(self, **kwargs):  # toaster:generated-perform
+        return json.dumps({"status": "ok", "instructions": INSTRUCTIONS,
+                           "inputs": kwargs,
+                           "note": "Prose-only capability: follow INSTRUCTIONS "
+                                   "with the given inputs."}, indent=2)
+
+if __name__ == "__main__":
+    #     echo '{"arg": "value"}' | python3 blog_content_auditor_agent.py
+    #     python3 blog_content_auditor_agent.py '{"arg": "value"}'
+    #     python3 blog_content_auditor_agent.py --tool          # emit the JSON tool contract
+    _a = sys.argv[1:]
+    if _a and _a[0] == "--tool":
+        print(json.dumps(BlogContentAuditorAgent().to_tool(), indent=2))
+    else:
+        _raw = _a[0] if _a else (sys.stdin.read().strip() or "{}")
+        print(BlogContentAuditorAgent().perform(**json.loads(_raw)))
+
+# rci-capsule:v1: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
+````
+
+<!-- toaster:generated:end -->
+
+<!-- rci-capsule:v1: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 -->

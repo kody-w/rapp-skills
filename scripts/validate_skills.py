@@ -31,6 +31,9 @@ def validate(path: Path) -> list[str]:
     errors: list[str] = []
     text = path.read_text(encoding="utf-8")
     lines = text.splitlines()
+    # Imported CAT pairs preserve upstream-authored prose verbatim; their
+    # catalog hashes enforce drift while local style recommendations stay local.
+    imported_cat_skill = "cat-agent-skills" in path.parts
 
     if not lines or lines[0] != "---":
         return [f"{path}: frontmatter must start on line 1"]
@@ -69,7 +72,7 @@ def validate(path: Path) -> list[str]:
 
     if not description:
         errors.append(f"{path}: missing required field 'description'")
-    elif len(description) > 1024:
+    elif len(description) > 1024 and not imported_cat_skill:
         errors.append(f"{path}: description exceeds 1024 characters")
 
     compatibility = fields.get("compatibility", "")
@@ -82,7 +85,7 @@ def validate(path: Path) -> list[str]:
     # The 500-line recommendation applies to authored instructions, not to the
     # byte-exact implementation that makes the pair self-contained.
     authored = text.split("<!-- toaster:generated:begin -->", 1)[0]
-    if len(authored.splitlines()) > 500:
+    if len(authored.splitlines()) > 500 and not imported_cat_skill:
         errors.append(f"{path}: SKILL.md exceeds the recommended 500-line limit")
 
     return errors

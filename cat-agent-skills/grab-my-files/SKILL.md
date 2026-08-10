@@ -1,0 +1,141 @@
+---
+name: "grab-my-files"
+description: "Bundle every file the agent produced in this session into a single timestamped .zip and hand it back as a download. Use when the user asks to \"export all produced files\", \"zip my files\", \"package everything you made\", \"bundle my files\", \"give me all the files\", or similar. Files are read from /app/created/. Do NOT use to fetch a single named file the user can already download on its own, to create or convert a file, or to save/persist files to SharePoint, OneDrive, or Dataverse \u2014 those are separate flows, not a local zip-and-download."
+---
+
+# Grab My Files
+
+## When to use
+
+Invoke when the user says anything like:
+- "export all produced files" / "package everything"
+- "zip up my files" / "bundle my files"
+- "give me everything you made" / "download all the outputs"
+
+If the user names a subset ("just the PDFs", "only the report"), honor that and zip
+only the matching files, but still follow the rules below.
+
+## How to export
+
+1. **Inspect the folder.** List `/app/created/` **recursively** so nested outputs
+   (e.g. `/app/created/charts/foo.png`) are included, not just top-level files.
+2. **Decide what goes in.** Include every produced file **except**:
+   - any previous export archive (files named `all_files_produced_*.zip`), and
+   - hidden/system junk (`.DS_Store`, `Thumbs.db`, `*.tmp`, dotfiles).
+3. **Prune old exports *after* the new one is written.** Build the new archive
+   first, then delete any *other* `all_files_produced_*.zip` in `/app/created/`.
+   Doing it in this order means a failed build never destroys the user's previous
+   bundle, and no old export gets nested inside the new one.
+4. **Handle the empty case.** If nothing qualifies, tell the user there are no
+   produced files to export and stop — do not create an empty zip.
+5. **Name the archive** `all_files_produced_<YYYYMMDD_HHMMSS>.zip` — a sortable,
+   UTC timestamp — and write it to `/app/created/`.
+6. **Preserve structure.** Keep the relative folder layout inside the zip so files
+   restore to the same subfolders they came from.
+7. **Deliver it.** Return the finished `.zip` to the user as a download — don't just
+   report that it was created. In Copilot Studio, writing the file to `/app/created/`
+   surfaces it as a downloadable attachment; make sure the user gets that link.
+
+## Confirm to the user
+
+After the zip is written, reply with:
+- the archive name (including its timestamp),
+- the total count of files packaged, plus a list of up to 50 packaged paths (sorted). If there are more than 50, list the first 50 and say how many additional files were included, and
+- a note that the zip is attached and ready to download.
+
+> I've packaged **3 file(s)** into **`all_files_produced_20260724_215812.zip`**:
+> - `onboarding_overview.pdf`
+> - `onboarding_overview.docx`
+> - `charts/headcount.png`
+>
+> It's attached above and ready to download. 📦
+
+<!-- toaster:generated:begin -->
+
+## Run this — do not improvise
+
+This capability's deterministic implementation is a RAPP single-file agent, linked beside this file as `grab_my_files_agent.py` and embedded as the fenced Python below (sha256 9cc98b1c1a193e16…; a byte-exact copy is also vaulted in the capsule comment at the end of this file). On a host with sandbox execution, run the linked file directly — if it is missing, write the fence contents verbatim to `grab_my_files_agent.py` first:
+
+```bash
+python3 grab_my_files_agent.py '{"key": "value"}'      # arguments as one JSON object
+echo '{"key": "value"}' | python3 grab_my_files_agent.py   # or on stdin
+python3 grab_my_files_agent.py --tool                      # emit the JSON tool contract
+```
+
+Treat stdout as a tool result. If it reports missing or unresolved inputs, stop and collect them. If it returns `steps`, execute those steps in order exactly as returned; if it returns `instructions`, follow them with the supplied inputs. Otherwise use the result verbatim. Do not invent behavior beyond that output. On a host without code execution, treat the Parameters schema and the code below as the exact specification and never paraphrase a step. Never edit inside the generated markers; a converter-equipped host can instead restore the original file checksum-verified with the installed `rapp-agent-converter/scripts/toast.py convert SKILL.md --to agent`.
+
+```python  # rapp:deterministic
+"""GrabMyFiles -- Bundle every file the agent produced in this session into a single timestamped .zip and hand it back as a download. Use when the user asks to "export all produced files", "zip my files", "package everything you made", "bundle my files", "give me all the files", or similar. Files are read from /app/created/. Do NOT use to fetch a single named file the user can already download on its own, to create or convert a file, or to save/persist files to SharePoint, OneDrive, or Dataverse — those are separate flows, not a local zip-and-download.
+
+Generated by the rapp skill from grab-my-files. The RCI capsule at the bottom of this file carries the full original; `toast.py convert` restores it byte-exact."""
+
+import json
+import re
+import sys
+
+try:
+    from agents.basic_agent import BasicAgent
+except ImportError:  # running OUTSIDE a brainstem -- stay executable anyway.
+    class BasicAgent:  # noqa: D101 - minimal stand-in, same contract
+        def __init__(self, name=None, metadata=None):
+            if name:
+                self.name = name
+            if metadata:
+                self.metadata = metadata
+
+        def perform(self, **kwargs):
+            return "Not implemented."
+
+        def system_context(self):
+            return None
+
+        def to_tool(self):
+            return {"type": "function", "function": {
+                "name": self.name,
+                "description": self.metadata.get("description", ""),
+                "parameters": self.metadata.get("parameters", {})}}
+
+# The procedural layer, verbatim from the source capability.
+INSTRUCTIONS = '# Grab My Files\n\n## When to use\n\nInvoke when the user says anything like:\n- "export all produced files" / "package everything"\n- "zip up my files" / "bundle my files"\n- "give me everything you made" / "download all the outputs"\n\nIf the user names a subset ("just the PDFs", "only the report"), honor that and zip\nonly the matching files, but still follow the rules below.\n\n## How to export\n\n1. **Inspect the folder.** List `/app/created/` **recursively** so nested outputs\n   (e.g. `/app/created/charts/foo.png`) are included, not just top-level files.\n2. **Decide what goes in.** Include every produced file **except**:\n   - any previous export archive (files named `all_files_produced_*.zip`), and\n   - hidden/system junk (`.DS_Store`, `Thumbs.db`, `*.tmp`, dotfiles).\n3. **Prune old exports *after* the new one is written.** Build the new archive\n   first, then delete any *other* `all_files_produced_*.zip` in `/app/created/`.\n   Doing it in this order means a failed build never destroys the user\'s previous\n   bundle, and no old export gets nested inside the new one.\n4. **Handle the empty case.** If nothing qualifies, tell the user there are no\n   produced files to export and stop — do not create an empty zip.\n5. **Name the archive** `all_files_produced_<YYYYMMDD_HHMMSS>.zip` — a sortable,\n   UTC timestamp — and write it to `/app/created/`.\n6. **Preserve structure.** Keep the relative folder layout inside the zip so files\n   restore to the same subfolders they came from.\n7. **Deliver it.** Return the finished `.zip` to the user as a download — don\'t just\n   report that it was created. In Copilot Studio, writing the file to `/app/created/`\n   surfaces it as a downloadable attachment; make sure the user gets that link.\n\n## Confirm to the user\n\nAfter the zip is written, reply with:\n- the archive name (including its timestamp),\n- the total count of files packaged, plus a list of up to 50 packaged paths (sorted). If there are more than 50, list the first 50 and say how many additional files were included, and\n- a note that the zip is attached and ready to download.\n\n> I\'ve packaged **3 file(s)** into **`all_files_produced_20260724_215812.zip`**:\n> - `onboarding_overview.pdf`\n> - `onboarding_overview.docx`\n> - `charts/headcount.png`\n>\n> It\'s attached above and ready to download. 📦'
+
+# Ordered commands lifted verbatim from the capability's own documentation.
+STEPS = []
+
+
+class GrabMyFilesAgent(BasicAgent):
+    def __init__(self):
+        self.name = 'GrabMyFiles'
+        self.metadata = {
+          "name": "GrabMyFiles",
+          "description": "Bundle every file the agent produced in this session into a single timestamped .zip and hand it back as a download. Use when the user asks to \"export all produced files\", \"zip my files\", \"package everything you made\", \"bundle my files\", \"give me all the files\", or similar. Files are read from /app/created/. Do NOT use to fetch a single named file the user can already download on its own, to create or convert a file, or to save/persist files to SharePoint, OneDrive, or Dataverse \u2014 those are separate flows, not a local zip-and-download.",
+          "parameters": {
+            "type": "object",
+            "properties": {},
+            "required": []
+          }
+        }
+        super().__init__(name=self.name, metadata=self.metadata)
+
+    def perform(self, **kwargs):  # toaster:generated-perform
+        return json.dumps({"status": "ok", "instructions": INSTRUCTIONS,
+                           "inputs": kwargs,
+                           "note": "Prose-only capability: follow INSTRUCTIONS "
+                                   "with the given inputs."}, indent=2)
+
+if __name__ == "__main__":
+    #     echo '{"arg": "value"}' | python3 grab_my_files_agent.py
+    #     python3 grab_my_files_agent.py '{"arg": "value"}'
+    #     python3 grab_my_files_agent.py --tool          # emit the JSON tool contract
+    _a = sys.argv[1:]
+    if _a and _a[0] == "--tool":
+        print(json.dumps(GrabMyFilesAgent().to_tool(), indent=2))
+    else:
+        _raw = _a[0] if _a else (sys.stdin.read().strip() or "{}")
+        print(GrabMyFilesAgent().perform(**json.loads(_raw)))
+
+# rci-capsule:v1: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
+```
+
+<!-- toaster:generated:end -->
+
+<!-- rci-capsule:v1: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 -->

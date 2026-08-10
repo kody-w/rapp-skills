@@ -1,0 +1,3879 @@
+{
+  "converter": {
+    "path": "engine/rapp-agent-converter/scripts/toast.py",
+    "sha256": "e09cfe52304cacc666fd865a31d8bf409d5385f3e34ecb5e210d433d39b4dab7"
+  },
+  "counts": {
+    "direct_result_agents": 0,
+    "excluded": 5,
+    "instruction_launchpads": 76,
+    "legacy_zip": 3,
+    "pairs": 76,
+    "step_launchpads": 0,
+    "typed_contracts": 0,
+    "unpacked": 73,
+    "untyped_contracts": 76
+  },
+  "excluded": [
+    {
+      "kind": "excluded-automation",
+      "reason": "Scout automation JSON is not an Agent Skill",
+      "slug": "awaiting-reply"
+    },
+    {
+      "kind": "excluded-automation",
+      "reason": "Scout automation JSON is not an Agent Skill",
+      "slug": "copilot-agents-news-scout"
+    },
+    {
+      "kind": "excluded-automation",
+      "reason": "Scout automation JSON is not an Agent Skill",
+      "slug": "pattern-radar-automation"
+    },
+    {
+      "kind": "excluded-automation",
+      "reason": "Scout automation JSON is not an Agent Skill",
+      "slug": "spend-more-time-with-friends-and-family"
+    },
+    {
+      "kind": "excluded-installer",
+      "reason": "archive contains no SKILL.md",
+      "slug": "vacation-urgent-forwarder"
+    }
+  ],
+  "schema": "rapp-skills-cat-catalog/1.0",
+  "skills": [
+    {
+      "agentBytes": 15614,
+      "agentSha256": "dc6327456db3f69641b68177c36be82c2e8829148957a4f0f6c2118ba3d68150",
+      "author": "Tim Karlsson",
+      "fileSha256": {
+        "SKILL.md": "480b342c67a37cab1d9338b2ed46ed0a8e00c7d96bb2ac34d6c4e58f02648397",
+        "accessibility_pass_agent.py": "dc6327456db3f69641b68177c36be82c2e8829148957a4f0f6c2118ba3d68150",
+        "scripts/a11y_check.py": "45dc1bab8c49b8cd4801f1de4cd394c96aa85aa55ef92e3c2115b4135ab34c25"
+      },
+      "files": [
+        "SKILL.md",
+        "accessibility_pass_agent.py",
+        "scripts/a11y_check.py"
+      ],
+      "name": "Accessibility Pass",
+      "parameters": 0,
+      "platforms": [
+        "Copilot Studio",
+        "Cowork"
+      ],
+      "rawSkillSha256": "b4a43e423f49f9eaf99343a696c195f54b77b74f9afc4058621f0da0f69634e6",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 40179,
+      "skillSha256": "480b342c67a37cab1d9338b2ed46ed0a8e00c7d96bb2ac34d6c4e58f02648397",
+      "slug": "accessibility-pass",
+      "sourceBundleSha256": "b1f8f32ccf885677a7c109cdfe2d54733ae821cf7a9387019c9c8d5ef234f827",
+      "sourceFiles": {
+        "SKILL.md": "b4a43e423f49f9eaf99343a696c195f54b77b74f9afc4058621f0da0f69634e6",
+        "scripts/a11y_check.py": "45dc1bab8c49b8cd4801f1de4cd394c96aa85aa55ef92e3c2115b4135ab34c25"
+      },
+      "sourceKind": "unpacked-skill",
+      "sourcePath": "submissions/accessibility-pass/SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/accessibility-pass/SKILL.md",
+      "tags": [
+        "accessibility",
+        "documents",
+        "presentations",
+        "powerpoint",
+        "quality",
+        "scripts"
+      ],
+      "tool": "AccessibilityPass"
+    },
+    {
+      "agentBytes": 17970,
+      "agentSha256": "575665366a0181a5aa50ea5110b910ebda0e0c0e0aa845244164755298e87387",
+      "author": "Sandeep Angara",
+      "fileSha256": {
+        "SKILL.md": "4440751cea04abc22f5863ec57a6b699b6e8611761ae2a76b7291d76d67b290b",
+        "acroform_writer_agent.py": "575665366a0181a5aa50ea5110b910ebda0e0c0e0aa845244164755298e87387",
+        "assets/sample_intake_form.pdf": "9bd34488845b65dac43e60d2d1cc78d8d87b7335722b9905c2916d2e9fd85df0",
+        "scripts/fill_form.py": "2fce1700bcdc1e739f7e53e42d44b2c65f081e9e25d2b2a6a567cbdb80686691"
+      },
+      "files": [
+        "SKILL.md",
+        "acroform_writer_agent.py",
+        "assets/sample_intake_form.pdf",
+        "scripts/fill_form.py"
+      ],
+      "name": "AcroForm Writer",
+      "parameters": 0,
+      "platforms": [
+        "Copilot Studio"
+      ],
+      "rawSkillSha256": "f495ef74d92d45e8725a8bc55e66855823a56933bf50d50a7ca19d1940212eb3",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 45401,
+      "skillSha256": "4440751cea04abc22f5863ec57a6b699b6e8611761ae2a76b7291d76d67b290b",
+      "slug": "acroform-writer",
+      "sourceBundleSha256": "c5f426ca30ecf9d09964b6befa52fe2e8056d589296400bac8a4b894dda61d92",
+      "sourceFiles": {
+        "SKILL.md": "f495ef74d92d45e8725a8bc55e66855823a56933bf50d50a7ca19d1940212eb3",
+        "assets/sample_intake_form.pdf": "9bd34488845b65dac43e60d2d1cc78d8d87b7335722b9905c2916d2e9fd85df0",
+        "scripts/fill_form.py": "2fce1700bcdc1e739f7e53e42d44b2c65f081e9e25d2b2a6a567cbdb80686691"
+      },
+      "sourceKind": "unpacked-skill",
+      "sourcePath": "submissions/acroform-writer/SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/acroform-writer/SKILL.md",
+      "tags": [
+        "acroform",
+        "pdf",
+        "forms",
+        "python",
+        "documents"
+      ],
+      "tool": "AcroformWriter"
+    },
+    {
+      "agentBytes": 17595,
+      "agentSha256": "f6575f132cb94a4d0cabd8a8fdad9be3e47ecb73851c12d7fd06441597680447",
+      "author": "James Papadimitriou",
+      "fileSha256": {
+        "SKILL.md": "2586f150e41c45a1d2dec628fe573dbcf7ffb43470cd5dcd67446cbcf4b8251e",
+        "agent_evaluation_designer_agent.py": "f6575f132cb94a4d0cabd8a8fdad9be3e47ecb73851c12d7fd06441597680447",
+        "references/copilot-studio-evaluation.md": "9c8a8d56826478998f1aeb78e722cd3330e5e67300eb73d961f57a9fcaba0ddb"
+      },
+      "files": [
+        "SKILL.md",
+        "agent_evaluation_designer_agent.py",
+        "references/copilot-studio-evaluation.md"
+      ],
+      "name": "Agent Evaluation Designer",
+      "parameters": 0,
+      "platforms": [
+        "Copilot Studio"
+      ],
+      "rawSkillSha256": "11850d009e42293e1b7247bf1ad932c5479b6ca14df2f55b7cfc616cc524ed1a",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 45020,
+      "skillSha256": "2586f150e41c45a1d2dec628fe573dbcf7ffb43470cd5dcd67446cbcf4b8251e",
+      "slug": "agent-evaluation-designer",
+      "sourceBundleSha256": "1aa31ae1500b3ec356ad2ed7e5d29eaa23649b80ea5d8b9e9170170e17797acc",
+      "sourceFiles": {
+        "SKILL.md": "11850d009e42293e1b7247bf1ad932c5479b6ca14df2f55b7cfc616cc524ed1a",
+        "references/copilot-studio-evaluation.md": "9c8a8d56826478998f1aeb78e722cd3330e5e67300eb73d961f57a9fcaba0ddb"
+      },
+      "sourceKind": "unpacked-skill",
+      "sourcePath": "submissions/agent-evaluation-designer/SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/agent-evaluation-designer/SKILL.md",
+      "tags": [
+        "evaluation",
+        "testing",
+        "quality-assurance",
+        "go-live",
+        "decision-making"
+      ],
+      "tool": "AgentEvaluationDesigner"
+    },
+    {
+      "agentBytes": 16908,
+      "agentSha256": "3d29b46fe0108a0380140d1d436bdfe02006f862ced70f3d9c92e05601f12fa5",
+      "author": "Chris Garty and Andrew Hess",
+      "fileSha256": {
+        "SKILL.md": "3b0999d8382d2bbb510b4cfce77eded2d89e30f180bb71923882145f03995cb1",
+        "agent_harness_explorer_agent.py": "3d29b46fe0108a0380140d1d436bdfe02006f862ced70f3d9c92e05601f12fa5",
+        "assets/comparison.schema.json": "6c6ef6e598452c37d963d859476498b2ac6afe23defc19f72ccfdb775690fabe",
+        "assets/report-template.md": "49b5e579b5eed362f553c28dfe30ae65423451aa7d6e7f932f5e5531f1b2614d",
+        "assets/snapshot-example.json": "0b3b7a3655a9fda60a50bb6b7fa963513cb408ef302e3638957e8f0d1062b4ff",
+        "assets/snapshot.schema.json": "d1c496ca74e2ef3ce9f3e30aeb21a360ebf19f5a293d4ce5c5bb41eb9ea014b0",
+        "references/comparison-rules.md": "ef5ce2a62827fab03e0f1397228a4dfb73d49e4b287f9e857c6b51d889981302",
+        "references/memory-snapshot-protocol.md": "d41c02008226bdfc94c08a5a6acc00c4e9b3287d26d3014abc5cfd63c214a378",
+        "references/probe-catalog.md": "fe4168f7b80a74e529f620a2accc1f6d0d6163cf0c564bf3249395a43c2ed659",
+        "references/python-library-catalog.yaml": "003f6ff68fdf627780432d104df8509124b437f2f73292960f65c33fddec1d9c",
+        "references/safety-boundaries.md": "b8ad29d9531cc17e5c7edd52a8987615e8794cffd09682d307161aa081dbc6b5",
+        "references/snapshot-history/2026-07-14-agent-harness-snapshot.html": "dc83b4c760956b12a98530faebfd1bf84c6484a2124a9cf5c3f622c5cbdcc77e",
+        "references/snapshot-history/2026-07-14-agent-harness-snapshot.json": "cbc8bb078f0c9cd5185a65909f340d21cafbff6f9c3c064d33dbf09981c84205",
+        "references/snapshot-history/2026-07-14-agent-harness-snapshot.md": "d91c7797e0f924ebcf71a1f059839d59717ec0d04376a74bb071f8e0a93f9597",
+        "references/snapshot-history/index.md": "e8f8ae41465bdc2dbf74c5ea02f34df43968fb7f1c520d8d0263037f4b56d1e7",
+        "scripts/archive_snapshot.py": "390bc6aee30f1a9f6f075f01480ce9ac35009032cebc205718df751fe45b28db",
+        "scripts/canonicalize_snapshot.py": "55bf55d168c714ed7cfd2f93cab0fbb8ad77814318ed863f4fef48226d5a8a8f",
+        "scripts/capture_snapshot.py": "4be2327cc81c5d28cfb13a40dd3160ee0fdfed64237e37d82cd9056d1b374697",
+        "scripts/compare_snapshots.py": "8f7add5ec81e5788d20fa54fc0d0fa9916b9bdbe8a0708cf5a40181e50d6f661",
+        "scripts/generate_html_report.py": "f6a5688a9947fa6d79a4b2bc685aad628d55dc0c0e1992cc5e6322dbe16a415b",
+        "scripts/generate_library_inventory.py": "2e5418bf9e7f4ab52443371e3d92215c9f0fcfc59c9fc96bb293bc2b9c08e908",
+        "scripts/generate_markdown_report.py": "63e41c699ab33757638220423e8a82542240880dcc38da561236ae41204642bf",
+        "scripts/inspect_python.py": "2e1d3972fe3b31200e3f741a28b6d61811a22661a88ffeed23c7355f8f05c65a",
+        "scripts/inspect_runtime.py": "8cc0f95bceb6b718ee447f0d9a0dc2a5881f1a2d8bdf06bcdb19b86dfa55af96",
+        "scripts/inspect_tools.py": "f61894affc815ccff616a758b620d9668d98de91b8f8cd06b6ddb7d8f864d77d"
+      },
+      "files": [
+        "SKILL.md",
+        "agent_harness_explorer_agent.py",
+        "assets/comparison.schema.json",
+        "assets/report-template.md",
+        "assets/snapshot-example.json",
+        "assets/snapshot.schema.json",
+        "references/comparison-rules.md",
+        "references/memory-snapshot-protocol.md",
+        "references/probe-catalog.md",
+        "references/python-library-catalog.yaml",
+        "references/safety-boundaries.md",
+        "references/snapshot-history/2026-07-14-agent-harness-snapshot.html",
+        "references/snapshot-history/2026-07-14-agent-harness-snapshot.json",
+        "references/snapshot-history/2026-07-14-agent-harness-snapshot.md",
+        "references/snapshot-history/index.md",
+        "scripts/archive_snapshot.py",
+        "scripts/canonicalize_snapshot.py",
+        "scripts/capture_snapshot.py",
+        "scripts/compare_snapshots.py",
+        "scripts/generate_html_report.py",
+        "scripts/generate_library_inventory.py",
+        "scripts/generate_markdown_report.py",
+        "scripts/inspect_python.py",
+        "scripts/inspect_runtime.py",
+        "scripts/inspect_tools.py"
+      ],
+      "name": "Agent Harness Explorer",
+      "parameters": 0,
+      "platforms": [
+        "Copilot Studio",
+        "Cowork",
+        "Scout"
+      ],
+      "rawSkillSha256": "9d84369899c4e6d4b1e2b9a19b39a5de046e9f00beb4bb0999d944e83732e7f0",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 43188,
+      "skillSha256": "3b0999d8382d2bbb510b4cfce77eded2d89e30f180bb71923882145f03995cb1",
+      "slug": "agent-harness-explorer",
+      "sourceBundleSha256": "375c9e98b9a4324a2d413657c08e93d4373902288b1c037af37f9325ecf652ef",
+      "sourceFiles": {
+        "SKILL.md": "9d84369899c4e6d4b1e2b9a19b39a5de046e9f00beb4bb0999d944e83732e7f0",
+        "assets/comparison.schema.json": "6c6ef6e598452c37d963d859476498b2ac6afe23defc19f72ccfdb775690fabe",
+        "assets/report-template.md": "49b5e579b5eed362f553c28dfe30ae65423451aa7d6e7f932f5e5531f1b2614d",
+        "assets/snapshot-example.json": "0b3b7a3655a9fda60a50bb6b7fa963513cb408ef302e3638957e8f0d1062b4ff",
+        "assets/snapshot.schema.json": "d1c496ca74e2ef3ce9f3e30aeb21a360ebf19f5a293d4ce5c5bb41eb9ea014b0",
+        "references/comparison-rules.md": "ef5ce2a62827fab03e0f1397228a4dfb73d49e4b287f9e857c6b51d889981302",
+        "references/memory-snapshot-protocol.md": "d41c02008226bdfc94c08a5a6acc00c4e9b3287d26d3014abc5cfd63c214a378",
+        "references/probe-catalog.md": "fe4168f7b80a74e529f620a2accc1f6d0d6163cf0c564bf3249395a43c2ed659",
+        "references/python-library-catalog.yaml": "003f6ff68fdf627780432d104df8509124b437f2f73292960f65c33fddec1d9c",
+        "references/safety-boundaries.md": "b8ad29d9531cc17e5c7edd52a8987615e8794cffd09682d307161aa081dbc6b5",
+        "references/snapshot-history/2026-07-14-agent-harness-snapshot.html": "dc83b4c760956b12a98530faebfd1bf84c6484a2124a9cf5c3f622c5cbdcc77e",
+        "references/snapshot-history/2026-07-14-agent-harness-snapshot.json": "cbc8bb078f0c9cd5185a65909f340d21cafbff6f9c3c064d33dbf09981c84205",
+        "references/snapshot-history/2026-07-14-agent-harness-snapshot.md": "d91c7797e0f924ebcf71a1f059839d59717ec0d04376a74bb071f8e0a93f9597",
+        "references/snapshot-history/index.md": "e8f8ae41465bdc2dbf74c5ea02f34df43968fb7f1c520d8d0263037f4b56d1e7",
+        "scripts/archive_snapshot.py": "390bc6aee30f1a9f6f075f01480ce9ac35009032cebc205718df751fe45b28db",
+        "scripts/canonicalize_snapshot.py": "55bf55d168c714ed7cfd2f93cab0fbb8ad77814318ed863f4fef48226d5a8a8f",
+        "scripts/capture_snapshot.py": "4be2327cc81c5d28cfb13a40dd3160ee0fdfed64237e37d82cd9056d1b374697",
+        "scripts/compare_snapshots.py": "8f7add5ec81e5788d20fa54fc0d0fa9916b9bdbe8a0708cf5a40181e50d6f661",
+        "scripts/generate_html_report.py": "f6a5688a9947fa6d79a4b2bc685aad628d55dc0c0e1992cc5e6322dbe16a415b",
+        "scripts/generate_library_inventory.py": "2e5418bf9e7f4ab52443371e3d92215c9f0fcfc59c9fc96bb293bc2b9c08e908",
+        "scripts/generate_markdown_report.py": "63e41c699ab33757638220423e8a82542240880dcc38da561236ae41204642bf",
+        "scripts/inspect_python.py": "2e1d3972fe3b31200e3f741a28b6d61811a22661a88ffeed23c7355f8f05c65a",
+        "scripts/inspect_runtime.py": "8cc0f95bceb6b718ee447f0d9a0dc2a5881f1a2d8bdf06bcdb19b86dfa55af96",
+        "scripts/inspect_tools.py": "f61894affc815ccff616a758b620d9668d98de91b8f8cd06b6ddb7d8f864d77d"
+      },
+      "sourceKind": "unpacked-skill",
+      "sourcePath": "submissions/agent-harness-explorer/SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/agent-harness-explorer/SKILL.md",
+      "tags": [
+        "diagnostics",
+        "runtime",
+        "python",
+        "capabilities",
+        "snapshots",
+        "scripts"
+      ],
+      "tool": "AgentHarnessExplorer"
+    },
+    {
+      "agentBytes": 54716,
+      "agentSha256": "0937bc8c3bb6200a5c17c9417c492e59cccca126b97c578251e51e38ac5c78c1",
+      "author": "Doak Moore",
+      "fileSha256": {
+        "SKILL.md": "c9d8cb17f5278d0c834abc3eeda2a515ee1ae492e8db134d7717ec33924cb9b4",
+        "ai_demo_assistant_agent.py": "0937bc8c3bb6200a5c17c9417c492e59cccca126b97c578251e51e38ac5c78c1"
+      },
+      "files": [
+        "SKILL.md",
+        "ai_demo_assistant_agent.py"
+      ],
+      "name": "AI Demo Assistant",
+      "parameters": 0,
+      "platforms": [
+        "Cowork"
+      ],
+      "rawSkillSha256": "c28f0d56884974dcc6ee5ebff01c261e3790aadb1c38146e60428041941c8bb0",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 137848,
+      "skillSha256": "c9d8cb17f5278d0c834abc3eeda2a515ee1ae492e8db134d7717ec33924cb9b4",
+      "slug": "ai-demo-assistant",
+      "sourceBundleSha256": "c004cd9237f3542296e0cb2487c57ca202548b33c17f8a50d6c2991846ba06fe",
+      "sourceFiles": {
+        "SKILL.md": "c28f0d56884974dcc6ee5ebff01c261e3790aadb1c38146e60428041941c8bb0"
+      },
+      "sourceKind": "unpacked-skill",
+      "sourcePath": "submissions/ai-demo-assistant/SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/ai-demo-assistant/SKILL.md",
+      "tags": [
+        "demo",
+        "copilot",
+        "microsoft-365",
+        "sales-enablement",
+        "content",
+        "productivity"
+      ],
+      "tool": "AiDemoAssistant"
+    },
+    {
+      "agentBytes": 27310,
+      "agentSha256": "8b1ba84d7a952ab5bd8495054dfdfd464db348d3ba66fb80830e5ecb10587ad7",
+      "author": "Tim Sparks",
+      "fileSha256": {
+        "SKILL.md": "bf181a585276a1709fdf00ea817f41bb8772c798a15475bd57dc512b7100d3a5",
+        "ai_first_process_redesign_agent.py": "8b1ba84d7a952ab5bd8495054dfdfd464db348d3ba66fb80830e5ecb10587ad7",
+        "references/ai-building-blocks.md": "9f95aa080f813d16881512be6203a04d37f4c60580e859c9f5d77cc925e81b55",
+        "references/blueprint-templates.md": "1a8a83408c978221abca63991bd19ee9c3b29e7bbe5f9fc1ca8e3e0445e33bd7",
+        "references/evals.md": "916f0c454b975fb8905cbbc8cde0ffebf3588ac6eb87828e92ec0614832bc3f7",
+        "references/example-run.md": "52a810da6f778d2e7cfabf608295cc2553d041441ceb86d2f6ff4cc7662a2505",
+        "references/output-package-spec.md": "399e215e78cdd4c9babe1a356d86b030399e59e4720fc9c5702f4a3ee8f3e50c",
+        "references/task-capture-template.md": "524022635a12846c46066ca39729fcc43de24c253330cf8c99e9c7e07c57c9b6"
+      },
+      "files": [
+        "SKILL.md",
+        "ai_first_process_redesign_agent.py",
+        "references/ai-building-blocks.md",
+        "references/blueprint-templates.md",
+        "references/evals.md",
+        "references/example-run.md",
+        "references/output-package-spec.md",
+        "references/task-capture-template.md"
+      ],
+      "name": "AI-First Process Redesign",
+      "parameters": 0,
+      "platforms": [
+        "Cowork",
+        "Copilot Studio"
+      ],
+      "rawSkillSha256": "e89743c5afa7ecb7f12979c1c0cae8157d29fceed7c10851e51663d471137688",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 69752,
+      "skillSha256": "bf181a585276a1709fdf00ea817f41bb8772c798a15475bd57dc512b7100d3a5",
+      "slug": "ai-first-process-redesign",
+      "sourceBundleSha256": "7183dce8a95ac913860eaefe710c83912dac4edcd90a0b12010eee672279a957",
+      "sourceFiles": {
+        "SKILL.md": "e89743c5afa7ecb7f12979c1c0cae8157d29fceed7c10851e51663d471137688",
+        "references/ai-building-blocks.md": "9f95aa080f813d16881512be6203a04d37f4c60580e859c9f5d77cc925e81b55",
+        "references/blueprint-templates.md": "1a8a83408c978221abca63991bd19ee9c3b29e7bbe5f9fc1ca8e3e0445e33bd7",
+        "references/evals.md": "916f0c454b975fb8905cbbc8cde0ffebf3588ac6eb87828e92ec0614832bc3f7",
+        "references/example-run.md": "52a810da6f778d2e7cfabf608295cc2553d041441ceb86d2f6ff4cc7662a2505",
+        "references/output-package-spec.md": "399e215e78cdd4c9babe1a356d86b030399e59e4720fc9c5702f4a3ee8f3e50c",
+        "references/task-capture-template.md": "524022635a12846c46066ca39729fcc43de24c253330cf8c99e9c7e07c57c9b6"
+      },
+      "sourceKind": "unpacked-skill",
+      "sourcePath": "submissions/ai-first-process-redesign/SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/ai-first-process-redesign/SKILL.md",
+      "tags": [
+        "productivity",
+        "process-improvement",
+        "agentic-workflow"
+      ],
+      "tool": "AiFirstProcessRedesign"
+    },
+    {
+      "agentBytes": 46827,
+      "agentSha256": "5934d6a2de06837f75d27e3978427ec99753d3b8149cd48f8289cc422230f5f5",
+      "author": "Alicja Gilderdale",
+      "fileSha256": {
+        "SKILL.md": "2dcf6f2cd6b98b662985e6ccab0d040aaec1ef6abe7dd603bb6d842b6f76d119",
+        "ai_usecase_assessment_agent.py": "5934d6a2de06837f75d27e3978427ec99753d3b8149cd48f8289cc422230f5f5",
+        "assets/UseCase_Assessment_Report_TEMPLATE.html": "43853669939480f857e52a67b8f132ddc16cfa40f813504998d1bfbff7726056",
+        "knowledge/Agentic_Use_Case_Assessment_Rubric_v2.docx": "180e3dc65dd7ea59ba390553f851ac8145c0da55f56e456cfb007d8feb1eb2ea",
+        "knowledge/UseCase_Categories_and_Subcategories_Guidance.docx": "4ceee81c52989db48a1349d11c0279e5e3b5d832db6b6d762091da8e227e6c89",
+        "references/privacy_and_safety_rules.md": "5192f1a1b04a182d45f3c50ee9e8576b6fd244da06a621e933cecc2d9c593e5b",
+        "references/skill_flow.md": "31a67c446f78d066b1a47b8b4ae774bb03e0dce3419882f0554b98ca4df499ae",
+        "references/working_object_schema.json": "62bb624a84cca4818379625ed58d00198e3006e2a5256fa8b3516539b5282297"
+      },
+      "files": [
+        "SKILL.md",
+        "ai_usecase_assessment_agent.py",
+        "assets/UseCase_Assessment_Report_TEMPLATE.html",
+        "knowledge/Agentic_Use_Case_Assessment_Rubric_v2.docx",
+        "knowledge/UseCase_Categories_and_Subcategories_Guidance.docx",
+        "references/privacy_and_safety_rules.md",
+        "references/skill_flow.md",
+        "references/working_object_schema.json"
+      ],
+      "name": "AI Use Case Assessment",
+      "parameters": 0,
+      "platforms": [
+        "Scout",
+        "Cowork"
+      ],
+      "rawSkillSha256": "9405867f164be0cc9efa98c04366aaa157204642d53883f9cebf3c349f2f1164",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 119359,
+      "skillSha256": "2dcf6f2cd6b98b662985e6ccab0d040aaec1ef6abe7dd603bb6d842b6f76d119",
+      "slug": "ai-usecase-assessment",
+      "sourceBundleSha256": "166dd2f207caadb6eb8dc9d69a50ce7a816411ed3a5f8d9cd1a5086282f1be7b",
+      "sourceFiles": {
+        "SKILL.md": "9405867f164be0cc9efa98c04366aaa157204642d53883f9cebf3c349f2f1164",
+        "assets/UseCase_Assessment_Report_TEMPLATE.html": "43853669939480f857e52a67b8f132ddc16cfa40f813504998d1bfbff7726056",
+        "knowledge/Agentic_Use_Case_Assessment_Rubric_v2.docx": "180e3dc65dd7ea59ba390553f851ac8145c0da55f56e456cfb007d8feb1eb2ea",
+        "knowledge/UseCase_Categories_and_Subcategories_Guidance.docx": "4ceee81c52989db48a1349d11c0279e5e3b5d832db6b6d762091da8e227e6c89",
+        "references/privacy_and_safety_rules.md": "5192f1a1b04a182d45f3c50ee9e8576b6fd244da06a621e933cecc2d9c593e5b",
+        "references/skill_flow.md": "31a67c446f78d066b1a47b8b4ae774bb03e0dce3419882f0554b98ca4df499ae",
+        "references/working_object_schema.json": "62bb624a84cca4818379625ed58d00198e3006e2a5256fa8b3516539b5282297"
+      },
+      "sourceKind": "unpacked-skill",
+      "sourcePath": "submissions/ai-usecase-assessment/SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/ai-usecase-assessment/SKILL.md",
+      "tags": [
+        "assessment",
+        "ai",
+        "agent",
+        "use-case",
+        "scoring",
+        "report",
+        "html",
+        "intake"
+      ],
+      "tool": "AiUsecaseAssessment"
+    },
+    {
+      "agentBytes": 12120,
+      "agentSha256": "df30ec64bf2a16ee9f63b33d680697a4a0630adc7103662f2bdf77b28a48dc02",
+      "author": "Simon Owen",
+      "fileSha256": {
+        "SKILL.md": "79dd6412688e437a74dcbacdd3159d71d8384859b9ec81c9412e1da863f31af9",
+        "anonymised_case_study_writer_agent.py": "df30ec64bf2a16ee9f63b33d680697a4a0630adc7103662f2bdf77b28a48dc02",
+        "references/anonymisation-checklist.md": "7901fe95881f6be643141d1932589889ea397e8a8ccb4ee78c0fef69af47b38a"
+      },
+      "files": [
+        "SKILL.md",
+        "anonymised_case_study_writer_agent.py",
+        "references/anonymisation-checklist.md"
+      ],
+      "name": "Anonymised Case Study Writer",
+      "parameters": 0,
+      "platforms": [
+        "Cowork",
+        "Copilot Studio",
+        "Scout"
+      ],
+      "rawSkillSha256": "31272d2020465f54489686e5eabb76c8eacfe2244bceb6124b18e57933ed334f",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 31073,
+      "skillSha256": "79dd6412688e437a74dcbacdd3159d71d8384859b9ec81c9412e1da863f31af9",
+      "slug": "anonymised-case-study-writer",
+      "sourceBundleSha256": "f37114db207f06fa92c5a0e7289a006efd27fd08819dadea883dc86200818351",
+      "sourceFiles": {
+        "SKILL.md": "31272d2020465f54489686e5eabb76c8eacfe2244bceb6124b18e57933ed334f",
+        "references/anonymisation-checklist.md": "7901fe95881f6be643141d1932589889ea397e8a8ccb4ee78c0fef69af47b38a"
+      },
+      "sourceKind": "unpacked-skill",
+      "sourcePath": "submissions/anonymised-case-study-writer/SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/anonymised-case-study-writer/SKILL.md",
+      "tags": [
+        "writing",
+        "case-study",
+        "marketing",
+        "documents",
+        "content",
+        "privacy"
+      ],
+      "tool": "AnonymisedCaseStudyWriter"
+    },
+    {
+      "agentBytes": 13230,
+      "agentSha256": "069e837b1d472a2fea7162a9bd23c6223005dc061396111890aa4e16bb7c3b33",
+      "author": "Marcel",
+      "fileSha256": {
+        "SKILL.md": "5fc415de0d54601d3398ffc01bc754913e499243f7002513b2e3bbb729af8e1a",
+        "assets/company-profile-template.md": "4a15bd7c94843a55240cba0b041bcd6a3fd47ef05e3e07f778d2835f319fb162",
+        "b2b_outreach_suite_agent.py": "069e837b1d472a2fea7162a9bd23c6223005dc061396111890aa4e16bb7c3b33",
+        "references/ad-copywriting.md": "9e4919425361667a3fc775b79975bad49986b4607bffd270624d2b6eb81620f2",
+        "references/cold-email.md": "a59f34bf7c3e549e412984e0434b1d9be531bef1e72497fc5e48f9c1c228b54c",
+        "references/follow-up-sequencer.md": "ce06aa0110c2daf7f18d6f3bee3af2602e4a9da13a7a72688dca56af1631bf5e",
+        "references/linkedin-messages.md": "15506c981db36d5a26be43110147bb4f627e486dfd7d1f2f46949ca7ca3a3e70",
+        "references/objection-handling.md": "89c14432b80df181d662b65bb01ed23269853d7f2309698ca054fd7937ddeb8b",
+        "references/prospect-research.md": "d2930d5d3a94740d2fc5749932810e54a6fb01d52d3529dd4ca5526711869aa2"
+      },
+      "files": [
+        "SKILL.md",
+        "assets/company-profile-template.md",
+        "b2b_outreach_suite_agent.py",
+        "references/ad-copywriting.md",
+        "references/cold-email.md",
+        "references/follow-up-sequencer.md",
+        "references/linkedin-messages.md",
+        "references/objection-handling.md",
+        "references/prospect-research.md"
+      ],
+      "name": "B2B Outreach Suite",
+      "parameters": 0,
+      "platforms": [
+        "Cowork",
+        "Copilot Studio",
+        "Scout"
+      ],
+      "rawSkillSha256": "ad951b67da1278ed94e346de7a82ec05f116dc10a587a479da9f059fb167ebf2",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 33387,
+      "skillSha256": "5fc415de0d54601d3398ffc01bc754913e499243f7002513b2e3bbb729af8e1a",
+      "slug": "b2b-outreach-suite",
+      "sourceBundleSha256": "48aa0bf1c39d0e32f71cf601af16eb35cfc1881e12f211f741e4f51463f63e0e",
+      "sourceFiles": {
+        "SKILL.md": "ad951b67da1278ed94e346de7a82ec05f116dc10a587a479da9f059fb167ebf2",
+        "assets/company-profile-template.md": "4a15bd7c94843a55240cba0b041bcd6a3fd47ef05e3e07f778d2835f319fb162",
+        "references/ad-copywriting.md": "9e4919425361667a3fc775b79975bad49986b4607bffd270624d2b6eb81620f2",
+        "references/cold-email.md": "a59f34bf7c3e549e412984e0434b1d9be531bef1e72497fc5e48f9c1c228b54c",
+        "references/follow-up-sequencer.md": "ce06aa0110c2daf7f18d6f3bee3af2602e4a9da13a7a72688dca56af1631bf5e",
+        "references/linkedin-messages.md": "15506c981db36d5a26be43110147bb4f627e486dfd7d1f2f46949ca7ca3a3e70",
+        "references/objection-handling.md": "89c14432b80df181d662b65bb01ed23269853d7f2309698ca054fd7937ddeb8b",
+        "references/prospect-research.md": "d2930d5d3a94740d2fc5749932810e54a6fb01d52d3529dd4ca5526711869aa2"
+      },
+      "sourceKind": "unpacked-skill",
+      "sourcePath": "submissions/b2b-outreach-suite/SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/b2b-outreach-suite/SKILL.md",
+      "tags": [
+        "sales-enablement",
+        "email",
+        "linkedin",
+        "writing",
+        "marketing",
+        "content"
+      ],
+      "tool": "B2bOutreachSuite"
+    },
+    {
+      "agentBytes": 10557,
+      "agentSha256": "f1c55c3b3c4896287e05695047a7d0a2fa2c56766c412b81cb5afca00980b3fc",
+      "author": "Simon Owen",
+      "fileSha256": {
+        "SKILL.md": "87fdc8961686f9afe73d3da889b8c589e36d19f840fbf65f107f5cfecef913df",
+        "blog_content_auditor_agent.py": "f1c55c3b3c4896287e05695047a7d0a2fa2c56766c412b81cb5afca00980b3fc",
+        "references/blog-audit-rubric.md": "8cc262fcb81426d01f9232c1f7b83d9729fa99896d7dcebdb84f6bfa634b725b"
+      },
+      "files": [
+        "SKILL.md",
+        "blog_content_auditor_agent.py",
+        "references/blog-audit-rubric.md"
+      ],
+      "name": "Blog Content Auditor",
+      "parameters": 0,
+      "platforms": [
+        "Cowork",
+        "Copilot Studio",
+        "Scout"
+      ],
+      "rawSkillSha256": "79f6d33272dc82a0e2d976b72c632b7ba46ef167a4b9b243691ffea9ffa0d3c5",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 26969,
+      "skillSha256": "87fdc8961686f9afe73d3da889b8c589e36d19f840fbf65f107f5cfecef913df",
+      "slug": "blog-content-auditor",
+      "sourceBundleSha256": "2a1431344bfb8d0a3ac0f1d567e5d602fceeec85299f36493f969ddbb45780b4",
+      "sourceFiles": {
+        "SKILL.md": "79f6d33272dc82a0e2d976b72c632b7ba46ef167a4b9b243691ffea9ffa0d3c5",
+        "references/blog-audit-rubric.md": "8cc262fcb81426d01f9232c1f7b83d9729fa99896d7dcebdb84f6bfa634b725b"
+      },
+      "sourceKind": "unpacked-skill",
+      "sourcePath": "submissions/blog-content-auditor/SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/blog-content-auditor/SKILL.md",
+      "tags": [
+        "blog",
+        "content",
+        "audit",
+        "writing",
+        "seo",
+        "productivity"
+      ],
+      "tool": "BlogContentAuditor"
+    },
+    {
+      "agentBytes": 9455,
+      "agentSha256": "d945fe9a0407a5e12f646644a80ffede742d7ac3e84f2887e3e141e40917aced",
+      "author": "Simon Owen",
+      "fileSha256": {
+        "SKILL.md": "7b2c4b45612eae361763e515368adbdd4542ff051c90a49339d70c7e7047e83f",
+        "blog_post_structure_pass_agent.py": "d945fe9a0407a5e12f646644a80ffede742d7ac3e84f2887e3e141e40917aced",
+        "references/post-structure-patterns.md": "a33362a2c96e81bd42cbd8eeefa434244e34d8a1f49c6a5ec34ecf1ca4dec6b4"
+      },
+      "files": [
+        "SKILL.md",
+        "blog_post_structure_pass_agent.py",
+        "references/post-structure-patterns.md"
+      ],
+      "name": "Blog Post Structure Pass",
+      "parameters": 0,
+      "platforms": [
+        "Cowork",
+        "Copilot Studio",
+        "Scout"
+      ],
+      "rawSkillSha256": "3aa70ac05cc396d194825db12c5ceb5bf3fba324a346835684236ce93bf36b12",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 24206,
+      "skillSha256": "7b2c4b45612eae361763e515368adbdd4542ff051c90a49339d70c7e7047e83f",
+      "slug": "blog-post-structure-pass",
+      "sourceBundleSha256": "732122771b0599ceda5b838b4f0bfb02161ccf733d4530a6e739d7443b568d14",
+      "sourceFiles": {
+        "SKILL.md": "3aa70ac05cc396d194825db12c5ceb5bf3fba324a346835684236ce93bf36b12",
+        "references/post-structure-patterns.md": "a33362a2c96e81bd42cbd8eeefa434244e34d8a1f49c6a5ec34ecf1ca4dec6b4"
+      },
+      "sourceKind": "unpacked-skill",
+      "sourcePath": "submissions/blog-post-structure-pass/SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/blog-post-structure-pass/SKILL.md",
+      "tags": [
+        "blog",
+        "writing",
+        "authoring",
+        "content",
+        "structure",
+        "productivity"
+      ],
+      "tool": "BlogPostStructurePass"
+    },
+    {
+      "agentBytes": 29150,
+      "agentSha256": "05380aa2893733092059eacf6b543277b3384474e5aa58804757738ba48e2beb",
+      "author": "Doug Bellingeri",
+      "fileSha256": {
+        "SKILL.md": "33add781ebc439d771f876036b9bdb59c05d8e8e8fadc8dd44739cc23a09012a",
+        "assets/template-manifest.json": "45b4cf757b4daed0baf18d6c5a03df371bad90e567cbb5f6b0a2fae820b42b49",
+        "brand_template_enforcer_agent.py": "05380aa2893733092059eacf6b543277b3384474e5aa58804757738ba48e2beb",
+        "references/PPTX-GENERATION.md": "df20a734adf05ba876288af8278c364ad5681db8f332dbb2b8ed0e5d63f6b7f9",
+        "references/TEMPLATE-SELECTION.md": "1a7b255657b3cbdec01a6eebe0b498c441925b362894ead749b2be12d00ac66a"
+      },
+      "files": [
+        "SKILL.md",
+        "assets/template-manifest.json",
+        "brand_template_enforcer_agent.py",
+        "references/PPTX-GENERATION.md",
+        "references/TEMPLATE-SELECTION.md"
+      ],
+      "name": "Brand Template Enforcer",
+      "parameters": 0,
+      "platforms": [
+        "Copilot Studio"
+      ],
+      "rawSkillSha256": "0408c45eeb258c00f54b51c8ac69023f2e94e795d1752ef489e29212beda8937",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 73872,
+      "skillSha256": "33add781ebc439d771f876036b9bdb59c05d8e8e8fadc8dd44739cc23a09012a",
+      "slug": "brand-template-enforcer",
+      "sourceBundleSha256": "3bbe94cb13b84e03bd35766553aae2a5f934fb669433d8a4d7399d086e1e3cc5",
+      "sourceFiles": {
+        "SKILL.md": "0408c45eeb258c00f54b51c8ac69023f2e94e795d1752ef489e29212beda8937",
+        "assets/template-manifest.json": "45b4cf757b4daed0baf18d6c5a03df371bad90e567cbb5f6b0a2fae820b42b49",
+        "references/PPTX-GENERATION.md": "df20a734adf05ba876288af8278c364ad5681db8f332dbb2b8ed0e5d63f6b7f9",
+        "references/TEMPLATE-SELECTION.md": "1a7b255657b3cbdec01a6eebe0b498c441925b362894ead749b2be12d00ac66a"
+      },
+      "sourceKind": "unpacked-skill",
+      "sourcePath": "submissions/brand-template-enforcer/SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/brand-template-enforcer/SKILL.md",
+      "tags": [
+        "branding",
+        "powerpoint",
+        "word",
+        "templates",
+        "documents",
+        "presentations"
+      ],
+      "tool": "BrandTemplateEnforcer"
+    },
+    {
+      "agentBytes": 11351,
+      "agentSha256": "e2ef6faf9fe6a5765e74e2672d5244fae15e777406184c185b5257403d24c46d",
+      "author": "Simon Owen",
+      "fileSha256": {
+        "SKILL.md": "f10e996994490ecf30a570c2c88db7e5c4ad5523b99bf04cbf5f2d2c38db22ba",
+        "brand_voice_pass_agent.py": "e2ef6faf9fe6a5765e74e2672d5244fae15e777406184c185b5257403d24c46d",
+        "references/voice-profile-template.md": "9061e253fc07b71558284a49d0eeb224131bb12401a2949bdcf3fb7e1533aab7"
+      },
+      "files": [
+        "SKILL.md",
+        "brand_voice_pass_agent.py",
+        "references/voice-profile-template.md"
+      ],
+      "name": "Brand Voice Pass",
+      "parameters": 0,
+      "platforms": [
+        "Cowork",
+        "Copilot Studio",
+        "Scout"
+      ],
+      "rawSkillSha256": "75a924270b0fff204f24d4c7c8e83b83e8b9d44d2d35e5b6ead9d08e61cca576",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 29253,
+      "skillSha256": "f10e996994490ecf30a570c2c88db7e5c4ad5523b99bf04cbf5f2d2c38db22ba",
+      "slug": "brand-voice-pass",
+      "sourceBundleSha256": "31bddb3dce38cc2bb280d39f47fcac9c299318efd7a757e4dc38b77febe30ec6",
+      "sourceFiles": {
+        "SKILL.md": "75a924270b0fff204f24d4c7c8e83b83e8b9d44d2d35e5b6ead9d08e61cca576",
+        "references/voice-profile-template.md": "9061e253fc07b71558284a49d0eeb224131bb12401a2949bdcf3fb7e1533aab7"
+      },
+      "sourceKind": "unpacked-skill",
+      "sourcePath": "submissions/brand-voice-pass/SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/brand-voice-pass/SKILL.md",
+      "tags": [
+        "writing",
+        "content",
+        "voice",
+        "authoring",
+        "productivity"
+      ],
+      "tool": "BrandVoicePass"
+    },
+    {
+      "agentBytes": 18821,
+      "agentSha256": "f70a1708d4be2f8004e46e2b00d91ad07de754eab00defc062327922a01d756c",
+      "author": "Matthew James Davis",
+      "fileSha256": {
+        "SKILL.md": "4669c441cea970defc7bbb5f8bb7f2d82c7254399b2ef99b92ae083f589a8d84",
+        "assets/templates/checklist.md": "17d879717d1ee0c848e079951f75e09d1f9d25ef1d5ae3bc8982139cb919f853",
+        "assets/templates/company-dna-profile.md": "b47c09073f505f143f464580cf07dc0b984336a165809b8e0fd7b15fdaa3c788",
+        "assets/templates/decision-brief.md": "e10b3eac553835799dd189b081b95fa4be083425910f0b85372eebd5748e5c7f",
+        "assets/templates/decision-log.md": "640bb24b9516d98e7976d27d10be850626c918acf8236016b5363e52debd463a",
+        "assets/templates/executive-summary.md": "5a1bfab75404e02814bcd3188bf4377a77e6cc8ef5c86c1631606eb796044b0a",
+        "assets/templates/lessons-learned.md": "9ec4211edd4425bc3c92cb370002ce34c08b9107d2ac220e211fe993cb56f352",
+        "assets/templates/meeting-brief-and-notes.md": "1de71ba1c81dc6f3e6ba1a1eda2d26f16ee11bbe6229ede834800193b963f688",
+        "assets/templates/project-plan.md": "c6b6820e2c085b6ce67cb28a4a609f043a4fb60f0796ade0ee8a58952773b24f",
+        "assets/templates/recommendation-memo.md": "a8251ea001e9c9fe5946e6aea53a0c41945ca781f22f206457ab14c866b54621",
+        "assets/templates/risk-register.md": "555cd432be24a657881bafa80085f672ef27ec9036af2f3a0fbc9a80378dc632",
+        "assets/templates/skill-candidate-assessment.md": "045d54b5dda19ab80918b79dfa6aaf5001ffaa55803e29584ac89fc07084821e",
+        "assets/templates/skill-improvement-proposal.md": "009087b61e59ee51489b628dfb6175ac2c8290656b8cbcec1b343d61bd9fac2e",
+        "assets/templates/skill-specification.md": "0b3337c21dd7554a25dbd3dd5b94ff91c80bb1d181489f56cb6dacffc897c37f",
+        "assets/templates/sop-and-process.md": "5f54bd0b0a67d8fae075192155b06765a700488cf7966b3cb13da85675d16aba",
+        "assets/templates/stakeholder-map.md": "98e90c746c325c3013020f044e70fae088e556c6d92f4bd97d49ade99976e2a2",
+        "business_os_agent.py": "f70a1708d4be2f8004e46e2b00d91ad07de754eab00defc062327922a01d756c",
+        "references/communication-engine.md": "e220319a5b5f78b18151c0c0df64f2057cb8db77c4fa634358fb4eaa6a537e9b",
+        "references/company-dna.md": "cf32a2e333eec73b9ba7b23181c51db05e90ad6f2d8c061110e24f7f0e895a7a",
+        "references/decision-engine.md": "25a2d2221f301e43f2c7f92f578ce31c90c2143816e5effa95f4eba930fd6690",
+        "references/executive-lenses.md": "c2d17584a0da90c5d1a1fb01b17c2db5517b45c080e7490460986933c229a83c",
+        "references/governance-evidence-qa.md": "beb52dd92a92eeadcfa813e75465a5126f13204d16258149983db9a5fbab155a",
+        "references/incident-engine.md": "48f97889ab1f922b8406277aef98eb467aadd38ee36ad8cdf9b2a7cd40be3daf",
+        "references/memory-and-learning.md": "324fa98bacfd97bf82e54475e633a4c104e33a434312af866eaef91296d57747",
+        "references/problem-solving.md": "681f93add8e7febd047f67542ebea4d5732d538a1d421e69a558ffcec9cf909e",
+        "references/process-engine.md": "e7ab0f7425b8187585a6926310c309dc4f38e8238ffba5305a9cd4c16d7622aa",
+        "references/project-engine.md": "390409c438268c80fc19d8980886eb014267db251aab787707831ff10453f9df",
+        "references/skill-generator.md": "58b585f2e98076d8a7c98a5bd99d7a7036dffee49b06bfcdc686e511fcfa9125",
+        "references/test-scenarios.md": "94c26dd3dabd7612891a553143229a2823d25be06b6dbd5d3b7d7d8e33304115",
+        "references/work-classification.md": "f1734aca2f545b57f35121570ccd3f9704bfca1ad329ea5234eb37db40679a46",
+        "references/worked-examples.md": "11ae7cd9da7ce38bf483a340099eb80d835c72288ef32f872ad6dc46af9d18dc"
+      },
+      "files": [
+        "SKILL.md",
+        "assets/templates/checklist.md",
+        "assets/templates/company-dna-profile.md",
+        "assets/templates/decision-brief.md",
+        "assets/templates/decision-log.md",
+        "assets/templates/executive-summary.md",
+        "assets/templates/lessons-learned.md",
+        "assets/templates/meeting-brief-and-notes.md",
+        "assets/templates/project-plan.md",
+        "assets/templates/recommendation-memo.md",
+        "assets/templates/risk-register.md",
+        "assets/templates/skill-candidate-assessment.md",
+        "assets/templates/skill-improvement-proposal.md",
+        "assets/templates/skill-specification.md",
+        "assets/templates/sop-and-process.md",
+        "assets/templates/stakeholder-map.md",
+        "business_os_agent.py",
+        "references/communication-engine.md",
+        "references/company-dna.md",
+        "references/decision-engine.md",
+        "references/executive-lenses.md",
+        "references/governance-evidence-qa.md",
+        "references/incident-engine.md",
+        "references/memory-and-learning.md",
+        "references/problem-solving.md",
+        "references/process-engine.md",
+        "references/project-engine.md",
+        "references/skill-generator.md",
+        "references/test-scenarios.md",
+        "references/work-classification.md",
+        "references/worked-examples.md"
+      ],
+      "name": "Business OS",
+      "parameters": 0,
+      "platforms": [
+        "Copilot Studio"
+      ],
+      "rawSkillSha256": "9aac26e17f58a98edc127a236fa975446602ef534cb247a73190682139987f4c",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 47996,
+      "skillSha256": "4669c441cea970defc7bbb5f8bb7f2d82c7254399b2ef99b92ae083f589a8d84",
+      "slug": "business-os",
+      "sourceBundleSha256": "ff28cc73516fde795f6bfd9c0211ba8b6bfc8eae1f3109b731d4e7b0540b7aae",
+      "sourceFiles": {
+        "SKILL.md": "9aac26e17f58a98edc127a236fa975446602ef534cb247a73190682139987f4c",
+        "assets/templates/checklist.md": "17d879717d1ee0c848e079951f75e09d1f9d25ef1d5ae3bc8982139cb919f853",
+        "assets/templates/company-dna-profile.md": "b47c09073f505f143f464580cf07dc0b984336a165809b8e0fd7b15fdaa3c788",
+        "assets/templates/decision-brief.md": "e10b3eac553835799dd189b081b95fa4be083425910f0b85372eebd5748e5c7f",
+        "assets/templates/decision-log.md": "640bb24b9516d98e7976d27d10be850626c918acf8236016b5363e52debd463a",
+        "assets/templates/executive-summary.md": "5a1bfab75404e02814bcd3188bf4377a77e6cc8ef5c86c1631606eb796044b0a",
+        "assets/templates/lessons-learned.md": "9ec4211edd4425bc3c92cb370002ce34c08b9107d2ac220e211fe993cb56f352",
+        "assets/templates/meeting-brief-and-notes.md": "1de71ba1c81dc6f3e6ba1a1eda2d26f16ee11bbe6229ede834800193b963f688",
+        "assets/templates/project-plan.md": "c6b6820e2c085b6ce67cb28a4a609f043a4fb60f0796ade0ee8a58952773b24f",
+        "assets/templates/recommendation-memo.md": "a8251ea001e9c9fe5946e6aea53a0c41945ca781f22f206457ab14c866b54621",
+        "assets/templates/risk-register.md": "555cd432be24a657881bafa80085f672ef27ec9036af2f3a0fbc9a80378dc632",
+        "assets/templates/skill-candidate-assessment.md": "045d54b5dda19ab80918b79dfa6aaf5001ffaa55803e29584ac89fc07084821e",
+        "assets/templates/skill-improvement-proposal.md": "009087b61e59ee51489b628dfb6175ac2c8290656b8cbcec1b343d61bd9fac2e",
+        "assets/templates/skill-specification.md": "0b3337c21dd7554a25dbd3dd5b94ff91c80bb1d181489f56cb6dacffc897c37f",
+        "assets/templates/sop-and-process.md": "5f54bd0b0a67d8fae075192155b06765a700488cf7966b3cb13da85675d16aba",
+        "assets/templates/stakeholder-map.md": "98e90c746c325c3013020f044e70fae088e556c6d92f4bd97d49ade99976e2a2",
+        "references/communication-engine.md": "e220319a5b5f78b18151c0c0df64f2057cb8db77c4fa634358fb4eaa6a537e9b",
+        "references/company-dna.md": "cf32a2e333eec73b9ba7b23181c51db05e90ad6f2d8c061110e24f7f0e895a7a",
+        "references/decision-engine.md": "25a2d2221f301e43f2c7f92f578ce31c90c2143816e5effa95f4eba930fd6690",
+        "references/executive-lenses.md": "c2d17584a0da90c5d1a1fb01b17c2db5517b45c080e7490460986933c229a83c",
+        "references/governance-evidence-qa.md": "beb52dd92a92eeadcfa813e75465a5126f13204d16258149983db9a5fbab155a",
+        "references/incident-engine.md": "48f97889ab1f922b8406277aef98eb467aadd38ee36ad8cdf9b2a7cd40be3daf",
+        "references/memory-and-learning.md": "324fa98bacfd97bf82e54475e633a4c104e33a434312af866eaef91296d57747",
+        "references/problem-solving.md": "681f93add8e7febd047f67542ebea4d5732d538a1d421e69a558ffcec9cf909e",
+        "references/process-engine.md": "e7ab0f7425b8187585a6926310c309dc4f38e8238ffba5305a9cd4c16d7622aa",
+        "references/project-engine.md": "390409c438268c80fc19d8980886eb014267db251aab787707831ff10453f9df",
+        "references/skill-generator.md": "58b585f2e98076d8a7c98a5bd99d7a7036dffee49b06bfcdc686e511fcfa9125",
+        "references/test-scenarios.md": "94c26dd3dabd7612891a553143229a2823d25be06b6dbd5d3b7d7d8e33304115",
+        "references/work-classification.md": "f1734aca2f545b57f35121570ccd3f9704bfca1ad329ea5234eb37db40679a46",
+        "references/worked-examples.md": "11ae7cd9da7ce38bf483a340099eb80d835c72288ef32f872ad6dc46af9d18dc"
+      },
+      "sourceKind": "unpacked-skill",
+      "sourcePath": "submissions/business-os/SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/business-os/SKILL.md",
+      "tags": [
+        "business",
+        "decision-making",
+        "problem-solving",
+        "project-planning",
+        "process-improvement",
+        "governance",
+        "skill-generation"
+      ],
+      "tool": "BusinessOs"
+    },
+    {
+      "agentBytes": 35640,
+      "agentSha256": "601007e65a6527e0ff5348f50e8c8ffac655ad88ee1ad509d5bc772896e8bf3b",
+      "author": "Michael Heath",
+      "fileSha256": {
+        "SKILL.md": "d1f079fcab8d1f342333d00dc713e505c0205b111266e939f379c8ff6c109939",
+        "call_for_speakers_digest_agent.py": "601007e65a6527e0ff5348f50e8c8ffac655ad88ee1ad509d5bc772896e8bf3b"
+      },
+      "files": [
+        "SKILL.md",
+        "call_for_speakers_digest_agent.py"
+      ],
+      "name": "Call for Speakers Digest",
+      "parameters": 0,
+      "platforms": [
+        "Copilot Studio",
+        "Scout",
+        "Cowork"
+      ],
+      "rawSkillSha256": "e1a30bb58b68dda3c5b2a14e2737a16ca07b52ac9b52eebe16a7f3b3c5489ca7",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 90778,
+      "skillSha256": "d1f079fcab8d1f342333d00dc713e505c0205b111266e939f379c8ff6c109939",
+      "slug": "call-for-speakers-digest",
+      "sourceBundleSha256": "e0485e905b1cc11a1d62cb12166f530ffc4503f103f1b8d6c541a565f93bdca1",
+      "sourceFiles": {
+        "SKILL.md": "e1a30bb58b68dda3c5b2a14e2737a16ca07b52ac9b52eebe16a7f3b3c5489ca7"
+      },
+      "sourceKind": "unpacked-skill",
+      "sourcePath": "submissions/call-for-speakers-digest/SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/call-for-speakers-digest/SKILL.md",
+      "tags": [
+        "productivity",
+        "speaking",
+        "conference",
+        "automation"
+      ],
+      "tool": "CallForSpeakersDigest"
+    },
+    {
+      "agentBytes": 10282,
+      "agentSha256": "0958cdbcff97aeba0969a05054f0409bac6dd182a1129704360e5a3f68e42d9b",
+      "author": "Adi Leibowitz",
+      "fileSha256": {
+        "SKILL.md": "d6fff469aeca7dd5862e66bf49e5408ca86279a2e9ce72f94d055127e78628bc",
+        "assets/answers.example.json": "8d5d481c0968f76fd7a66e933f7c8248f2ea92df59238c60f2e1e63a1aa0f7a3",
+        "assets/campaign-template.pptx": "020194481c6951eb20ddd1dd4e8775113aa75298ba19fc2a9b7c4e273175da90",
+        "campaign_deck_builder_agent.py": "0958cdbcff97aeba0969a05054f0409bac6dd182a1129704360e5a3f68e42d9b",
+        "references/design-notes.md": "2b48c7f3bade44aaf724f0871faeaf882ba1d88d97414a3f52399dcbd4034045",
+        "scripts/build_campaign.py": "cb4a9ca69794ef62505e3fa25b62ea5c1285aaa97337575edc540a223e8dac58"
+      },
+      "files": [
+        "SKILL.md",
+        "assets/answers.example.json",
+        "assets/campaign-template.pptx",
+        "campaign_deck_builder_agent.py",
+        "references/design-notes.md",
+        "scripts/build_campaign.py"
+      ],
+      "name": "Campaign Deck Builder",
+      "parameters": 0,
+      "platforms": [
+        "Copilot Studio"
+      ],
+      "rawSkillSha256": "4a4641a6ade1d3369780583ca7f51eb9d66285d505c6638485936eab0b1ec742",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 26374,
+      "skillSha256": "d6fff469aeca7dd5862e66bf49e5408ca86279a2e9ce72f94d055127e78628bc",
+      "slug": "campaign-deck-builder",
+      "sourceBundleSha256": "5ccf497a88864ced0886546f3f2b0e06b592457cae7023d0739ca3026ce093fa",
+      "sourceFiles": {
+        "SKILL.md": "4a4641a6ade1d3369780583ca7f51eb9d66285d505c6638485936eab0b1ec742",
+        "assets/answers.example.json": "8d5d481c0968f76fd7a66e933f7c8248f2ea92df59238c60f2e1e63a1aa0f7a3",
+        "assets/campaign-template.pptx": "020194481c6951eb20ddd1dd4e8775113aa75298ba19fc2a9b7c4e273175da90",
+        "references/design-notes.md": "2b48c7f3bade44aaf724f0871faeaf882ba1d88d97414a3f52399dcbd4034045",
+        "scripts/build_campaign.py": "cb4a9ca69794ef62505e3fa25b62ea5c1285aaa97337575edc540a223e8dac58"
+      },
+      "sourceKind": "unpacked-skill",
+      "sourcePath": "submissions/campaign-deck-builder/SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/campaign-deck-builder/SKILL.md",
+      "tags": [
+        "marketing",
+        "presentations",
+        "powerpoint",
+        "automation",
+        "scripts"
+      ],
+      "tool": "CampaignDeckBuilder"
+    },
+    {
+      "agentBytes": 9827,
+      "agentSha256": "f0e78a1c34b818dac302feac4032bc8465e46e6ff9b62a1e1d875cebaf777057",
+      "author": "Adi Leibowitz",
+      "fileSha256": {
+        "SKILL.md": "42a795fa08fb15a7009120cbf4a64c9ce982fd9458a5896cf832989bfac84676",
+        "assets/sample_sales.csv": "c1fcd6f01d42a3de9519c6990db9d8374a2745a5f0dde092d42bf7de6c38b97a",
+        "chart_builder_agent.py": "f0e78a1c34b818dac302feac4032bc8465e46e6ff9b62a1e1d875cebaf777057",
+        "references/cheatsheet.md": "d4e4013ee9a1acd0a606010b9454b48d3ab4dc9915a49cafb904abfb58755dc9",
+        "scripts/charts.py": "7087176cb77cd08ffddb63479909d6073f8587ce28c01ab8e87d3a9d73cf8070"
+      },
+      "files": [
+        "SKILL.md",
+        "assets/sample_sales.csv",
+        "chart_builder_agent.py",
+        "references/cheatsheet.md",
+        "scripts/charts.py"
+      ],
+      "name": "Chart Builder",
+      "parameters": 0,
+      "platforms": [
+        "Cowork",
+        "Copilot Studio",
+        "Scout"
+      ],
+      "rawSkillSha256": "802381b192ce80b73272cd291caf7c5df0ae80af31a94c404dce63eda837d460",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 25045,
+      "skillSha256": "42a795fa08fb15a7009120cbf4a64c9ce982fd9458a5896cf832989bfac84676",
+      "slug": "chart-builder",
+      "sourceBundleSha256": "f4283ee0cf0fd3251f047cb7f08fde1769bc83f37a5a9c247a310582d4138ce3",
+      "sourceFiles": {
+        "SKILL.md": "802381b192ce80b73272cd291caf7c5df0ae80af31a94c404dce63eda837d460",
+        "assets/sample_sales.csv": "c1fcd6f01d42a3de9519c6990db9d8374a2745a5f0dde092d42bf7de6c38b97a",
+        "references/cheatsheet.md": "d4e4013ee9a1acd0a606010b9454b48d3ab4dc9915a49cafb904abfb58755dc9",
+        "scripts/charts.py": "7087176cb77cd08ffddb63479909d6073f8587ce28c01ab8e87d3a9d73cf8070"
+      },
+      "sourceKind": "unpacked-skill",
+      "sourcePath": "submissions/chart-builder/SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/chart-builder/SKILL.md",
+      "tags": [
+        "data",
+        "charts",
+        "matplotlib",
+        "scripts"
+      ],
+      "tool": "ChartBuilder"
+    },
+    {
+      "agentBytes": 14111,
+      "agentSha256": "cf9f45dcddd1384a00ffb1d9d57b06a03ea0269a7bc741706b1fff847c16bcba",
+      "author": "Andreas Adner",
+      "fileSha256": {
+        "SKILL.md": "64592d05b4c663c5a647b3e01ec9ab791bef6bc74ffedd7bac701880c85e6e83",
+        "classic_text_adventure_agent.py": "cf9f45dcddd1384a00ffb1d9d57b06a03ea0269a7bc741706b1fff847c16bcba",
+        "references/licenses/Apache-2.0.txt": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+        "references/licenses/BUNDLE_MANIFEST.json": "1cf47424ddd96421cc27c71d6f60c2c9c3fc4742f10d17951f643da21dfcc1f3",
+        "references/licenses/MIT.txt": "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383",
+        "references/licenses/MODIFICATIONS.md": "3ca9b5f5582c83dec4a0d5ce5a1f56d09917142dd1358c98f812729fe6600d2f",
+        "references/licenses/THIRD_PARTY_MANIFEST.json": "40dc12e9b1df7e1ed5418edb7c85b58b6d77297271ad0bbc6d268f973032b1dd",
+        "references/licenses/adventure-NOTICE.md": "8a6efa99ae6b2b6b11475b69b3f5088b57146b3cc8e0c5ff660618d7423ee9a1",
+        "scripts/checkpoint.py": "bf47717f20ab37e3788895ec7a63b2da93b9403274d11850dea7612db31f2c5d",
+        "scripts/generate_license_manifest.py": "11fdac7916c35cb6a96e5e8b25319fcd7dd9dbe87f7ce146f3022f6a8155b6de",
+        "scripts/runner.py": "47dca7b2503a1ba05dd66dd1757a9059254816a7b4112816daf0648188690f03",
+        "scripts/runtime/adventure/README.txt": "4ff0ced51c90a94b85ecd6a8df637caaae5a180fd37bdc3096bc775566502305",
+        "scripts/runtime/adventure/__init__.py": "65257dc124e5f1d882170dbc6f8fb9a4f0e51b38f9ca1e0e0006978ba593c5ea",
+        "scripts/runtime/adventure/__main__.py": "29a6c0e5b11a58327f3ca7441a97551af6e459659bbd0884bd7c49dc37af5b54",
+        "scripts/runtime/adventure/advent.dat": "ab024845bb60f1ff753b25103de578120db307c672575e7435aeede4c9cc15ff",
+        "scripts/runtime/adventure/data.py": "df18fe18ce0be811713849d07af6192057a6238390ff201a4b99addefb56e68a",
+        "scripts/runtime/adventure/game.py": "136c0eeedcf679cec297f63ec7028a3156bc27b8782571bc8a5fa3cee1759b02",
+        "scripts/runtime/adventure/model.py": "f9659b28ad1a2d876debeef5a3a485d5a2fddc55d06aa37e0ba1b8146178087f",
+        "scripts/runtime/adventure/prompt.py": "2153d89f150c6a7d1101df2adac105203683edacdeaaf0f2d04c4725c1abfb2c",
+        "scripts/runtime/adventure/tests/__init__.py": "de648dcf698ec1ed82b7ea75ab251759e245292196ef493e254886b8387de02a",
+        "scripts/runtime/adventure/tests/syntax.txt": "74a5614935d7ec1e9730285787eac4f28607562b7d55456edd605c46c77e82f9",
+        "scripts/runtime/adventure/tests/test_commands.py": "d27f2f86d21293fa9a47aaaabfd50b61a934f67a46be186b2e9017befa9542dd",
+        "scripts/runtime/adventure/tests/test_data.py": "d71d70cce7a028f9b3f7f3274e12a5b2314d540826eaa1165854401e564be742",
+        "scripts/runtime/adventure/tests/test_walks.py": "cf8bc54a8a1cf631e97688a822e7505eb3dd8435ef35abdd816cbc5ff36ebccd",
+        "scripts/runtime/adventure/tests/vignettes.txt": "4f3a656184d6c3f58e81638a574e1e3e6737d49106326f6566d6cffab0af9398",
+        "scripts/runtime/adventure/tests/walkthrough1.txt": "f6cd54db3feb562595f2ab7b6547ef96f0b372c348e468e4aa6e63f9fa4b286f",
+        "scripts/runtime/adventure/tests/walkthrough2.txt": "763db8f7cbb86627f160fdc5ebae65ff26a853cc179368783a7210b1cc1340f5",
+        "scripts/runtime/adventure/tests/walkthrough3.txt": "6770deebb7bdd03511ae3fba71142aa7786d7b49950daf046387d1ecbe7049bf",
+        "scripts/runtime/adventure/tests/walkthrough4.txt": "eb2cdb60011c788a02e8dfbc24f6dd1dcd50f91daa7da2181f2af74a551e61a8",
+        "scripts/runtime_adapter.py": "45b74d3b1e33494d688100c64bd455ea620f123398658c9f2be05c94a624a628",
+        "scripts/smoke_cases.json": "cb8cb761c79a4815733c24afa407c3357ac9684e835d933e24c6343bac3c16a2",
+        "scripts/smoke_test.py": "119408f33902d7446599d998218a7811b826d21daef0864a5a9ff6d21a3c9c94",
+        "scripts/tests/test_checkpoint.py": "5b814e29fe95c806fe939907ee3a3a4bca3ba57b5cd7203c58f9782c6393ddfe",
+        "scripts/tests/test_runner.py": "600ca885b069f751bfd2cdca245b3b366388fad14711bb1384926fb8014cb243",
+        "scripts/tests/test_runtime_adapter.py": "1d1542d21a894ec48cdb5728c825ef75114e855e2779ce28318d6a3c98e039ff",
+        "scripts/tests/test_smoke_test.py": "b66bb7ba44bfc21e0ea0688a563c00e8f775202a3a16e2322c90e0e51c53901c"
+      },
+      "files": [
+        "SKILL.md",
+        "classic_text_adventure_agent.py",
+        "references/licenses/Apache-2.0.txt",
+        "references/licenses/BUNDLE_MANIFEST.json",
+        "references/licenses/MIT.txt",
+        "references/licenses/MODIFICATIONS.md",
+        "references/licenses/THIRD_PARTY_MANIFEST.json",
+        "references/licenses/adventure-NOTICE.md",
+        "scripts/checkpoint.py",
+        "scripts/generate_license_manifest.py",
+        "scripts/runner.py",
+        "scripts/runtime/adventure/README.txt",
+        "scripts/runtime/adventure/__init__.py",
+        "scripts/runtime/adventure/__main__.py",
+        "scripts/runtime/adventure/advent.dat",
+        "scripts/runtime/adventure/data.py",
+        "scripts/runtime/adventure/game.py",
+        "scripts/runtime/adventure/model.py",
+        "scripts/runtime/adventure/prompt.py",
+        "scripts/runtime/adventure/tests/__init__.py",
+        "scripts/runtime/adventure/tests/syntax.txt",
+        "scripts/runtime/adventure/tests/test_commands.py",
+        "scripts/runtime/adventure/tests/test_data.py",
+        "scripts/runtime/adventure/tests/test_walks.py",
+        "scripts/runtime/adventure/tests/vignettes.txt",
+        "scripts/runtime/adventure/tests/walkthrough1.txt",
+        "scripts/runtime/adventure/tests/walkthrough2.txt",
+        "scripts/runtime/adventure/tests/walkthrough3.txt",
+        "scripts/runtime/adventure/tests/walkthrough4.txt",
+        "scripts/runtime_adapter.py",
+        "scripts/smoke_cases.json",
+        "scripts/smoke_test.py",
+        "scripts/tests/test_checkpoint.py",
+        "scripts/tests/test_runner.py",
+        "scripts/tests/test_runtime_adapter.py",
+        "scripts/tests/test_smoke_test.py"
+      ],
+      "name": "Classic Text Adventure",
+      "parameters": 0,
+      "platforms": [
+        "Copilot Studio"
+      ],
+      "rawSkillSha256": "40bd5a5ba6032ea9a8278334fc1e1f8685b8e853e06f0ba7ae832d8141c5082f",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 36035,
+      "skillSha256": "64592d05b4c663c5a647b3e01ec9ab791bef6bc74ffedd7bac701880c85e6e83",
+      "slug": "classic-text-adventure",
+      "sourceBundleSha256": "872a259a9d81414e9893da89ec4fc211ac9a7efcbd54a46793d1a1a6088b07c6",
+      "sourceFiles": {
+        "SKILL.md": "40bd5a5ba6032ea9a8278334fc1e1f8685b8e853e06f0ba7ae832d8141c5082f",
+        "references/licenses/Apache-2.0.txt": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+        "references/licenses/BUNDLE_MANIFEST.json": "1cf47424ddd96421cc27c71d6f60c2c9c3fc4742f10d17951f643da21dfcc1f3",
+        "references/licenses/MIT.txt": "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383",
+        "references/licenses/MODIFICATIONS.md": "3ca9b5f5582c83dec4a0d5ce5a1f56d09917142dd1358c98f812729fe6600d2f",
+        "references/licenses/THIRD_PARTY_MANIFEST.json": "40dc12e9b1df7e1ed5418edb7c85b58b6d77297271ad0bbc6d268f973032b1dd",
+        "references/licenses/adventure-NOTICE.md": "8a6efa99ae6b2b6b11475b69b3f5088b57146b3cc8e0c5ff660618d7423ee9a1",
+        "scripts/checkpoint.py": "bf47717f20ab37e3788895ec7a63b2da93b9403274d11850dea7612db31f2c5d",
+        "scripts/generate_license_manifest.py": "11fdac7916c35cb6a96e5e8b25319fcd7dd9dbe87f7ce146f3022f6a8155b6de",
+        "scripts/runner.py": "47dca7b2503a1ba05dd66dd1757a9059254816a7b4112816daf0648188690f03",
+        "scripts/runtime/adventure/README.txt": "4ff0ced51c90a94b85ecd6a8df637caaae5a180fd37bdc3096bc775566502305",
+        "scripts/runtime/adventure/__init__.py": "65257dc124e5f1d882170dbc6f8fb9a4f0e51b38f9ca1e0e0006978ba593c5ea",
+        "scripts/runtime/adventure/__main__.py": "29a6c0e5b11a58327f3ca7441a97551af6e459659bbd0884bd7c49dc37af5b54",
+        "scripts/runtime/adventure/advent.dat": "ab024845bb60f1ff753b25103de578120db307c672575e7435aeede4c9cc15ff",
+        "scripts/runtime/adventure/data.py": "df18fe18ce0be811713849d07af6192057a6238390ff201a4b99addefb56e68a",
+        "scripts/runtime/adventure/game.py": "136c0eeedcf679cec297f63ec7028a3156bc27b8782571bc8a5fa3cee1759b02",
+        "scripts/runtime/adventure/model.py": "f9659b28ad1a2d876debeef5a3a485d5a2fddc55d06aa37e0ba1b8146178087f",
+        "scripts/runtime/adventure/prompt.py": "2153d89f150c6a7d1101df2adac105203683edacdeaaf0f2d04c4725c1abfb2c",
+        "scripts/runtime/adventure/tests/__init__.py": "de648dcf698ec1ed82b7ea75ab251759e245292196ef493e254886b8387de02a",
+        "scripts/runtime/adventure/tests/syntax.txt": "74a5614935d7ec1e9730285787eac4f28607562b7d55456edd605c46c77e82f9",
+        "scripts/runtime/adventure/tests/test_commands.py": "d27f2f86d21293fa9a47aaaabfd50b61a934f67a46be186b2e9017befa9542dd",
+        "scripts/runtime/adventure/tests/test_data.py": "d71d70cce7a028f9b3f7f3274e12a5b2314d540826eaa1165854401e564be742",
+        "scripts/runtime/adventure/tests/test_walks.py": "cf8bc54a8a1cf631e97688a822e7505eb3dd8435ef35abdd816cbc5ff36ebccd",
+        "scripts/runtime/adventure/tests/vignettes.txt": "4f3a656184d6c3f58e81638a574e1e3e6737d49106326f6566d6cffab0af9398",
+        "scripts/runtime/adventure/tests/walkthrough1.txt": "f6cd54db3feb562595f2ab7b6547ef96f0b372c348e468e4aa6e63f9fa4b286f",
+        "scripts/runtime/adventure/tests/walkthrough2.txt": "763db8f7cbb86627f160fdc5ebae65ff26a853cc179368783a7210b1cc1340f5",
+        "scripts/runtime/adventure/tests/walkthrough3.txt": "6770deebb7bdd03511ae3fba71142aa7786d7b49950daf046387d1ecbe7049bf",
+        "scripts/runtime/adventure/tests/walkthrough4.txt": "eb2cdb60011c788a02e8dfbc24f6dd1dcd50f91daa7da2181f2af74a551e61a8",
+        "scripts/runtime_adapter.py": "45b74d3b1e33494d688100c64bd455ea620f123398658c9f2be05c94a624a628",
+        "scripts/smoke_cases.json": "cb8cb761c79a4815733c24afa407c3357ac9684e835d933e24c6343bac3c16a2",
+        "scripts/smoke_test.py": "119408f33902d7446599d998218a7811b826d21daef0864a5a9ff6d21a3c9c94",
+        "scripts/tests/test_checkpoint.py": "5b814e29fe95c806fe939907ee3a3a4bca3ba57b5cd7203c58f9782c6393ddfe",
+        "scripts/tests/test_runner.py": "600ca885b069f751bfd2cdca245b3b366388fad14711bb1384926fb8014cb243",
+        "scripts/tests/test_runtime_adapter.py": "1d1542d21a894ec48cdb5728c825ef75114e855e2779ce28318d6a3c98e039ff",
+        "scripts/tests/test_smoke_test.py": "b66bb7ba44bfc21e0ea0688a563c00e8f775202a3a16e2322c90e0e51c53901c"
+      },
+      "sourceKind": "unpacked-skill",
+      "sourcePath": "submissions/classic-text-adventure/SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/classic-text-adventure/SKILL.md",
+      "tags": [
+        "adventure",
+        "game",
+        "python"
+      ],
+      "tool": "ClassicTextAdventure"
+    },
+    {
+      "agentBytes": 12105,
+      "agentSha256": "85de92aefe77b94ebc7f050b5bbb07cd5bb91802c8a6fcc74987a6d7f37af505",
+      "author": "Michael Ferro Pereira",
+      "fileSha256": {
+        "SKILL.md": "bdf5e75cf1353e199898a8ec3e46f17f12c38e4d5b319bce1bec489c553f283c",
+        "assets/tables_2026.json": "63745bcaaf92de4082a742639d8b38c95e0987e8b223210732712fa75e6dc583",
+        "clt_hr_assistant_agent.py": "85de92aefe77b94ebc7f050b5bbb07cd5bb91802c8a6fcc74987a6d7f37af505",
+        "references/clt_rules.md": "c600ea8c6348f20448a195d898d28ad46d760c0453ebf2c6112b5fd8c62f8e39",
+        "scripts/fetch_current_values.py": "ab2278dc510f02d09f4002c1ee5bff3dba45bd77f178c696603bce4e85f5bdbf",
+        "scripts/severance_calculator.py": "ee6c2380ae6cb30e430569619f5ae128f7284292eb9808874e745e632835ddae"
+      },
+      "files": [
+        "SKILL.md",
+        "assets/tables_2026.json",
+        "clt_hr_assistant_agent.py",
+        "references/clt_rules.md",
+        "scripts/fetch_current_values.py",
+        "scripts/severance_calculator.py"
+      ],
+      "name": "Assistente CLT para RH",
+      "parameters": 0,
+      "platforms": [
+        "Copilot Studio",
+        "Cowork",
+        "Scout"
+      ],
+      "rawSkillSha256": "b62e9e0713495a935ac1de5d15c79bfc20c6e6bc3805c4de11401a3efb26594c",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 31353,
+      "skillSha256": "bdf5e75cf1353e199898a8ec3e46f17f12c38e4d5b319bce1bec489c553f283c",
+      "slug": "clt-hr-assistant",
+      "sourceBundleSha256": "85b7eb84f4be6eb8f23abfe17db7b2526c6bc8f8e9a7786df884d844f3a667dd",
+      "sourceFiles": {
+        "SKILL.md": "b62e9e0713495a935ac1de5d15c79bfc20c6e6bc3805c4de11401a3efb26594c",
+        "assets/tables_2026.json": "63745bcaaf92de4082a742639d8b38c95e0987e8b223210732712fa75e6dc583",
+        "references/clt_rules.md": "c600ea8c6348f20448a195d898d28ad46d760c0453ebf2c6112b5fd8c62f8e39",
+        "scripts/fetch_current_values.py": "ab2278dc510f02d09f4002c1ee5bff3dba45bd77f178c696603bce4e85f5bdbf",
+        "scripts/severance_calculator.py": "ee6c2380ae6cb30e430569619f5ae128f7284292eb9808874e745e632835ddae"
+      },
+      "sourceKind": "unpacked-skill",
+      "sourcePath": "submissions/clt-hr-assistant/SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/clt-hr-assistant/SKILL.md",
+      "tags": [
+        "rh",
+        "folha",
+        "clt",
+        "brasil",
+        "trabalhista",
+        "rescisao",
+        "inss",
+        "irrf",
+        "verbas-rescisorias",
+        "departamento-pessoal"
+      ],
+      "tool": "CltHrAssistant"
+    },
+    {
+      "agentBytes": 7935,
+      "agentSha256": "d3840f3c9cb4f90e8b68c6c8913f1384fdac13c3c71410b467f64a1ad11eabf1",
+      "author": "AndrewHessMSFT",
+      "fileSha256": {
+        "SKILL.md": "013ae6d35e5632f11a79379fa43f98b4632a8ea9566371b3739ecb282430c3ec",
+        "commenting_content_agent.py": "d3840f3c9cb4f90e8b68c6c8913f1384fdac13c3c71410b467f64a1ad11eabf1",
+        "references/REFERENCE-DOCX.md": "c98bb990253329bdf2ac57b3901314ae60345a9f03b1e3825aa17c5a4eddc635",
+        "references/REFERENCE-PPTX.md": "f9d34b7a7a6039419fa3c6c2f78787355efc17bcbb5e2a692ce52d21cabe5ad4",
+        "scripts/inject-comments-docx.py": "8a37d966144f935ef9666620ab31211de394a71023d243726f76b8b2d3022a0a",
+        "scripts/inject-comments-pptx.py": "9a0768854fed93ce6dc571149b114a995e1d18181fdb12bd55d1945506ec3a2b"
+      },
+      "files": [
+        "SKILL.md",
+        "commenting_content_agent.py",
+        "references/REFERENCE-DOCX.md",
+        "references/REFERENCE-PPTX.md",
+        "scripts/inject-comments-docx.py",
+        "scripts/inject-comments-pptx.py"
+      ],
+      "name": "Commenting Content",
+      "parameters": 0,
+      "platforms": [
+        "Cowork",
+        "Copilot Studio"
+      ],
+      "rawSkillSha256": "6d83629af75426b2e0bf6b07136416a96b16c574b73f2c60bd0a60a42a539c20",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 19985,
+      "skillSha256": "013ae6d35e5632f11a79379fa43f98b4632a8ea9566371b3739ecb282430c3ec",
+      "slug": "commenting-content",
+      "sourceBundleSha256": "9bf3f1bc74fae9dd9e61917b54e58883be891d1565ac1f7d04c21e74d1fe0782",
+      "sourceFiles": {
+        "SKILL.md": "6d83629af75426b2e0bf6b07136416a96b16c574b73f2c60bd0a60a42a539c20",
+        "references/REFERENCE-DOCX.md": "c98bb990253329bdf2ac57b3901314ae60345a9f03b1e3825aa17c5a4eddc635",
+        "references/REFERENCE-PPTX.md": "f9d34b7a7a6039419fa3c6c2f78787355efc17bcbb5e2a692ce52d21cabe5ad4",
+        "scripts/inject-comments-docx.py": "8a37d966144f935ef9666620ab31211de394a71023d243726f76b8b2d3022a0a",
+        "scripts/inject-comments-pptx.py": "9a0768854fed93ce6dc571149b114a995e1d18181fdb12bd55d1945506ec3a2b"
+      },
+      "sourceKind": "unpacked-skill",
+      "sourcePath": "submissions/commenting-content/SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/commenting-content/SKILL.md",
+      "tags": [
+        "documents",
+        "productivity"
+      ],
+      "tool": "CommentingContent"
+    },
+    {
+      "agentBytes": 44595,
+      "agentSha256": "afa091aad7c11d5f7a04cfac39a7d0a08239fdef7cba88114d470ca7b30819c3",
+      "author": "Michael Heath",
+      "fileSha256": {
+        "SKILL.md": "f46d9aa50511f6f0e578f7d7b23e486cf552345d7a8b2d6efd4f53cc8da1db71",
+        "assets/battlecard-app-template.html": "0f98828aed345f3250b31f8702a20acdf401d4d6c9e9f3fc5e85669a3cbddd56",
+        "competitive_battlecard_builder_agent.py": "afa091aad7c11d5f7a04cfac39a7d0a08239fdef7cba88114d470ca7b30819c3"
+      },
+      "files": [
+        "SKILL.md",
+        "assets/battlecard-app-template.html",
+        "competitive_battlecard_builder_agent.py"
+      ],
+      "name": "Competitive Battlecard Builder",
+      "parameters": 0,
+      "platforms": [
+        "Copilot Studio"
+      ],
+      "rawSkillSha256": "fa6b80e25fe48db681e2c690254b1b1b69fd3e53a9b2edcfcfa771b888509b4c",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 113158,
+      "skillSha256": "f46d9aa50511f6f0e578f7d7b23e486cf552345d7a8b2d6efd4f53cc8da1db71",
+      "slug": "competitive-battlecard-builder",
+      "sourceBundleSha256": "7690b6ac38424fef471a59843dbf0459044b07734981f43c9e135793bee56f96",
+      "sourceFiles": {
+        "SKILL.md": "fa6b80e25fe48db681e2c690254b1b1b69fd3e53a9b2edcfcfa771b888509b4c",
+        "assets/battlecard-app-template.html": "0f98828aed345f3250b31f8702a20acdf401d4d6c9e9f3fc5e85669a3cbddd56"
+      },
+      "sourceKind": "unpacked-skill",
+      "sourcePath": "submissions/competitive-battlecard-builder/SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/competitive-battlecard-builder/SKILL.md",
+      "tags": [
+        "sales-enablement",
+        "productivity",
+        "comparison"
+      ],
+      "tool": "CompetitiveBattlecardBuilder"
+    },
+    {
+      "agentBytes": 16886,
+      "agentSha256": "650cd63e9a808be006fb7a81fa9f6f96c70fef4bb32d57ed5dcf1de1deb4f69c",
+      "author": "Giorgio Ughini",
+      "fileSha256": {
+        "SKILL.md": "c2013f7c615b2e47f45dbc0ab28be9478f6b9ac5b7e865cd96ec53df504247d8",
+        "conditional_chat_reminder_agent.py": "650cd63e9a808be006fb7a81fa9f6f96c70fef4bb32d57ed5dcf1de1deb4f69c"
+      },
+      "files": [
+        "SKILL.md",
+        "conditional_chat_reminder_agent.py"
+      ],
+      "name": "Conditional Chat Reminder",
+      "parameters": 0,
+      "platforms": [
+        "Scout"
+      ],
+      "rawSkillSha256": "c39c6933af4a7872d3ae058e4fd7aef419f45f0a5b9170f1d78b198b7325bf1e",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 42908,
+      "skillSha256": "c2013f7c615b2e47f45dbc0ab28be9478f6b9ac5b7e865cd96ec53df504247d8",
+      "slug": "conditional-chat-reminder",
+      "sourceBundleSha256": "6c8d7601d98075267c90837466af4cad7444eea80a79d80b905f6376c64c1941",
+      "sourceFiles": {
+        "SKILL.md": "c39c6933af4a7872d3ae058e4fd7aef419f45f0a5b9170f1d78b198b7325bf1e"
+      },
+      "sourceKind": "unpacked-skill",
+      "sourcePath": "submissions/conditional-chat-reminder/SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/conditional-chat-reminder/SKILL.md",
+      "tags": [
+        "automation",
+        "teams",
+        "reminders",
+        "follow-up",
+        "productivity"
+      ],
+      "tool": "ConditionalChatReminder"
+    },
+    {
+      "agentBytes": 10265,
+      "agentSha256": "d50c89a4de410910e1e91f40a42c5c519e75d56098869dc547de97f11fd808e0",
+      "author": "Simon Owen",
+      "fileSha256": {
+        "SKILL.md": "674a344154d7b7b8290b88cafe253b9e14c4229f50326cbe710fa9deeb0451b2",
+        "conference_session_abstract_pack_agent.py": "d50c89a4de410910e1e91f40a42c5c519e75d56098869dc547de97f11fd808e0",
+        "references/cfp-quality-checklist.md": "3a19b10e9324635482be19807bef6b7eb86e55af1827f168ac98fb6eeb88ca19"
+      },
+      "files": [
+        "SKILL.md",
+        "conference_session_abstract_pack_agent.py",
+        "references/cfp-quality-checklist.md"
+      ],
+      "name": "Conference Session Abstract Pack",
+      "parameters": 0,
+      "platforms": [
+        "Cowork",
+        "Copilot Studio",
+        "Scout"
+      ],
+      "rawSkillSha256": "9d37918bf39e496394633339cfd7ab477c99650fc6db6682f0b82b2962ece2d9",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 26186,
+      "skillSha256": "674a344154d7b7b8290b88cafe253b9e14c4229f50326cbe710fa9deeb0451b2",
+      "slug": "conference-session-abstract-pack",
+      "sourceBundleSha256": "1b751039103c428e92de8d3ae942ecf036720faeb9e2a146ba0ed9fecf142f88",
+      "sourceFiles": {
+        "SKILL.md": "9d37918bf39e496394633339cfd7ab477c99650fc6db6682f0b82b2962ece2d9",
+        "references/cfp-quality-checklist.md": "3a19b10e9324635482be19807bef6b7eb86e55af1827f168ac98fb6eeb88ca19"
+      },
+      "sourceKind": "unpacked-skill",
+      "sourcePath": "submissions/conference-session-abstract-pack/SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/conference-session-abstract-pack/SKILL.md",
+      "tags": [
+        "writing",
+        "conference",
+        "abstract",
+        "speaking",
+        "content",
+        "productivity"
+      ],
+      "tool": "ConferenceSessionAbstractPack"
+    },
+    {
+      "agentBytes": 12321,
+      "agentSha256": "3d8cce90ef5a51c8419633e633da4612b4d3ee7c803b177a09f77d0bfcec85ca",
+      "author": "Simon Owen",
+      "fileSha256": {
+        "SKILL.md": "09b547e9fce07aa6d283279126e1872d6b3eb338d7ae5bebaa7627013ee63dc2",
+        "content_quality_auditor_agent.py": "3d8cce90ef5a51c8419633e633da4612b4d3ee7c803b177a09f77d0bfcec85ca",
+        "references/scoring-rubric.md": "934b8a0712d6e852118ca202a542845c797bfcee9abd60458ef1ad7708c1596e"
+      },
+      "files": [
+        "SKILL.md",
+        "content_quality_auditor_agent.py",
+        "references/scoring-rubric.md"
+      ],
+      "name": "Content Quality Auditor",
+      "parameters": 0,
+      "platforms": [
+        "Cowork",
+        "Copilot Studio",
+        "Scout"
+      ],
+      "rawSkillSha256": "8a0fc4a0dccd430aa61d082fd0ab20d8866343c6c69884f0c0fdd6e43976be7e",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 31527,
+      "skillSha256": "09b547e9fce07aa6d283279126e1872d6b3eb338d7ae5bebaa7627013ee63dc2",
+      "slug": "content-quality-auditor",
+      "sourceBundleSha256": "3ea13f0305965fa6f21562765563c1281b39811c78c22f8be2dfe971b60ef6e3",
+      "sourceFiles": {
+        "SKILL.md": "8a0fc4a0dccd430aa61d082fd0ab20d8866343c6c69884f0c0fdd6e43976be7e",
+        "references/scoring-rubric.md": "934b8a0712d6e852118ca202a542845c797bfcee9abd60458ef1ad7708c1596e"
+      },
+      "sourceKind": "unpacked-skill",
+      "sourcePath": "submissions/content-quality-auditor/SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/content-quality-auditor/SKILL.md",
+      "tags": [
+        "content",
+        "quality",
+        "audit",
+        "documents",
+        "productivity",
+        "governance"
+      ],
+      "tool": "ContentQualityAuditor"
+    },
+    {
+      "agentBytes": 33236,
+      "agentSha256": "7f415345104dee5a4e756e496675f577dff471dcd6835550a3add6e34e67f1fd",
+      "author": "Liam O'Grady",
+      "fileSha256": {
+        "SKILL.md": "d859eebb1d89ba184ae9c3dd2a6dc489410f07357dd7a546a3b8f238cdd7d84d",
+        "assets/credit-rates-2026-08.json": "f27625718c31970ddbe6d1bd68e327951d82babde85c87a75ecf640591d0c604",
+        "copilot_studio_harness_picker_agent.py": "7f415345104dee5a4e756e496675f577dff471dcd6835550a3add6e34e67f1fd",
+        "references/credits-and-licensing.md": "355f7d0a9dbbed0e1d0df39fbc55a53d85d317267d8034824de7cd6ce8a2b58e",
+        "references/decision-criteria.md": "2f7b6b5157ce630fffce083382f5ebf5815321eb26666afffa154127ca66ab52",
+        "references/implementation-checks.md": "1f358e91efd6ce847e7dbebaaf7a36209444c42754c88af0ceee2a6001430f85",
+        "references/interview-and-brief.md": "18786997acb6988dd6c2b65b07f716815a4bc4b982fab7f90557d0e622bf47e7",
+        "references/official-sources.md": "01dc21792cd6ed72b11ea27eb59aa12ed3ce741cc160fe103c2df661c32bc668",
+        "scripts/estimate_credits.py": "3d371daaa4fc4ee6666edfde3c038f653622416cc296671de0069e288245f325"
+      },
+      "files": [
+        "SKILL.md",
+        "assets/credit-rates-2026-08.json",
+        "copilot_studio_harness_picker_agent.py",
+        "references/credits-and-licensing.md",
+        "references/decision-criteria.md",
+        "references/implementation-checks.md",
+        "references/interview-and-brief.md",
+        "references/official-sources.md",
+        "scripts/estimate_credits.py"
+      ],
+      "name": "Copilot Studio Harness Picker",
+      "parameters": 0,
+      "platforms": [
+        "Cowork",
+        "Copilot Studio"
+      ],
+      "rawSkillSha256": "e977cd6724e00f72afcfb554ce89897e515b4d13ed4c10ad2f62fbfdd2ef4b85",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 84433,
+      "skillSha256": "d859eebb1d89ba184ae9c3dd2a6dc489410f07357dd7a546a3b8f238cdd7d84d",
+      "slug": "copilot-studio-harness-picker",
+      "sourceBundleSha256": "83ba796b64e3da8c5d0d6bf1b1fb9e708ecd44a06d569a269861258f0ac841e0",
+      "sourceFiles": {
+        "SKILL.md": "e977cd6724e00f72afcfb554ce89897e515b4d13ed4c10ad2f62fbfdd2ef4b85",
+        "assets/credit-rates-2026-08.json": "f27625718c31970ddbe6d1bd68e327951d82babde85c87a75ecf640591d0c604",
+        "references/credits-and-licensing.md": "355f7d0a9dbbed0e1d0df39fbc55a53d85d317267d8034824de7cd6ce8a2b58e",
+        "references/decision-criteria.md": "2f7b6b5157ce630fffce083382f5ebf5815321eb26666afffa154127ca66ab52",
+        "references/implementation-checks.md": "1f358e91efd6ce847e7dbebaaf7a36209444c42754c88af0ceee2a6001430f85",
+        "references/interview-and-brief.md": "18786997acb6988dd6c2b65b07f716815a4bc4b982fab7f90557d0e622bf47e7",
+        "references/official-sources.md": "01dc21792cd6ed72b11ea27eb59aa12ed3ce741cc160fe103c2df661c32bc668",
+        "scripts/estimate_credits.py": "3d371daaa4fc4ee6666edfde3c038f653622416cc296671de0069e288245f325"
+      },
+      "sourceKind": "unpacked-skill",
+      "sourcePath": "submissions/copilot-studio-harness-picker/SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/copilot-studio-harness-picker/SKILL.md",
+      "tags": [
+        "copilot-studio",
+        "cowork",
+        "architecture",
+        "agent-design",
+        "governance",
+        "licensing"
+      ],
+      "tool": "CopilotStudioHarnessPicker"
+    },
+    {
+      "agentBytes": 13435,
+      "agentSha256": "8939caaf5ab8a47c335c058ca0c1590b500bac7d88f6e883f28f40ba7eb7db1d",
+      "author": "Elliot Margot",
+      "fileSha256": {
+        "SKILL.md": "44ec9c756ce164ac0f0067284469f58447ba98a444fd1f526220f1e2827d754f",
+        "copilot_studio_test_planner_agent.py": "8939caaf5ab8a47c335c058ca0c1590b500bac7d88f6e883f28f40ba7eb7db1d"
+      },
+      "files": [
+        "SKILL.md",
+        "copilot_studio_test_planner_agent.py"
+      ],
+      "name": "Copilot Studio Test Planner",
+      "parameters": 0,
+      "platforms": [],
+      "rawSkillSha256": "bc0675dce38e4b9e7057bd38bc9289d0692a582b9cf7aee1a394ecf81f0f1a54",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 34327,
+      "skillSha256": "44ec9c756ce164ac0f0067284469f58447ba98a444fd1f526220f1e2827d754f",
+      "slug": "copilot-studio-test-planner",
+      "sourceBundleSha256": "c0d97e137aefdc580d5a7f1e35045574638378599f8e9ef1e5f636ea38a82017",
+      "sourceFiles": {
+        "SKILL.md": "bc0675dce38e4b9e7057bd38bc9289d0692a582b9cf7aee1a394ecf81f0f1a54"
+      },
+      "sourceKind": "legacy-zip-skill",
+      "sourcePath": "submissions/copilot-studio-test-planner/copilot-studio-test-planner.zip#skills/copilot-studio-test-planner/SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/copilot-studio-test-planner/copilot-studio-test-planner.zip#skills/copilot-studio-test-planner/SKILL.md",
+      "tags": [
+        "qa",
+        "eval",
+        "regression",
+        "agent"
+      ],
+      "tool": "CopilotStudioTestPlanner"
+    },
+    {
+      "agentBytes": 12194,
+      "agentSha256": "612d290a51c98546b20c600aaa1a9638567738717dc3a8546a3d35d4a2af3382",
+      "author": "Elliot Margot",
+      "fileSha256": {
+        "SKILL.md": "7ae6ecb45bb580048e29d78c33efc735f3324a217103fc4680ef2c55da953b19",
+        "copilot_studio_topic_blueprint_agent.py": "612d290a51c98546b20c600aaa1a9638567738717dc3a8546a3d35d4a2af3382"
+      },
+      "files": [
+        "SKILL.md",
+        "copilot_studio_topic_blueprint_agent.py"
+      ],
+      "name": "Copilot Studio Topic Blueprint",
+      "parameters": 0,
+      "platforms": [
+        "Copilot Studio"
+      ],
+      "rawSkillSha256": "dff01ef0faf7727ebd7cead6765aa1b051d7fd90f65042ccdeab7e47835958a5",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 30774,
+      "skillSha256": "7ae6ecb45bb580048e29d78c33efc735f3324a217103fc4680ef2c55da953b19",
+      "slug": "copilot-studio-topic-blueprint",
+      "sourceBundleSha256": "8d644d332ac64170235b49c01104c9afeb227209c01c1597fbb6d01cb79d6bb2",
+      "sourceFiles": {
+        "SKILL.md": "dff01ef0faf7727ebd7cead6765aa1b051d7fd90f65042ccdeab7e47835958a5"
+      },
+      "sourceKind": "unpacked-skill",
+      "sourcePath": "submissions/copilot-studio-topic-blueprint/SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/copilot-studio-topic-blueprint/SKILL.md",
+      "tags": [
+        "agent",
+        "blueprint",
+        "topics",
+        "design",
+        "power-platform",
+        "orchestration",
+        "adaptive-card"
+      ],
+      "tool": "CopilotStudioTopicBlueprint"
+    },
+    {
+      "agentBytes": 14824,
+      "agentSha256": "89c224c39e622d0f5a84fcd261530959b43a3a4cfae23847dd429a80993c681a",
+      "author": "Andreas Adner",
+      "fileSha256": {
+        "SKILL.md": "d7fda0b5267e393ce59d96de1cfba1cd1faf51eb912ad9cc04beddad96dd9acb",
+        "assets/samples/sample.csv": "eb3468cfae6c7c2fefdd42211f6df47e2223d8175d482eb142494d1b16dc71e6",
+        "assets/samples/sample.docx": "fafaabe0f7b4a809bdb0b32ca8a0d6bdb5a2c9ead89e64472fbaf27f11806023",
+        "assets/samples/sample.html": "ec9bfd39b5367c00634de84a059e3146056fabc83ff95849e02fc62f4702089e",
+        "assets/samples/sample.md": "0686247fff6463bc0659be1dd4898bdb128ec71a8c569aa2990be03d88a24dfb",
+        "assets/samples/sample.pptx": "6864d6c2f54b550301f1ea955fb87991f0b935eae01ff22ba5513a2cf8ace6dc",
+        "assets/samples/sample.xlsx": "f21908231904dcb8511e08f4e69257b6f06962514cb5abd1cf411208b336f85a",
+        "doc_format_converter_agent.py": "89c224c39e622d0f5a84fcd261530959b43a3a4cfae23847dd429a80993c681a",
+        "references/test-cases.md": "5405bb706ce71041be20c2bb2e1b86ae369dcf8fcb184d996c96502056e813a8",
+        "scripts/blocks.py": "09a0cffe09861b7a48dc3409bf28e4e31226c307afcd70cf38ac626d30a61dba",
+        "scripts/convert.py": "4e02f7a33f3edb183aaf4f4fe5f547cb0d450503fec17f4082c2fe90606f6063",
+        "scripts/render.py": "7faa2e4fa5ad64ddbb36779130cd706e8a45c4275a4490e520af0aba3774846a"
+      },
+      "files": [
+        "SKILL.md",
+        "assets/samples/sample.csv",
+        "assets/samples/sample.docx",
+        "assets/samples/sample.html",
+        "assets/samples/sample.md",
+        "assets/samples/sample.pptx",
+        "assets/samples/sample.xlsx",
+        "doc_format_converter_agent.py",
+        "references/test-cases.md",
+        "scripts/blocks.py",
+        "scripts/convert.py",
+        "scripts/render.py"
+      ],
+      "name": "Universal Document Converter",
+      "parameters": 0,
+      "platforms": [
+        "Copilot Studio"
+      ],
+      "rawSkillSha256": "fcb552a84ac5a52e23afa6d8dd54b9c479310ad6580940fb1ff551591bc0607f",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 37668,
+      "skillSha256": "d7fda0b5267e393ce59d96de1cfba1cd1faf51eb912ad9cc04beddad96dd9acb",
+      "slug": "doc-format-converter",
+      "sourceBundleSha256": "df59f0881af0a213d8657009ae95e1b70e58a0a498b4f90e6a476ecde39d89cd",
+      "sourceFiles": {
+        "SKILL.md": "fcb552a84ac5a52e23afa6d8dd54b9c479310ad6580940fb1ff551591bc0607f",
+        "assets/samples/sample.csv": "eb3468cfae6c7c2fefdd42211f6df47e2223d8175d482eb142494d1b16dc71e6",
+        "assets/samples/sample.docx": "fafaabe0f7b4a809bdb0b32ca8a0d6bdb5a2c9ead89e64472fbaf27f11806023",
+        "assets/samples/sample.html": "ec9bfd39b5367c00634de84a059e3146056fabc83ff95849e02fc62f4702089e",
+        "assets/samples/sample.md": "0686247fff6463bc0659be1dd4898bdb128ec71a8c569aa2990be03d88a24dfb",
+        "assets/samples/sample.pptx": "6864d6c2f54b550301f1ea955fb87991f0b935eae01ff22ba5513a2cf8ace6dc",
+        "assets/samples/sample.xlsx": "f21908231904dcb8511e08f4e69257b6f06962514cb5abd1cf411208b336f85a",
+        "references/test-cases.md": "5405bb706ce71041be20c2bb2e1b86ae369dcf8fcb184d996c96502056e813a8",
+        "scripts/blocks.py": "09a0cffe09861b7a48dc3409bf28e4e31226c307afcd70cf38ac626d30a61dba",
+        "scripts/convert.py": "4e02f7a33f3edb183aaf4f4fe5f547cb0d450503fec17f4082c2fe90606f6063",
+        "scripts/render.py": "7faa2e4fa5ad64ddbb36779130cd706e8a45c4275a4490e520af0aba3774846a"
+      },
+      "sourceKind": "unpacked-skill",
+      "sourcePath": "submissions/doc-format-converter/SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/doc-format-converter/SKILL.md",
+      "tags": [
+        "documents",
+        "conversion",
+        "markdown",
+        "pdf",
+        "office",
+        "scripts"
+      ],
+      "tool": "DocFormatConverter"
+    },
+    {
+      "agentBytes": 12783,
+      "agentSha256": "e1695e44da8deaeb5ca56d72c5cddecfbfa98d00690bc17cdc8ef75da587c460",
+      "author": "Faride Ilanda",
+      "fileSha256": {
+        "SKILL.md": "ed89859e44349db9d0b8710a908b95c24dccb30af4fa6caef2521183551d0222",
+        "enterprise_agent_design_authority_agent.py": "e1695e44da8deaeb5ca56d72c5cddecfbfa98d00690bc17cdc8ef75da587c460"
+      },
+      "files": [
+        "SKILL.md",
+        "enterprise_agent_design_authority_agent.py"
+      ],
+      "name": "Enterprise Agent Design Authority (EADA)",
+      "parameters": 0,
+      "platforms": [
+        "Copilot Studio",
+        "Cowork"
+      ],
+      "rawSkillSha256": "b1ed13baa519070017e076758c9cca0aef212b7e80e73b76141a0f652bcaaf2f",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 31917,
+      "skillSha256": "ed89859e44349db9d0b8710a908b95c24dccb30af4fa6caef2521183551d0222",
+      "slug": "enterprise-agent-design-authority",
+      "sourceBundleSha256": "71622ab8717453c31b2372827cd5b2ccfb4821a92d9cc0863e50891f10d97084",
+      "sourceFiles": {
+        "SKILL.md": "b1ed13baa519070017e076758c9cca0aef212b7e80e73b76141a0f652bcaaf2f"
+      },
+      "sourceKind": "unpacked-skill",
+      "sourcePath": "submissions/enterprise-agent-design-authority/SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/enterprise-agent-design-authority/SKILL.md",
+      "tags": [
+        "assessment",
+        "review",
+        "architecture",
+        "enterprise",
+        "design-review",
+        "copilot-studio"
+      ],
+      "tool": "EnterpriseAgentDesignAuthority"
+    },
+    {
+      "agentBytes": 14267,
+      "agentSha256": "508db0f5538375744dff2c396ee7601a2fb986b2fc982e8c5a64b69981ff2b70",
+      "author": "Remi Dyon",
+      "fileSha256": {
+        "SKILL.md": "37aa56c7da6b857c84c21bff5a2f4987a9c474d237900bd4c23a8e56cc9d2abe",
+        "eu_greenwashing_analysis_agent.py": "508db0f5538375744dff2c396ee7601a2fb986b2fc982e8c5a64b69981ff2b70"
+      },
+      "files": [
+        "SKILL.md",
+        "eu_greenwashing_analysis_agent.py"
+      ],
+      "name": "EU Greenwashing Analysis",
+      "parameters": 0,
+      "platforms": [
+        "Copilot Studio",
+        "Cowork",
+        "Scout"
+      ],
+      "rawSkillSha256": "d33b9fc639e9b50f800d32c8f4bc08064874b53b83299ce72167d7d9991fe372",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 36211,
+      "skillSha256": "37aa56c7da6b857c84c21bff5a2f4987a9c474d237900bd4c23a8e56cc9d2abe",
+      "slug": "eu-greenwashing-analysis",
+      "sourceBundleSha256": "14256e45d80360af9522b2547231fd84f934c772fdaac60b9821824fccb43252",
+      "sourceFiles": {
+        "SKILL.md": "d33b9fc639e9b50f800d32c8f4bc08064874b53b83299ce72167d7d9991fe372"
+      },
+      "sourceKind": "unpacked-skill",
+      "sourcePath": "submissions/eu-greenwashing-analysis/SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/eu-greenwashing-analysis/SKILL.md",
+      "tags": [
+        "compliance",
+        "sustainability",
+        "greenwashing",
+        "eu-regulation",
+        "marketing-review",
+        "esg"
+      ],
+      "tool": "EuGreenwashingAnalysis"
+    },
+    {
+      "agentBytes": 28108,
+      "agentSha256": "deba1e2da6649a8191f7ac2b848081ab8ab1ca57da9048d32fe396e3690f36f2",
+      "author": "Michael Heath",
+      "fileSha256": {
+        "SKILL.md": "1f3156c7232708bf1891b9161f568d87492849ab7a9b94c255bcae165fb989af",
+        "assets/plan-app-template.html": "f39e3350e45e09f4f7a5aec8e3ab300259b21af3a771a1d15d3a0b44fad15dac",
+        "exam_prep_learning_plan_builder_agent.py": "deba1e2da6649a8191f7ac2b848081ab8ab1ca57da9048d32fe396e3690f36f2"
+      },
+      "files": [
+        "SKILL.md",
+        "assets/plan-app-template.html",
+        "exam_prep_learning_plan_builder_agent.py"
+      ],
+      "name": "Exam Prep Learning Plan Builder",
+      "parameters": 0,
+      "platforms": [
+        "Copilot Studio"
+      ],
+      "rawSkillSha256": "7a00f2931feeedfb01be857cdb4e2d19c17db48c07a7d5b8a07c1a7cbbf1d51a",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 71912,
+      "skillSha256": "1f3156c7232708bf1891b9161f568d87492849ab7a9b94c255bcae165fb989af",
+      "slug": "exam-prep-learning-plan-builder",
+      "sourceBundleSha256": "2db04d5ea274c5566db725856a08c00505c2a38ccba4661f5e62ea29011fe03a",
+      "sourceFiles": {
+        "SKILL.md": "7a00f2931feeedfb01be857cdb4e2d19c17db48c07a7d5b8a07c1a7cbbf1d51a",
+        "assets/plan-app-template.html": "f39e3350e45e09f4f7a5aec8e3ab300259b21af3a771a1d15d3a0b44fad15dac"
+      },
+      "sourceKind": "unpacked-skill",
+      "sourcePath": "submissions/exam-prep-learning-plan-builder/SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/exam-prep-learning-plan-builder/SKILL.md",
+      "tags": [
+        "planning",
+        "productivity",
+        "learning"
+      ],
+      "tool": "ExamPrepLearningPlanBuilder"
+    },
+    {
+      "agentBytes": 9447,
+      "agentSha256": "301a1e3447da604862cc325fb905ab78fcfb4ab526323f2f685d06a5083fec60",
+      "author": "Nazish Qasim",
+      "fileSha256": {
+        "SKILL.md": "06f847671ce06d05f8e29001f9f6dda067e56433e1186a70bf3b00d131e0c971",
+        "assets/sample_schedule.csv": "84e172840d1b0b8ab004097786c16916065142a1edc411f6f9671a8f241a203c",
+        "gantt_chart_generator_agent.py": "301a1e3447da604862cc325fb905ab78fcfb4ab526323f2f685d06a5083fec60",
+        "references/cheatsheet.md": "faad652bc9d1d1ada75d0c8266fbff2740ebd7500b2bc4c6e7d142a81a287dfb",
+        "scripts/gantt.py": "a9cda6267f5d934062d9cff755e2287c458049f310acda719264a7c63c8c3150"
+      },
+      "files": [
+        "SKILL.md",
+        "assets/sample_schedule.csv",
+        "gantt_chart_generator_agent.py",
+        "references/cheatsheet.md",
+        "scripts/gantt.py"
+      ],
+      "name": "Gantt Chart Builder",
+      "parameters": 0,
+      "platforms": [
+        "Copilot Studio"
+      ],
+      "rawSkillSha256": "0ea7721b8c6ded289a1ed803f8324d477ae503248952dd9677457bbd53ecfca9",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 23857,
+      "skillSha256": "06f847671ce06d05f8e29001f9f6dda067e56433e1186a70bf3b00d131e0c971",
+      "slug": "gantt-chart-generator",
+      "sourceBundleSha256": "209d9e28b30ef53fa2e959f16b4736fb39de8175e0b2d519a63fb73f900cb17c",
+      "sourceFiles": {
+        "SKILL.md": "0ea7721b8c6ded289a1ed803f8324d477ae503248952dd9677457bbd53ecfca9",
+        "assets/sample_schedule.csv": "84e172840d1b0b8ab004097786c16916065142a1edc411f6f9671a8f241a203c",
+        "references/cheatsheet.md": "faad652bc9d1d1ada75d0c8266fbff2740ebd7500b2bc4c6e7d142a81a287dfb",
+        "scripts/gantt.py": "a9cda6267f5d934062d9cff755e2287c458049f310acda719264a7c63c8c3150"
+      },
+      "sourceKind": "unpacked-skill",
+      "sourcePath": "submissions/gantt-chart-generator/SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/gantt-chart-generator/SKILL.md",
+      "tags": [
+        "gantt",
+        "timeline",
+        "project-management",
+        "matplotlib",
+        "charts",
+        "scripts"
+      ],
+      "tool": "GanttChartGenerator"
+    },
+    {
+      "agentBytes": 27152,
+      "agentSha256": "efb84e566fdfffb0792ce33dc82da92cc59255557f46ae8ae76af18a63877748",
+      "author": "Remi Dyon",
+      "fileSha256": {
+        "SKILL.md": "cb15ba570cfa8abb05826fc1d858a9770b7b936290a61cbfeb4b6b3ba344363f",
+        "generating_podcast_script_agent.py": "efb84e566fdfffb0792ce33dc82da92cc59255557f46ae8ae76af18a63877748"
+      },
+      "files": [
+        "SKILL.md",
+        "generating_podcast_script_agent.py"
+      ],
+      "name": "Podcast Script Generator",
+      "parameters": 0,
+      "platforms": [
+        "Copilot Studio"
+      ],
+      "rawSkillSha256": "cb59026214ee835eeeea61288c49fe7bc24f4883f6a30c2b04e31c6ffad69551",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 70040,
+      "skillSha256": "cb15ba570cfa8abb05826fc1d858a9770b7b936290a61cbfeb4b6b3ba344363f",
+      "slug": "generating-podcast-script",
+      "sourceBundleSha256": "be5367f7f035e73a312da49a5faaabf523041769656f46d2e5f91f3ee1729124",
+      "sourceFiles": {
+        "SKILL.md": "cb59026214ee835eeeea61288c49fe7bc24f4883f6a30c2b04e31c6ffad69551"
+      },
+      "sourceKind": "unpacked-skill",
+      "sourcePath": "submissions/generating-podcast-script/SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/generating-podcast-script/SKILL.md",
+      "tags": [
+        "content",
+        "podcast",
+        "audio",
+        "text-to-speech",
+        "ssml",
+        "news"
+      ],
+      "tool": "GeneratingPodcastScript"
+    },
+    {
+      "agentBytes": 15575,
+      "agentSha256": "2b240e6d663efe17ed9ab05c467439b97f0492034e824418a4cb12ea05967603",
+      "author": "Chris Garty",
+      "fileSha256": {
+        "SKILL.md": "3b3bc3208ff93b997308b830ff810f9a4e1a5cb3ede8dbcba34a552b4c756510",
+        "global_greenwashing_claim_auditor_agent.py": "2b240e6d663efe17ed9ab05c467439b97f0492034e824418a4cb12ea05967603",
+        "references/Greenwashing-vocab.md": "5c56d7d1c605094e5564aa267ab777a063b1d84f1d630cf27cd528450f6f0ecb",
+        "references/greenwashing-analysis-research.md": "9516116ae7b2e3fd1f0641da229b8ee02ef4a96f97e51ebd2ae6fe9197c277f8",
+        "references/greenwashing-detection.md": "65ed27ddd7d6bb652af9c905cebe95d28148b018e17339828b076dec1e3cbf1a",
+        "references/greenwashing-risk-taxonomy.md": "7dcf2239d132b195e5787f0d9d869ada8301758641ced1742eb0072d1a382b6d",
+        "references/greenwashing-rules.json": "d6b33aaf98018e1fcbf900f57a3a2728f4d882d5cbb0b8d26366938feb34abe1",
+        "scripts/analyze_csv.py": "4bfa2ef068c5ec3d127e94dd6496baa0b56f0b84032b320331592f4bdaa2bc79",
+        "scripts/analyze_docx.py": "1516ef606a164d7c8160c35582c6e463a570bc8b0ff7d4d67d1daeb46ac47e6b",
+        "scripts/analyze_pptx.py": "2fe5b5d3c9c7dc5e3acb5cae5731c0d81ef1d35b78c73f4733c9f6d1eb25ca7f",
+        "scripts/analyze_text.py": "bd5ccedf1113418cb2cd20c6ee3f1655c3be691b769acc927ded0d94d3b98f03",
+        "scripts/analyze_url.py": "67194c0a4b40904a56a6950806f67001ffb23fb6bf001bd4f09de653d6adbd95",
+        "scripts/analyze_xlsx.py": "2a68efa2c552a910daf4e85f8067cfb734f7e7ef2f9d761f9b86c8b08657a23d",
+        "scripts/audit_core.py": "7b578cb2cd1e63e1b93987b7b353d497d7021164e57f18c653bfcc32a3ddbd8d",
+        "scripts/test_audit_core.py": "fbad3d5ea863ef07a80cff598baebe1f9acbe9c386f516978b324b1efaf52879"
+      },
+      "files": [
+        "SKILL.md",
+        "global_greenwashing_claim_auditor_agent.py",
+        "references/Greenwashing-vocab.md",
+        "references/greenwashing-analysis-research.md",
+        "references/greenwashing-detection.md",
+        "references/greenwashing-risk-taxonomy.md",
+        "references/greenwashing-rules.json",
+        "scripts/analyze_csv.py",
+        "scripts/analyze_docx.py",
+        "scripts/analyze_pptx.py",
+        "scripts/analyze_text.py",
+        "scripts/analyze_url.py",
+        "scripts/analyze_xlsx.py",
+        "scripts/audit_core.py",
+        "scripts/test_audit_core.py"
+      ],
+      "name": "Global Greenwashing Claim Auditor",
+      "parameters": 0,
+      "platforms": [
+        "Cowork",
+        "Copilot Studio",
+        "Scout"
+      ],
+      "rawSkillSha256": "62af549291ed56803b750547f573862ca40adef58b75d64b061d4849dd151a49",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 39433,
+      "skillSha256": "3b3bc3208ff93b997308b830ff810f9a4e1a5cb3ede8dbcba34a552b4c756510",
+      "slug": "global-greenwashing-claim-auditor",
+      "sourceBundleSha256": "845a0cb57b2c725a97e00afceef3894eba3e2c206817153711d51773676b6dde",
+      "sourceFiles": {
+        "SKILL.md": "62af549291ed56803b750547f573862ca40adef58b75d64b061d4849dd151a49",
+        "references/Greenwashing-vocab.md": "5c56d7d1c605094e5564aa267ab777a063b1d84f1d630cf27cd528450f6f0ecb",
+        "references/greenwashing-analysis-research.md": "9516116ae7b2e3fd1f0641da229b8ee02ef4a96f97e51ebd2ae6fe9197c277f8",
+        "references/greenwashing-detection.md": "65ed27ddd7d6bb652af9c905cebe95d28148b018e17339828b076dec1e3cbf1a",
+        "references/greenwashing-risk-taxonomy.md": "7dcf2239d132b195e5787f0d9d869ada8301758641ced1742eb0072d1a382b6d",
+        "references/greenwashing-rules.json": "d6b33aaf98018e1fcbf900f57a3a2728f4d882d5cbb0b8d26366938feb34abe1",
+        "scripts/analyze_csv.py": "4bfa2ef068c5ec3d127e94dd6496baa0b56f0b84032b320331592f4bdaa2bc79",
+        "scripts/analyze_docx.py": "1516ef606a164d7c8160c35582c6e463a570bc8b0ff7d4d67d1daeb46ac47e6b",
+        "scripts/analyze_pptx.py": "2fe5b5d3c9c7dc5e3acb5cae5731c0d81ef1d35b78c73f4733c9f6d1eb25ca7f",
+        "scripts/analyze_text.py": "bd5ccedf1113418cb2cd20c6ee3f1655c3be691b769acc927ded0d94d3b98f03",
+        "scripts/analyze_url.py": "67194c0a4b40904a56a6950806f67001ffb23fb6bf001bd4f09de653d6adbd95",
+        "scripts/analyze_xlsx.py": "2a68efa2c552a910daf4e85f8067cfb734f7e7ef2f9d761f9b86c8b08657a23d",
+        "scripts/audit_core.py": "7b578cb2cd1e63e1b93987b7b353d497d7021164e57f18c653bfcc32a3ddbd8d",
+        "scripts/test_audit_core.py": "fbad3d5ea863ef07a80cff598baebe1f9acbe9c386f516978b324b1efaf52879"
+      },
+      "sourceKind": "unpacked-skill",
+      "sourcePath": "submissions/global-greenwashing-claim-auditor/SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/global-greenwashing-claim-auditor/SKILL.md",
+      "tags": [
+        "greenwashing",
+        "environmental claims",
+        "sustainability",
+        "compliance",
+        "canada",
+        "european union",
+        "united kingdom",
+        "documents",
+        "spreadsheets",
+        "web"
+      ],
+      "tool": "GlobalGreenwashingClaimAuditor"
+    },
+    {
+      "agentBytes": 10258,
+      "agentSha256": "9cc98b1c1a193e16e96bd40a8fa880ac8f73b998887d9f03c2c4f3736e12e043",
+      "author": "Rafael Alcaraz",
+      "fileSha256": {
+        "SKILL.md": "f0880e0f33f745661497ef3ba093d1cfdb9332867bd8aa1f3cd12cffea410638",
+        "grab_my_files_agent.py": "9cc98b1c1a193e16e96bd40a8fa880ac8f73b998887d9f03c2c4f3736e12e043"
+      },
+      "files": [
+        "SKILL.md",
+        "grab_my_files_agent.py"
+      ],
+      "name": "Grab My Files",
+      "parameters": 0,
+      "platforms": [
+        "Copilot Studio"
+      ],
+      "rawSkillSha256": "ffbf2fb063a5455e2c50da8e6fea39a94f430d34b7108d7ecc3453c75458a6d6",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 25886,
+      "skillSha256": "f0880e0f33f745661497ef3ba093d1cfdb9332867bd8aa1f3cd12cffea410638",
+      "slug": "grab-my-files",
+      "sourceBundleSha256": "4f87f15c4a5d9b2a2633c2d239c4ae7e1d79f5f0667b32afeae7e9a732395898",
+      "sourceFiles": {
+        "SKILL.md": "ffbf2fb063a5455e2c50da8e6fea39a94f430d34b7108d7ecc3453c75458a6d6"
+      },
+      "sourceKind": "unpacked-skill",
+      "sourcePath": "submissions/grab-my-files/SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/grab-my-files/SKILL.md",
+      "tags": [
+        "files",
+        "export",
+        "zip",
+        "download",
+        "productivity"
+      ],
+      "tool": "GrabMyFiles"
+    },
+    {
+      "agentBytes": 5335,
+      "agentSha256": "65375457271e8ebfb00a2f26ad6182e7301c9f806412cac538c9ba495cba326a",
+      "author": "Mathias Salomonsen",
+      "fileSha256": {
+        "SKILL.md": "24fbe362f223cc67d02f00b039b547825aba8d78d03f7739371bd1bef80cb47d",
+        "idea_refiner_agent.py": "65375457271e8ebfb00a2f26ad6182e7301c9f806412cac538c9ba495cba326a"
+      },
+      "files": [
+        "SKILL.md",
+        "idea_refiner_agent.py"
+      ],
+      "name": "Idea Refiner",
+      "parameters": 0,
+      "platforms": [
+        "Copilot Studio"
+      ],
+      "rawSkillSha256": "d7ef51fe5a43ea11ba1e2620c4ca17f685bd96c19d9e7285cb93c1a70fc8dbe7",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 13541,
+      "skillSha256": "24fbe362f223cc67d02f00b039b547825aba8d78d03f7739371bd1bef80cb47d",
+      "slug": "idea-refiner",
+      "sourceBundleSha256": "7266a312f3d32277441952fab45dd90c9bf78d82bbdcbafdc6d529cf177bb5a7",
+      "sourceFiles": {
+        "SKILL.md": "d7ef51fe5a43ea11ba1e2620c4ca17f685bd96c19d9e7285cb93c1a70fc8dbe7"
+      },
+      "sourceKind": "unpacked-skill",
+      "sourcePath": "submissions/idea-refiner/SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/idea-refiner/SKILL.md",
+      "tags": [
+        "productivity",
+        "planning",
+        "decision-making",
+        "refinement",
+        "brainstorming"
+      ],
+      "tool": "IdeaRefiner"
+    },
+    {
+      "agentBytes": 59050,
+      "agentSha256": "e4079eb21a5c1229445d85df5551a1f14f66db5413a833335f226f47f8af7894",
+      "author": "Srinivas Varukala",
+      "fileSha256": {
+        "SKILL.md": "a4ac028f5a849808847e7bfc998b5ea387fde2e88a3c5ca569a2f83124bfb890",
+        "institutional_knowledge_agent.py": "e4079eb21a5c1229445d85df5551a1f14f66db5413a833335f226f47f8af7894"
+      },
+      "files": [
+        "SKILL.md",
+        "institutional_knowledge_agent.py"
+      ],
+      "name": "Institutional Knowledge Archivist",
+      "parameters": 0,
+      "platforms": [
+        "Cowork",
+        "Scout"
+      ],
+      "rawSkillSha256": "943b4e851a9cd0db5c3db77cda8ab4eb5a9082861cfb3ce78c389290d4a2d949",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 149348,
+      "skillSha256": "a4ac028f5a849808847e7bfc998b5ea387fde2e88a3c5ca569a2f83124bfb890",
+      "slug": "institutional-knowledge",
+      "sourceBundleSha256": "61ed079c0d14927f308d9194cdf7c7a55a0c834b224ccd791e47e939e344babb",
+      "sourceFiles": {
+        "SKILL.md": "943b4e851a9cd0db5c3db77cda8ab4eb5a9082861cfb3ce78c389290d4a2d949"
+      },
+      "sourceKind": "unpacked-skill",
+      "sourcePath": "submissions/institutional-knowledge/SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/institutional-knowledge/SKILL.md",
+      "tags": [
+        "knowledge",
+        "handoff",
+        "leadership",
+        "m365",
+        "offboarding",
+        "documentation",
+        "productivity"
+      ],
+      "tool": "InstitutionalKnowledge"
+    },
+    {
+      "agentBytes": 6466,
+      "agentSha256": "4c8da0bffae0ebcd2aa1b7558bcb3a0e63f72c61c24c02d8dbdcd7a3e4dc2fa1",
+      "author": "Adi Leibowitz",
+      "fileSha256": {
+        "SKILL.md": "8c03af7fa8897e77d46b9407099800b64fcc3e20c1979b04b9dea19060ace050",
+        "iterative_file_editing_agent.py": "4c8da0bffae0ebcd2aa1b7558bcb3a0e63f72c61c24c02d8dbdcd7a3e4dc2fa1"
+      },
+      "files": [
+        "SKILL.md",
+        "iterative_file_editing_agent.py"
+      ],
+      "name": "Iterative File Editing",
+      "parameters": 0,
+      "platforms": [
+        "Copilot Studio"
+      ],
+      "rawSkillSha256": "d6affe709fb972d85aa85f60858686b9173218fd76138721158fd49518419c09",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 15933,
+      "skillSha256": "8c03af7fa8897e77d46b9407099800b64fcc3e20c1979b04b9dea19060ace050",
+      "slug": "iterative-file-editing",
+      "sourceBundleSha256": "e9de59f24be31e6821cc9b412e075948538e14664eda625430fca73f164d03b8",
+      "sourceFiles": {
+        "SKILL.md": "d6affe709fb972d85aa85f60858686b9173218fd76138721158fd49518419c09"
+      },
+      "sourceKind": "unpacked-skill",
+      "sourcePath": "submissions/iterative-file-editing/SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/iterative-file-editing/SKILL.md",
+      "tags": [
+        "files",
+        "iteration",
+        "workflow",
+        "collaboration",
+        "productivity"
+      ],
+      "tool": "IterativeFileEditing"
+    },
+    {
+      "agentBytes": 38255,
+      "agentSha256": "20b4ec1e4b6c39755ea82195bdfcdcb0f4d70ab80c454f6dc93e758c71e500ce",
+      "author": "Doug Bellingeri",
+      "fileSha256": {
+        "SKILL.md": "aafa658917df7e69844dca4401f851c3cffcad4022d72c61dad532d44c5c3593",
+        "assets/default-config.json": "ae9a558361da520d692bae527aba5b44ba1027a82140fea364f4b5b0ddee44f9",
+        "knowledge_corpus_curator_agent.py": "20b4ec1e4b6c39755ea82195bdfcdcb0f4d70ab80c454f6dc93e758c71e500ce",
+        "references/RESULT-SCHEMA.md": "4953a02e8a4289e7ae2c3b45d8a922ffcdbe045cfed463209e1ebd032df68dee",
+        "references/UPLOAD-AND-KNOWLEDGE-SETUP.md": "6061e7d402c26537882dfff1887c66318ec8191ba532820be5bf0fb0ef409dde",
+        "scripts/curate_library.py": "0589e22e62dae504ecdae351eb1e221001f78761751a35881a03c744598a9b23",
+        "scripts/prepare_batches.py": "6d63e1ccafb1c3105544637efcd8ab52f1d6d839e68e3a0b8e6cdf3a9f50956e"
+      },
+      "files": [
+        "SKILL.md",
+        "assets/default-config.json",
+        "knowledge_corpus_curator_agent.py",
+        "references/RESULT-SCHEMA.md",
+        "references/UPLOAD-AND-KNOWLEDGE-SETUP.md",
+        "scripts/curate_library.py",
+        "scripts/prepare_batches.py"
+      ],
+      "name": "Knowledge Corpus Curator",
+      "parameters": 0,
+      "platforms": [
+        "Copilot Studio"
+      ],
+      "rawSkillSha256": "399d87be66b1541490d0028bf571fb58f27bee4c1ca325b5ef5d39ef9ad2cf63",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 97311,
+      "skillSha256": "aafa658917df7e69844dca4401f851c3cffcad4022d72c61dad532d44c5c3593",
+      "slug": "knowledge-corpus-curator",
+      "sourceBundleSha256": "35c14c23822d4a55c5c4559ecf80fcb2eb8d5e467b9529a5f26fffae81859354",
+      "sourceFiles": {
+        "SKILL.md": "399d87be66b1541490d0028bf571fb58f27bee4c1ca325b5ef5d39ef9ad2cf63",
+        "assets/default-config.json": "ae9a558361da520d692bae527aba5b44ba1027a82140fea364f4b5b0ddee44f9",
+        "references/RESULT-SCHEMA.md": "4953a02e8a4289e7ae2c3b45d8a922ffcdbe045cfed463209e1ebd032df68dee",
+        "references/UPLOAD-AND-KNOWLEDGE-SETUP.md": "6061e7d402c26537882dfff1887c66318ec8191ba532820be5bf0fb0ef409dde",
+        "scripts/curate_library.py": "0589e22e62dae504ecdae351eb1e221001f78761751a35881a03c744598a9b23",
+        "scripts/prepare_batches.py": "6d63e1ccafb1c3105544637efcd8ab52f1d6d839e68e3a0b8e6cdf3a9f50956e"
+      },
+      "sourceKind": "unpacked-skill",
+      "sourcePath": "submissions/knowledge-corpus-curator/SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/knowledge-corpus-curator/SKILL.md",
+      "tags": [
+        "knowledge",
+        "sharepoint",
+        "governance",
+        "deduplication",
+        "documents",
+        "uploads",
+        "excel"
+      ],
+      "tool": "KnowledgeCorpusCurator"
+    },
+    {
+      "agentBytes": 5960,
+      "agentSha256": "7852acf6808b80959d1bb94d4f55cd8cfb8f05ff2697b49d8ba834e94e4cb6cf",
+      "author": "Adi Leibowitz",
+      "fileSha256": {
+        "SKILL.md": "55a22e6aa07bc5ba3e3e3ec6843a6dedf5728b1db7d55f1bfe8707546aebd15f",
+        "knowledge_source_router_agent.py": "7852acf6808b80959d1bb94d4f55cd8cfb8f05ff2697b49d8ba834e94e4cb6cf"
+      },
+      "files": [
+        "SKILL.md",
+        "knowledge_source_router_agent.py"
+      ],
+      "name": "Knowledge Source Router",
+      "parameters": 0,
+      "platforms": [
+        "Copilot Studio"
+      ],
+      "rawSkillSha256": "82106480cf8e98a2bbe2219f9af712a938482055c03380dab1bd09bceebb97d9",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 14965,
+      "skillSha256": "55a22e6aa07bc5ba3e3e3ec6843a6dedf5728b1db7d55f1bfe8707546aebd15f",
+      "slug": "knowledge-source-router",
+      "sourceBundleSha256": "105c2a262a308d0c9cb29e08f138d9a22d2a6fcf459ab1e8af0afde370f49599",
+      "sourceFiles": {
+        "SKILL.md": "82106480cf8e98a2bbe2219f9af712a938482055c03380dab1bd09bceebb97d9"
+      },
+      "sourceKind": "unpacked-skill",
+      "sourcePath": "submissions/knowledge-source-router/SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/knowledge-source-router/SKILL.md",
+      "tags": [
+        "knowledge",
+        "routing",
+        "localization",
+        "location",
+        "grounding"
+      ],
+      "tool": "KnowledgeSourceRouter"
+    },
+    {
+      "agentBytes": 18334,
+      "agentSha256": "ea4827edc1843433e3143a9744732a0ac191edd451c2562c49cd48030508968e",
+      "author": "Rafsan Huseynov",
+      "fileSha256": {
+        "SKILL.md": "68fc13fd489f7a9e36177f63e084f65af12f7ef2bac3d7ae756a64cf55902df8",
+        "lab_column_mapper_agent.py": "ea4827edc1843433e3143a9744732a0ac191edd451c2562c49cd48030508968e",
+        "scripts/rank_column_matches.py": "20a5c78b777f3d6e084c35671c92bfc2d1bd7939c9e55832f7ead9136d3dfb0a"
+      },
+      "files": [
+        "SKILL.md",
+        "lab_column_mapper_agent.py",
+        "scripts/rank_column_matches.py"
+      ],
+      "name": "Lab Column Mapper",
+      "parameters": 0,
+      "platforms": [
+        "Copilot Studio"
+      ],
+      "rawSkillSha256": "6335573951b902dc8e7014f5fa178f9317a314dbef7f8243bb98187c3149490a",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 46200,
+      "skillSha256": "68fc13fd489f7a9e36177f63e084f65af12f7ef2bac3d7ae756a64cf55902df8",
+      "slug": "lab-column-mapper",
+      "sourceBundleSha256": "e5cb70277262290942211fc87c1022a1142ef72f075e5f3f547c683e71d255d7",
+      "sourceFiles": {
+        "SKILL.md": "6335573951b902dc8e7014f5fa178f9317a314dbef7f8243bb98187c3149490a",
+        "scripts/rank_column_matches.py": "20a5c78b777f3d6e084c35671c92bfc2d1bd7939c9e55832f7ead9136d3dfb0a"
+      },
+      "sourceKind": "unpacked-skill",
+      "sourcePath": "submissions/lab-column-mapper/SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/lab-column-mapper/SKILL.md",
+      "tags": [
+        "healthcare",
+        "clinical-data",
+        "lab-results",
+        "schema-drift",
+        "column-mapping",
+        "data-ingestion",
+        "loinc",
+        "azure-ai-search",
+        "azure-data-factory",
+        "dataverse",
+        "power-automate",
+        "human-in-the-loop"
+      ],
+      "tool": "LabColumnMapper"
+    },
+    {
+      "agentBytes": 10119,
+      "agentSha256": "ae1ea403f54f2ecdadcfaa59d6ad8afc579e3f09b24064abf2912f3dec89b7b7",
+      "author": "Simon Owen",
+      "fileSha256": {
+        "SKILL.md": "ff51ad97efb01b215268a17400bc64df3d4e7db3e46fae54c06898ed8681581a",
+        "linkedin_content_system_agent.py": "ae1ea403f54f2ecdadcfaa59d6ad8afc579e3f09b24064abf2912f3dec89b7b7",
+        "references/linkedin-format-guide.md": "75bbec491d11bed38bcad2cfc8a45ce1a7a0d5ccda8dcf8091784c943da0c04e"
+      },
+      "files": [
+        "SKILL.md",
+        "linkedin_content_system_agent.py",
+        "references/linkedin-format-guide.md"
+      ],
+      "name": "LinkedIn Content System",
+      "parameters": 0,
+      "platforms": [
+        "Cowork",
+        "Copilot Studio",
+        "Scout"
+      ],
+      "rawSkillSha256": "14996df32a6dc1de91fce556ecb781d3ff6cb1c6fca7cdf91e68156d34d48153",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 25770,
+      "skillSha256": "ff51ad97efb01b215268a17400bc64df3d4e7db3e46fae54c06898ed8681581a",
+      "slug": "linkedin-content-system",
+      "sourceBundleSha256": "378940eeddd038558f6124f2b6d749056437e7c8be2a111748006a9788eec81e",
+      "sourceFiles": {
+        "SKILL.md": "14996df32a6dc1de91fce556ecb781d3ff6cb1c6fca7cdf91e68156d34d48153",
+        "references/linkedin-format-guide.md": "75bbec491d11bed38bcad2cfc8a45ce1a7a0d5ccda8dcf8091784c943da0c04e"
+      },
+      "sourceKind": "unpacked-skill",
+      "sourcePath": "submissions/linkedin-content-system/SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/linkedin-content-system/SKILL.md",
+      "tags": [
+        "linkedin",
+        "social-media",
+        "writing",
+        "marketing",
+        "content"
+      ],
+      "tool": "LinkedinContentSystem"
+    },
+    {
+      "agentBytes": 36699,
+      "agentSha256": "20fa492f9a6dc8118336df8a727adee824ebfbe046d02750e826f9f2527efdbd",
+      "author": "Becky Still, Digital Boop Ltd",
+      "fileSha256": {
+        "SKILL.md": "c47048f77285e270f24c19b19e617af0fbb249db155cf546f367ecd3d7dfb97f",
+        "linkedin_content_writer_agent.py": "20fa492f9a6dc8118336df8a727adee824ebfbe046d02750e826f9f2527efdbd"
+      },
+      "files": [
+        "SKILL.md",
+        "linkedin_content_writer_agent.py"
+      ],
+      "name": "LinkedIn Content Writer",
+      "parameters": 0,
+      "platforms": [
+        "Copilot Studio"
+      ],
+      "rawSkillSha256": "f500f29d7ed793ab03e035b36fd476ce1619412994108d295aceee1c61f7a788",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 93510,
+      "skillSha256": "c47048f77285e270f24c19b19e617af0fbb249db155cf546f367ecd3d7dfb97f",
+      "slug": "linkedin-content-writer",
+      "sourceBundleSha256": "2518e42b0e765ceaefb6b961e2900946bc0a41c7c181526dd2d7a5ae49c8f431",
+      "sourceFiles": {
+        "SKILL.md": "f500f29d7ed793ab03e035b36fd476ce1619412994108d295aceee1c61f7a788"
+      },
+      "sourceKind": "unpacked-skill",
+      "sourcePath": "submissions/linkedin-content-writer/SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/linkedin-content-writer/SKILL.md",
+      "tags": [
+        "linkedin",
+        "social-media",
+        "writing",
+        "content"
+      ],
+      "tool": "LinkedinContentWriter"
+    },
+    {
+      "agentBytes": 14287,
+      "agentSha256": "ac816289aaff0d485d60b79537624f44d3a5aad9379175721e55d14e8b2d382f",
+      "author": "Chris Garty",
+      "fileSha256": {
+        "SKILL.md": "bac1985bb4272187eddfe4543d74297570e8223d73d55eb9836c1e47a58f85cf",
+        "lookup_dataverse_table_agent.py": "ac816289aaff0d485d60b79537624f44d3a5aad9379175721e55d14e8b2d382f"
+      },
+      "files": [
+        "SKILL.md",
+        "lookup_dataverse_table_agent.py"
+      ],
+      "name": "Dataverse Table Lookup",
+      "parameters": 0,
+      "platforms": [
+        "Copilot Studio"
+      ],
+      "rawSkillSha256": "71a994c019bbab1a35e79db52e41cda30d106cb64ed6e31e109a45d5133757b1",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 36365,
+      "skillSha256": "bac1985bb4272187eddfe4543d74297570e8223d73d55eb9836c1e47a58f85cf",
+      "slug": "lookup-dataverse-table",
+      "sourceBundleSha256": "06071040f1adea182d2da5f28a33876e9d7d94eca3b732236141e441f1f8620f",
+      "sourceFiles": {
+        "SKILL.md": "71a994c019bbab1a35e79db52e41cda30d106cb64ed6e31e109a45d5133757b1"
+      },
+      "sourceKind": "unpacked-skill",
+      "sourcePath": "submissions/lookup-dataverse-table/SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/lookup-dataverse-table/SKILL.md",
+      "tags": [
+        "dataverse",
+        "mcp",
+        "data-lookup",
+        "power-platform",
+        "crm"
+      ],
+      "tool": "LookupDataverseTable"
+    },
+    {
+      "agentBytes": 18968,
+      "agentSha256": "2acef68f645f0af15900669670749b4790266e2d0c2a237f67183723eb480576",
+      "author": "Faride Ilanda",
+      "fileSha256": {
+        "SKILL.md": "8e137f6e8f47d31a92a931691778f8bbde84584866b77aa956e9f5d2f1c49090",
+        "mct_excellence_iq_agent.py": "2acef68f645f0af15900669670749b4790266e2d0c2a237f67183723eb480576"
+      },
+      "files": [
+        "SKILL.md",
+        "mct_excellence_iq_agent.py"
+      ],
+      "name": "MCT Excellence IQ",
+      "parameters": 0,
+      "platforms": [
+        "Copilot Studio",
+        "Cowork"
+      ],
+      "rawSkillSha256": "a82f87c956312b8f73c86a66a21ac00f468efdb5f45405a57d6545479f671814",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 47310,
+      "skillSha256": "8e137f6e8f47d31a92a931691778f8bbde84584866b77aa956e9f5d2f1c49090",
+      "slug": "mct-excellence-iq",
+      "sourceBundleSha256": "ad19acc140b0d22582f8337ee1bcd42c3695ee93734e52143fb09cbe005b9e81",
+      "sourceFiles": {
+        "SKILL.md": "a82f87c956312b8f73c86a66a21ac00f468efdb5f45405a57d6545479f671814"
+      },
+      "sourceKind": "unpacked-skill",
+      "sourcePath": "submissions/mct-excellence-iq/SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/mct-excellence-iq/SKILL.md",
+      "tags": [
+        "mct",
+        "instructional-intelligence",
+        "microsoft-learning",
+        "courseware",
+        "microsoft-learn",
+        "azure",
+        "business-applications",
+        "data-ai",
+        "modern-work",
+        "security",
+        "instructional-design",
+        "learning-experience",
+        "workshops",
+        "hands-on-labs",
+        "demonstrations",
+        "assessment",
+        "surveys",
+        "learning-analytics",
+        "localization",
+        "responsible-ai"
+      ],
+      "tool": "MctExcellenceIq"
+    },
+    {
+      "agentBytes": 12755,
+      "agentSha256": "6b90f3cc7db6ab159f57a353d6dc726aa3c051fcb37ed907659c56ae6043f5c7",
+      "author": "Michael Ferro Pereira",
+      "fileSha256": {
+        "SKILL.md": "876518f5d67c712b002a3ca39ccf6beb3a0cb332f99cc114117981cade6ab925",
+        "assets/report-template.md": "c6901d0e046614f36db8c05f2558e7abfd47b6686ebe94e5ec90d3dc688e0231",
+        "meeting_analyzer_agent.py": "6b90f3cc7db6ab159f57a353d6dc726aa3c051fcb37ed907659c56ae6043f5c7",
+        "references/hidden-insights-guide.md": "f8fd5574eeb811b9df1c396da5a2f14f8f08a42736d7278f92bb406efc3bff9f",
+        "references/persona-framework.md": "2e2a617845ef56c38a603536d8bbeecadbdc603bc58d64b8451cc0974dad6f78"
+      },
+      "files": [
+        "SKILL.md",
+        "assets/report-template.md",
+        "meeting_analyzer_agent.py",
+        "references/hidden-insights-guide.md",
+        "references/persona-framework.md"
+      ],
+      "name": "Meeting Analyzer",
+      "parameters": 0,
+      "platforms": [
+        "Copilot Studio",
+        "Cowork"
+      ],
+      "rawSkillSha256": "4fdb61ee1f2a9e55e9741a510ac8e9955d423b296b0039c556867672ebb8f297",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 31842,
+      "skillSha256": "876518f5d67c712b002a3ca39ccf6beb3a0cb332f99cc114117981cade6ab925",
+      "slug": "meeting-analyzer",
+      "sourceBundleSha256": "0d536dcbf520afb0a920a7ebb08246b23f99184d7d85a20e7a6ae82fb7eb97bd",
+      "sourceFiles": {
+        "SKILL.md": "4fdb61ee1f2a9e55e9741a510ac8e9955d423b296b0039c556867672ebb8f297",
+        "assets/report-template.md": "c6901d0e046614f36db8c05f2558e7abfd47b6686ebe94e5ec90d3dc688e0231",
+        "references/hidden-insights-guide.md": "f8fd5574eeb811b9df1c396da5a2f14f8f08a42736d7278f92bb406efc3bff9f",
+        "references/persona-framework.md": "2e2a617845ef56c38a603536d8bbeecadbdc603bc58d64b8451cc0974dad6f78"
+      },
+      "sourceKind": "unpacked-skill",
+      "sourcePath": "submissions/meeting-analyzer/SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/meeting-analyzer/SKILL.md",
+      "tags": [
+        "meetings",
+        "analysis",
+        "insights",
+        "personas",
+        "transcription",
+        "productivity",
+        "communication"
+      ],
+      "tool": "MeetingAnalyzer"
+    },
+    {
+      "agentBytes": 34066,
+      "agentSha256": "04b92bb09d0dda1f65c579b48ceafdf705bee850b191b65a3a07666dc0bfc5fe",
+      "author": "Rafsan Huseynov",
+      "fileSha256": {
+        "SKILL.md": "6efb4ce423bbe51ec7ba0f23f073b8fec1ba8f17fb44b063da1a81cd3e1a932b",
+        "microsoft_ai_platform_advisor_agent.py": "04b92bb09d0dda1f65c579b48ceafdf705bee850b191b65a3a07666dc0bfc5fe",
+        "scripts/effort_profile_chart.py": "c6f8d6410706747d14eababfbfba7855a0f7e651ab0da63f339a08b84843aeaf"
+      },
+      "files": [
+        "SKILL.md",
+        "microsoft_ai_platform_advisor_agent.py",
+        "scripts/effort_profile_chart.py"
+      ],
+      "name": "Microsoft AI Platform Advisor",
+      "parameters": 0,
+      "platforms": [
+        "Copilot Studio"
+      ],
+      "rawSkillSha256": "5b5901101911aaebc07f93f16adb7033b9d2066cce185f5dc5cf44f426d02150",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 86401,
+      "skillSha256": "6efb4ce423bbe51ec7ba0f23f073b8fec1ba8f17fb44b063da1a81cd3e1a932b",
+      "slug": "microsoft-ai-platform-advisor",
+      "sourceBundleSha256": "2164ca5eb0c8c66be991c04d25e3f4e174420925f31f194323cf986376d31270",
+      "sourceFiles": {
+        "SKILL.md": "5b5901101911aaebc07f93f16adb7033b9d2066cce185f5dc5cf44f426d02150",
+        "scripts/effort_profile_chart.py": "c6f8d6410706747d14eababfbfba7855a0f7e651ab0da63f339a08b84843aeaf"
+      },
+      "sourceKind": "unpacked-skill",
+      "sourcePath": "submissions/microsoft-ai-platform-advisor/SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/microsoft-ai-platform-advisor/SKILL.md",
+      "tags": [
+        "advisor",
+        "discovery",
+        "architecture",
+        "decision-making",
+        "requirements",
+        "risk-assessment",
+        "microsoft-365-copilot",
+        "foundry",
+        "foundry-agent-service",
+        "agent-365",
+        "windows-ai-foundry"
+      ],
+      "tool": "MicrosoftAiPlatformAdvisor"
+    },
+    {
+      "agentBytes": 16116,
+      "agentSha256": "30c674a5f46cdc92eb0795f203b91eae226395146f8d00b49732d4a14b764f69",
+      "author": "Nazish Qasim",
+      "fileSha256": {
+        "SKILL.md": "2d20b13c743d75d3113bf86e75384b0f48999653cd14d4b4db9c976223db16a7",
+        "assets/sample_exponential.json": "9c02bc8dfcc7a9c51ffeeef3c0d579345a2b2e5d2bd5e1fb5b5e8d04c914d061",
+        "assets/sample_lognormal.json": "8ae526516caa99117204421aa319ed8500bcf15e89c6829c1bd8895bf65bdc5f",
+        "assets/sample_normal.json": "49e82c79ffc3348ef33a82274e37416d06981ecd1e11a2bbd14cdfbee6a88d10",
+        "assets/sample_poisson.json": "0d23494eea347ceef2f603c7d5367991dd09b5e0f2be6b1489f07dc68d18264b",
+        "assets/sample_triangular.json": "3f913ab1ce0c580efdd5c0110097909247a261d06a4c2826d8fe32a904b635b9",
+        "assets/sample_weibull.json": "e360068e680b510042ce9afce5e5ac4dd6f26003ca5879cc0282d6388d93b88d",
+        "monte_carlo_analysis_agent.py": "30c674a5f46cdc92eb0795f203b91eae226395146f8d00b49732d4a14b764f69",
+        "references/cheatsheet.md": "304cf2daaf451822de8de0056177627ce5695ea383542419085ca65e13b09180",
+        "scripts/monte_carlo.py": "418335843ecd4dea72b95e9230143244763d7fa3eca76c76f4d1e7f501a7aa72"
+      },
+      "files": [
+        "SKILL.md",
+        "assets/sample_exponential.json",
+        "assets/sample_lognormal.json",
+        "assets/sample_normal.json",
+        "assets/sample_poisson.json",
+        "assets/sample_triangular.json",
+        "assets/sample_weibull.json",
+        "monte_carlo_analysis_agent.py",
+        "references/cheatsheet.md",
+        "scripts/monte_carlo.py"
+      ],
+      "name": "Monte Carlo Analysis",
+      "parameters": 0,
+      "platforms": [
+        "Copilot Studio"
+      ],
+      "rawSkillSha256": "39b08b27ed8bbc75231108a7a5992bafdf122e176064994189b90b7a4f850c29",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 41041,
+      "skillSha256": "2d20b13c743d75d3113bf86e75384b0f48999653cd14d4b4db9c976223db16a7",
+      "slug": "monte-carlo-analysis",
+      "sourceBundleSha256": "961b7fbebb59e436d508d91968f429961bbf1e3f52db04f5684a58ef18412881",
+      "sourceFiles": {
+        "SKILL.md": "39b08b27ed8bbc75231108a7a5992bafdf122e176064994189b90b7a4f850c29",
+        "assets/sample_exponential.json": "9c02bc8dfcc7a9c51ffeeef3c0d579345a2b2e5d2bd5e1fb5b5e8d04c914d061",
+        "assets/sample_lognormal.json": "8ae526516caa99117204421aa319ed8500bcf15e89c6829c1bd8895bf65bdc5f",
+        "assets/sample_normal.json": "49e82c79ffc3348ef33a82274e37416d06981ecd1e11a2bbd14cdfbee6a88d10",
+        "assets/sample_poisson.json": "0d23494eea347ceef2f603c7d5367991dd09b5e0f2be6b1489f07dc68d18264b",
+        "assets/sample_triangular.json": "3f913ab1ce0c580efdd5c0110097909247a261d06a4c2826d8fe32a904b635b9",
+        "assets/sample_weibull.json": "e360068e680b510042ce9afce5e5ac4dd6f26003ca5879cc0282d6388d93b88d",
+        "references/cheatsheet.md": "304cf2daaf451822de8de0056177627ce5695ea383542419085ca65e13b09180",
+        "scripts/monte_carlo.py": "418335843ecd4dea72b95e9230143244763d7fa3eca76c76f4d1e7f501a7aa72"
+      },
+      "sourceKind": "unpacked-skill",
+      "sourcePath": "submissions/monte-carlo-analysis/SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/monte-carlo-analysis/SKILL.md",
+      "tags": [
+        "monte-carlo",
+        "risk-assessment",
+        "python",
+        "simulation",
+        "matplotlib",
+        "charts",
+        "csv",
+        "analysis"
+      ],
+      "tool": "MonteCarloAnalysis"
+    },
+    {
+      "agentBytes": 20062,
+      "agentSha256": "6d8b87c2bdad829c1af693c7ffb4b2161d89ec274f0ccc2e4031dfd7686a6648",
+      "author": "Marcel",
+      "fileSha256": {
+        "SKILL.md": "c845bf41d8140efea57bd4198a62e72a96c6ba5550b59876ca56742a899c339a",
+        "own_voice_builder_agent.py": "6d8b87c2bdad829c1af693c7ffb4b2161d89ec274f0ccc2e4031dfd7686a6648"
+      },
+      "files": [
+        "SKILL.md",
+        "own_voice_builder_agent.py"
+      ],
+      "name": "Own Voice Builder",
+      "parameters": 0,
+      "platforms": [
+        "Cowork",
+        "Scout"
+      ],
+      "rawSkillSha256": "2931ba3b66ec694ca247a5f9bfddd4207142b48adbece93c736cb97d878e8f2e",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 51466,
+      "skillSha256": "c845bf41d8140efea57bd4198a62e72a96c6ba5550b59876ca56742a899c339a",
+      "slug": "own-voice-builder",
+      "sourceBundleSha256": "5e087198a0f196fa33036a67f84ec53ed6b5803258cac958f90beb1ce3e1b397",
+      "sourceFiles": {
+        "SKILL.md": "2931ba3b66ec694ca247a5f9bfddd4207142b48adbece93c736cb97d878e8f2e"
+      },
+      "sourceKind": "unpacked-skill",
+      "sourcePath": "submissions/own-voice-builder/SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/own-voice-builder/SKILL.md",
+      "tags": [
+        "writing",
+        "voice",
+        "email",
+        "teams",
+        "productivity",
+        "microsoft-365"
+      ],
+      "tool": "OwnVoiceBuilder"
+    },
+    {
+      "agentBytes": 15976,
+      "agentSha256": "c94dc99e397fadd58d5d7c2315cddd655116e1441d96c7ac2c7b7ab9b26bb63b",
+      "author": "Srinivas Varukala",
+      "fileSha256": {
+        "SKILL.md": "435067731a6c0790522c88e33f8952bad4a689575435ac5bea7b3444b3734ec2",
+        "pattern_radar_agent.py": "c94dc99e397fadd58d5d7c2315cddd655116e1441d96c7ac2c7b7ab9b26bb63b"
+      },
+      "files": [
+        "SKILL.md",
+        "pattern_radar_agent.py"
+      ],
+      "name": "Pattern Radar",
+      "parameters": 0,
+      "platforms": [
+        "Cowork",
+        "Scout"
+      ],
+      "rawSkillSha256": "7cf94614efff39c65097fa7857e16f24a75363f41d870eff826be31a9f7ea8b8",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 40968,
+      "skillSha256": "435067731a6c0790522c88e33f8952bad4a689575435ac5bea7b3444b3734ec2",
+      "slug": "pattern-radar",
+      "sourceBundleSha256": "4bfcdbdf49c1876b8e196b3dead25f65263ab4173639a54a6a4e4f7c6803a4cb",
+      "sourceFiles": {
+        "SKILL.md": "7cf94614efff39c65097fa7857e16f24a75363f41d870eff826be31a9f7ea8b8"
+      },
+      "sourceKind": "unpacked-skill",
+      "sourcePath": "submissions/pattern-radar/SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/pattern-radar/SKILL.md",
+      "tags": [
+        "productivity",
+        "automation",
+        "content",
+        "email",
+        "teams",
+        "insights"
+      ],
+      "tool": "PatternRadar"
+    },
+    {
+      "agentBytes": 22100,
+      "agentSha256": "815527a7c5b5db5af68cc26f2030808a96d70fcee7b2d6ba02a5039d0cc956da",
+      "author": "Lewis Baybutt",
+      "fileSha256": {
+        "SKILL.md": "cdd1eedd1f494470097b8763121d710b56ccf40960fd2ffc095f90362840eb80",
+        "pdf_table_data_conversion_agent.py": "815527a7c5b5db5af68cc26f2030808a96d70fcee7b2d6ba02a5039d0cc956da",
+        "scripts/extract_tables.py": "f11e82a4b15e8f90a1abdf5338767c472b6115facf6cc85704e8dcdd72d71417"
+      },
+      "files": [
+        "SKILL.md",
+        "pdf_table_data_conversion_agent.py",
+        "scripts/extract_tables.py"
+      ],
+      "name": "PDF Table Data Conversion",
+      "parameters": 0,
+      "platforms": [
+        "Copilot Studio"
+      ],
+      "rawSkillSha256": "735a67c9967dfccf1d07e580f1465523e1f7f60e578186014c3a9b157ed73aa2",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 56226,
+      "skillSha256": "cdd1eedd1f494470097b8763121d710b56ccf40960fd2ffc095f90362840eb80",
+      "slug": "pdf-table-data-conversion",
+      "sourceBundleSha256": "dbec3ae740badd7cf4e9182b23aa238b5965ed3d3f3e479633dc760ef9a555f3",
+      "sourceFiles": {
+        "SKILL.md": "735a67c9967dfccf1d07e580f1465523e1f7f60e578186014c3a9b157ed73aa2",
+        "scripts/extract_tables.py": "f11e82a4b15e8f90a1abdf5338767c472b6115facf6cc85704e8dcdd72d71417"
+      },
+      "sourceKind": "unpacked-skill",
+      "sourcePath": "submissions/pdf-table-data-conversion/SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/pdf-table-data-conversion/SKILL.md",
+      "tags": [
+        "documents",
+        "extraction",
+        "pdf",
+        "csv",
+        "xlsx",
+        "tables",
+        "sharepoint"
+      ],
+      "tool": "PdfTableDataConversion"
+    },
+    {
+      "agentBytes": 15409,
+      "agentSha256": "801ee9f6fe7bb2fddcc6167af8bfb381a647eff792d338ff4a8be421e59100dc",
+      "author": "Olivia Zhang",
+      "fileSha256": {
+        "SKILL.md": "145ac33fa4f002c893fd0fca97ef8b75320ba1de5973465e81500462f2eeec2a",
+        "persona_reaction_panel_agent.py": "801ee9f6fe7bb2fddcc6167af8bfb381a647eff792d338ff4a8be421e59100dc",
+        "references/personas.template.md": "15b2684a8f30e7e64a9dd60026ee2a872ed6fe352099f802a937e743537a1621"
+      },
+      "files": [
+        "SKILL.md",
+        "persona_reaction_panel_agent.py",
+        "references/personas.template.md"
+      ],
+      "name": "Persona Reaction Panel",
+      "parameters": 0,
+      "platforms": [
+        "Cowork",
+        "Copilot Studio"
+      ],
+      "rawSkillSha256": "da931ae230bb068a34049d5f52cc5e81a28b11e62296c2dfe347135227c887b0",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 39126,
+      "skillSha256": "145ac33fa4f002c893fd0fca97ef8b75320ba1de5973465e81500462f2eeec2a",
+      "slug": "persona-reaction-panel",
+      "sourceBundleSha256": "724fb25e4eb242ee22aee2c0928f06683e7e54f1543f86033099d14be9caf0ee",
+      "sourceFiles": {
+        "SKILL.md": "da931ae230bb068a34049d5f52cc5e81a28b11e62296c2dfe347135227c887b0",
+        "references/personas.template.md": "15b2684a8f30e7e64a9dd60026ee2a872ed6fe352099f802a937e743537a1621"
+      },
+      "sourceKind": "unpacked-skill",
+      "sourcePath": "submissions/persona-reaction-panel/SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/persona-reaction-panel/SKILL.md",
+      "tags": [
+        "communications",
+        "change-management",
+        "launch-readiness",
+        "personas",
+        "qa"
+      ],
+      "tool": "PersonaReactionPanel"
+    },
+    {
+      "agentBytes": 24806,
+      "agentSha256": "9dd1a9b5d2e52b47b7dc209e26f6a1f13c8ec8b0f2b3f8c3c44c2176a593a9eb",
+      "author": "Rafael Lopez Alcaraz",
+      "fileSha256": {
+        "SKILL.md": "0a208d2c057dad41f4cdc770a636afffcf67c929e00a5a2f3967cce3682b1f60",
+        "assets/name_lexicon.txt": "ef38cd1fdb3eecf9124812e75e3e906e49fad6d9df001266cc796090bf67cf79",
+        "phi_deidentifier_agent.py": "9dd1a9b5d2e52b47b7dc209e26f6a1f13c8ec8b0f2b3f8c3c44c2176a593a9eb",
+        "references/hipaa-safe-harbor.md": "43c250c8579d6e92219f2a654121aa0ac377755c153fe8cd3ec55128fda73397",
+        "scripts/deidentify.py": "20740710c751e9e00d8373e20a7a59260ec35c8da6240dddc5b580ae43c03a26"
+      },
+      "files": [
+        "SKILL.md",
+        "assets/name_lexicon.txt",
+        "phi_deidentifier_agent.py",
+        "references/hipaa-safe-harbor.md",
+        "scripts/deidentify.py"
+      ],
+      "name": "PHI De-identifier",
+      "parameters": 0,
+      "platforms": [
+        "Cowork",
+        "Copilot Studio",
+        "Scout"
+      ],
+      "rawSkillSha256": "a2bf5f5f0e5b25f2278575a5993aaa5461f03309ac495760fe3d089d4f731061",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 63182,
+      "skillSha256": "0a208d2c057dad41f4cdc770a636afffcf67c929e00a5a2f3967cce3682b1f60",
+      "slug": "phi-deidentifier",
+      "sourceBundleSha256": "f63ae8a63e7fa5e2727d7517faa8163235bf36ae45a909a172df337aa253399d",
+      "sourceFiles": {
+        "SKILL.md": "a2bf5f5f0e5b25f2278575a5993aaa5461f03309ac495760fe3d089d4f731061",
+        "assets/name_lexicon.txt": "ef38cd1fdb3eecf9124812e75e3e906e49fad6d9df001266cc796090bf67cf79",
+        "references/hipaa-safe-harbor.md": "43c250c8579d6e92219f2a654121aa0ac377755c153fe8cd3ec55128fda73397",
+        "scripts/deidentify.py": "20740710c751e9e00d8373e20a7a59260ec35c8da6240dddc5b580ae43c03a26"
+      },
+      "sourceKind": "legacy-zip-skill",
+      "sourcePath": "submissions/phi-deidentifier/phi-deidentifier.zip#SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/phi-deidentifier/phi-deidentifier.zip#SKILL.md",
+      "tags": [
+        "healthcare",
+        "hls",
+        "phi",
+        "privacy",
+        "redaction",
+        "hipaa",
+        "compliance",
+        "scripts"
+      ],
+      "tool": "PhiDeidentifier"
+    },
+    {
+      "agentBytes": 8372,
+      "agentSha256": "950892004698e1916626312b3d59b41369180a8e496494ab21ee43091e154bda",
+      "author": "Simon Owen",
+      "fileSha256": {
+        "SKILL.md": "2b6dc255d88ab9ba1f5ef8550d0364b407922d4ebba096fe2ee679f8f58ddb26",
+        "pov_line_generator_agent.py": "950892004698e1916626312b3d59b41369180a8e496494ab21ee43091e154bda",
+        "references/pov-patterns.md": "aadf34559482801cb0a5abb93e394bec2ed0e408e664dbc5cbae61624e64c9d0"
+      },
+      "files": [
+        "SKILL.md",
+        "pov_line_generator_agent.py",
+        "references/pov-patterns.md"
+      ],
+      "name": "POV Line Generator",
+      "parameters": 0,
+      "platforms": [
+        "Cowork",
+        "Copilot Studio",
+        "Scout"
+      ],
+      "rawSkillSha256": "52189000bbd1aefe63a7a60d0e6725b840d1faff7fa61c4ca6f65ae930b77cf6",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 21431,
+      "skillSha256": "2b6dc255d88ab9ba1f5ef8550d0364b407922d4ebba096fe2ee679f8f58ddb26",
+      "slug": "pov-line-generator",
+      "sourceBundleSha256": "aca588bf23271d6e9b037db77b0a79ea0b4dc81fda7085c14d2f28557ba0c91f",
+      "sourceFiles": {
+        "SKILL.md": "52189000bbd1aefe63a7a60d0e6725b840d1faff7fa61c4ca6f65ae930b77cf6",
+        "references/pov-patterns.md": "aadf34559482801cb0a5abb93e394bec2ed0e408e664dbc5cbae61624e64c9d0"
+      },
+      "sourceKind": "unpacked-skill",
+      "sourcePath": "submissions/pov-line-generator/SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/pov-line-generator/SKILL.md",
+      "tags": [
+        "writing",
+        "positioning",
+        "marketing",
+        "content",
+        "social-media"
+      ],
+      "tool": "PovLineGenerator"
+    },
+    {
+      "agentBytes": 99167,
+      "agentSha256": "bc200dd4df3df079f1dd30341ec7db0106d4da77490ac77f89d6d9d21bd16d04",
+      "author": "Ricardo Calejo",
+      "fileSha256": {
+        "SKILL.md": "7e968992f408d29b379908a6e5ddbc25d5a60d6a9142a71fd0919b659aeadb15",
+        "power_automate_desktop_assessment_agent.py": "bc200dd4df3df079f1dd30341ec7db0106d4da77490ac77f89d6d9d21bd16d04",
+        "scripts/analyze_solution.py": "78fde5e3d808a5a1861c083a63bfdb00ae0606d51ebcabe266ce5e8047bae46b",
+        "scripts/extract_solution.py": "6ceb0451836c987c85927ecda525436e1560e37d40892ac78b37e75ecfdf3402",
+        "scripts/render_report.py": "5743657c068ca7d627c566cb18c5d1b53e74223a56cd29a07600837489301591",
+        "scripts/run_assessment.py": "2fab92f31d49b3f3686d8cea32e91f7ea05934e9d212405800b78060f44ff3b8"
+      },
+      "files": [
+        "SKILL.md",
+        "power_automate_desktop_assessment_agent.py",
+        "scripts/analyze_solution.py",
+        "scripts/extract_solution.py",
+        "scripts/render_report.py",
+        "scripts/run_assessment.py"
+      ],
+      "name": "Power Automate Desktop Assessment",
+      "parameters": 0,
+      "platforms": [
+        "Cowork",
+        "Copilot Studio"
+      ],
+      "rawSkillSha256": "815bf62c7b114b3f5f6645bcd0059b3cd5f06ad3e3cfc302218209fc9e9cd73f",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 245544,
+      "skillSha256": "7e968992f408d29b379908a6e5ddbc25d5a60d6a9142a71fd0919b659aeadb15",
+      "slug": "power-automate-desktop-assessment",
+      "sourceBundleSha256": "63d745dece06710ce7e4fa3796d306ca1dbdc39ae86cf8dfe995d69160f99c54",
+      "sourceFiles": {
+        "SKILL.md": "815bf62c7b114b3f5f6645bcd0059b3cd5f06ad3e3cfc302218209fc9e9cd73f",
+        "scripts/analyze_solution.py": "78fde5e3d808a5a1861c083a63bfdb00ae0606d51ebcabe266ce5e8047bae46b",
+        "scripts/extract_solution.py": "6ceb0451836c987c85927ecda525436e1560e37d40892ac78b37e75ecfdf3402",
+        "scripts/render_report.py": "5743657c068ca7d627c566cb18c5d1b53e74223a56cd29a07600837489301591",
+        "scripts/run_assessment.py": "2fab92f31d49b3f3686d8cea32e91f7ea05934e9d212405800b78060f44ff3b8"
+      },
+      "sourceKind": "unpacked-skill",
+      "sourcePath": "submissions/power-automate-desktop-assessment/SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/power-automate-desktop-assessment/SKILL.md",
+      "tags": [
+        "power-automate",
+        "desktop-flows",
+        "automation",
+        "assessment",
+        "governance"
+      ],
+      "tool": "PowerAutomateDesktopAssessment"
+    },
+    {
+      "agentBytes": 37095,
+      "agentSha256": "b76ea36bf7a3221a8307589d97a605eabd60cb286910680395f46eb5b35587c5",
+      "author": "Mathias Salomonsen",
+      "fileSha256": {
+        "SKILL.md": "9a6b3330ff0ffdffed44a149cb9fcc977ce7fbcaf1dbd8975010978be849e2e1",
+        "power_automate_documentation_agent.py": "b76ea36bf7a3221a8307589d97a605eabd60cb286910680395f46eb5b35587c5"
+      },
+      "files": [
+        "SKILL.md",
+        "power_automate_documentation_agent.py"
+      ],
+      "name": "Power Automate Documentation",
+      "parameters": 0,
+      "platforms": [
+        "Cowork",
+        "Copilot Studio",
+        "Scout"
+      ],
+      "rawSkillSha256": "61734a905c947a002a165fa371f3914cb0c26427261a3cc413f083cc78aaf0b7",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 94959,
+      "skillSha256": "9a6b3330ff0ffdffed44a149cb9fcc977ce7fbcaf1dbd8975010978be849e2e1",
+      "slug": "power-automate-documentation",
+      "sourceBundleSha256": "b5c3c298c03539a645d21dafeb8e5ed32708a3e4a3fe9ab4c2e1dcfaa6e82b3d",
+      "sourceFiles": {
+        "SKILL.md": "61734a905c947a002a165fa371f3914cb0c26427261a3cc413f083cc78aaf0b7"
+      },
+      "sourceKind": "unpacked-skill",
+      "sourcePath": "submissions/power-automate-documentation/SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/power-automate-documentation/SKILL.md",
+      "tags": [
+        "power-automate",
+        "documentation",
+        "audit",
+        "governance"
+      ],
+      "tool": "PowerAutomateDocumentation"
+    },
+    {
+      "agentBytes": 14412,
+      "agentSha256": "4b1b628b46aec068037b30da41cbce4de9a5caf9f40504c091d57dec459dda59",
+      "author": "Tim Karlsson",
+      "fileSha256": {
+        "SKILL.md": "18324bce03858b8f78d7865c5939570b671a4344d145d7420631c381aa3f3344",
+        "power_bi_model_review_agent.py": "4b1b628b46aec068037b30da41cbce4de9a5caf9f40504c091d57dec459dda59"
+      },
+      "files": [
+        "SKILL.md",
+        "power_bi_model_review_agent.py"
+      ],
+      "name": "Power BI Model Review",
+      "parameters": 0,
+      "platforms": [
+        "Copilot Studio",
+        "Cowork",
+        "Scout"
+      ],
+      "rawSkillSha256": "03c5f9ca3b212567408d62eb55e0427520f33bf46d6209a4deb5cd25f06dc8ed",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 36942,
+      "skillSha256": "18324bce03858b8f78d7865c5939570b671a4344d145d7420631c381aa3f3344",
+      "slug": "power-bi-model-review",
+      "sourceBundleSha256": "1924f4612a932ad8130eee31bbba166b9ec60cf183836627cf73e3ebe83aebcc",
+      "sourceFiles": {
+        "SKILL.md": "03c5f9ca3b212567408d62eb55e0427520f33bf46d6209a4deb5cd25f06dc8ed"
+      },
+      "sourceKind": "unpacked-skill",
+      "sourcePath": "submissions/power-bi-model-review/SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/power-bi-model-review/SKILL.md",
+      "tags": [
+        "power-bi",
+        "dax",
+        "semantic-model",
+        "data",
+        "review",
+        "fabric"
+      ],
+      "tool": "PowerBiModelReview"
+    },
+    {
+      "agentBytes": 13325,
+      "agentSha256": "d076d5955a1c94e42cd9da4b84f9d21273d3276eb6f079a00aea070ce46bd890",
+      "author": "Ferran Chopo",
+      "fileSha256": {
+        "SKILL.md": "f154aff9a3e8d1ae9eef2950c2014e923296ade7ae96752fb676262f9094f152",
+        "assets/example_request.json": "a9ae3329ad6c8f5f569410c09e0ab4adb8c3ff8df6215b08d1f95ddad09a8f0b",
+        "assets/themes.json": "75197bf0105576b1f48c68ba301b0faab19c8d4b64d14644dc0b39ceb38a00ef",
+        "powerpoint_deck_designer_agent.py": "d076d5955a1c94e42cd9da4b84f9d21273d3276eb6f079a00aea070ce46bd890",
+        "references/input_schema.md": "9089c95259acfd3b59e3689c3c4b0d0fcb6331fada118e6895f8d46cd9e7338a",
+        "references/layouts.md": "ad9027edc3a897fa0f7400375f142150a11ef63e4d574d1b53712da7c89004c7",
+        "scripts/generate_presentation.py": "1b4809834578c6ecca7a66b1d5b73d6efa7565bfc5fe853d0ea8a53a4ceb7e39",
+        "scripts/layout_engine.py": "8d633a6638d5214c3c2ce3e7f35142ad68bc97d87e779c3bdf97335a1e7540e6",
+        "scripts/text_fit.py": "33a407354f73a06bdb841ccc30ea81c89cdfec5e798b636baafc50758bc2e4fa",
+        "scripts/theme_engine.py": "d943277b4ee10629db010caa5da2022afcd3882019f153fc97f06a5230983082",
+        "scripts/validators.py": "780f7173dd5dc299d895e5b45a348e10e05dddc30a95b169cd4322f0e242b9eb"
+      },
+      "files": [
+        "SKILL.md",
+        "assets/example_request.json",
+        "assets/themes.json",
+        "powerpoint_deck_designer_agent.py",
+        "references/input_schema.md",
+        "references/layouts.md",
+        "scripts/generate_presentation.py",
+        "scripts/layout_engine.py",
+        "scripts/text_fit.py",
+        "scripts/theme_engine.py",
+        "scripts/validators.py"
+      ],
+      "name": "PowerPoint Deck Designer",
+      "parameters": 0,
+      "platforms": [
+        "Copilot Studio"
+      ],
+      "rawSkillSha256": "e1f526e3110e7afa43eb9c074c884c46ccb1474ef1b974be019faed8181776c1",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 34509,
+      "skillSha256": "f154aff9a3e8d1ae9eef2950c2014e923296ade7ae96752fb676262f9094f152",
+      "slug": "powerpoint-deck-designer",
+      "sourceBundleSha256": "fc8671c4c23bdb7e45997dcc560f1fc4d8b5a86eead5a282cdc62bbc4fc40762",
+      "sourceFiles": {
+        "SKILL.md": "e1f526e3110e7afa43eb9c074c884c46ccb1474ef1b974be019faed8181776c1",
+        "assets/example_request.json": "a9ae3329ad6c8f5f569410c09e0ab4adb8c3ff8df6215b08d1f95ddad09a8f0b",
+        "assets/themes.json": "75197bf0105576b1f48c68ba301b0faab19c8d4b64d14644dc0b39ceb38a00ef",
+        "references/input_schema.md": "9089c95259acfd3b59e3689c3c4b0d0fcb6331fada118e6895f8d46cd9e7338a",
+        "references/layouts.md": "ad9027edc3a897fa0f7400375f142150a11ef63e4d574d1b53712da7c89004c7",
+        "scripts/generate_presentation.py": "1b4809834578c6ecca7a66b1d5b73d6efa7565bfc5fe853d0ea8a53a4ceb7e39",
+        "scripts/layout_engine.py": "8d633a6638d5214c3c2ce3e7f35142ad68bc97d87e779c3bdf97335a1e7540e6",
+        "scripts/text_fit.py": "33a407354f73a06bdb841ccc30ea81c89cdfec5e798b636baafc50758bc2e4fa",
+        "scripts/theme_engine.py": "d943277b4ee10629db010caa5da2022afcd3882019f153fc97f06a5230983082",
+        "scripts/validators.py": "780f7173dd5dc299d895e5b45a348e10e05dddc30a95b169cd4322f0e242b9eb"
+      },
+      "sourceKind": "legacy-zip-skill",
+      "sourcePath": "submissions/powerpoint-deck-designer/powerpoint-deck-designer.zip#SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/powerpoint-deck-designer/powerpoint-deck-designer.zip#SKILL.md",
+      "tags": [
+        "powerpoint",
+        "presentations",
+        "python",
+        "charts"
+      ],
+      "tool": "PowerpointDeckDesigner"
+    },
+    {
+      "agentBytes": 29201,
+      "agentSha256": "ce0a3943b95abe6fa24f4c270609432b250d44c514a9533d71388842e34188ca",
+      "author": "Jagmeet Chabra",
+      "fileSha256": {
+        "SKILL.md": "d4fc24a3046277a1863ad649ccd493a093138b9221694839a390dbe6a1fc669b",
+        "assets/example-notes.json": "54e56a3edbd3b55b375f5fe4c2d31c3c2aef253fc46d8518089c9891a3f9ee11",
+        "presentation_talk_track_builder_agent.py": "ce0a3943b95abe6fa24f4c270609432b250d44c514a9533d71388842e34188ca",
+        "references/tone-examples.md": "c891980c5cffc0e9df352e3421c31f56591e9cc26170eff04e2b716f8e488a35",
+        "scripts/pptx_talk_track.py": "87d38cbcfc4d967a5aefe7cf7b160badd7a91b4aaaddb1698de199a5ee2e6212"
+      },
+      "files": [
+        "SKILL.md",
+        "assets/example-notes.json",
+        "presentation_talk_track_builder_agent.py",
+        "references/tone-examples.md",
+        "scripts/pptx_talk_track.py"
+      ],
+      "name": "Presentation Talk Track Builder",
+      "parameters": 0,
+      "platforms": [
+        "Cowork",
+        "Copilot Studio",
+        "Scout"
+      ],
+      "rawSkillSha256": "9b389cb865e5348313c6d4ab719e47702fb4a34e751530757e3128bcf89a1161",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 74235,
+      "skillSha256": "d4fc24a3046277a1863ad649ccd493a093138b9221694839a390dbe6a1fc669b",
+      "slug": "presentation-talk-track-builder",
+      "sourceBundleSha256": "641db895408942afb6bd776fc24ff3a05ef5d7168ca6d6ce3a3684be71573d12",
+      "sourceFiles": {
+        "SKILL.md": "9b389cb865e5348313c6d4ab719e47702fb4a34e751530757e3128bcf89a1161",
+        "assets/example-notes.json": "54e56a3edbd3b55b375f5fe4c2d31c3c2aef253fc46d8518089c9891a3f9ee11",
+        "references/tone-examples.md": "c891980c5cffc0e9df352e3421c31f56591e9cc26170eff04e2b716f8e488a35",
+        "scripts/pptx_talk_track.py": "87d38cbcfc4d967a5aefe7cf7b160badd7a91b4aaaddb1698de199a5ee2e6212"
+      },
+      "sourceKind": "unpacked-skill",
+      "sourcePath": "submissions/presentation-talk-track-builder/SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/presentation-talk-track-builder/SKILL.md",
+      "tags": [
+        "presentations",
+        "speaker-notes",
+        "powerpoint",
+        "writing",
+        "productivity"
+      ],
+      "tool": "PresentationTalkTrackBuilder"
+    },
+    {
+      "agentBytes": 13786,
+      "agentSha256": "256c90c49138693c0bad5abb2379ac10818bb9f6486df52796b11cd7a1bf9e15",
+      "author": "Parag Dessai",
+      "fileSha256": {
+        "SKILL.md": "91277ce2a67ca7aa722902df8c6edff093903b8e7a3b82bc37407c6d1d516861",
+        "assets/example_process_spec.json": "c0f2438e75700ce27eaabc6a9f08670b926ec6689c950e7082255dc18de913e7",
+        "assets/presentation_theme.json": "902ae4fd2368d8cbf2123b8b3ac41db3a6f21e44e13ed5004718220d7738813a",
+        "process_sop_architect_agent.py": "256c90c49138693c0bad5abb2379ac10818bb9f6486df52796b11cd7a1bf9e15",
+        "references/mapping_conventions.md": "89ac15698fa1e170ce39316384dce878300dc83082fd9169a987914078ffdd12",
+        "references/presentation_style_guide.md": "55b3343dface920bbf3f79d914bc5ae97c493cca85a8321bdf532cf610292370",
+        "references/process_spec_schema.md": "54cbc3180dc35fad4af63e484f037e27b0b0a7befef32e66d4be94d7789b666a",
+        "references/sop_quality_rules.md": "7a861a2979ef38c0a61c66e632833971563fdfddc44d03add8ea890cf4b1f3fa",
+        "scripts/generate_presentation.py": "b8e0a6ad639964f24359eb0ff9d3ac532582730cdf9963bd625423210b3edb6e",
+        "scripts/generate_process_pack.py": "3c820d306d68d77a59dfd297ca66fdc432fd8f51391c442811798db4e2eeff71",
+        "scripts/validate_process_spec.py": "71f1049fe949ef7d2bcb0594318e99040099756b0b7975abffbd6cdd01f8ccfe"
+      },
+      "files": [
+        "SKILL.md",
+        "assets/example_process_spec.json",
+        "assets/presentation_theme.json",
+        "process_sop_architect_agent.py",
+        "references/mapping_conventions.md",
+        "references/presentation_style_guide.md",
+        "references/process_spec_schema.md",
+        "references/sop_quality_rules.md",
+        "scripts/generate_presentation.py",
+        "scripts/generate_process_pack.py",
+        "scripts/validate_process_spec.py"
+      ],
+      "name": "Process & SOP Architect",
+      "parameters": 0,
+      "platforms": [
+        "Copilot Studio"
+      ],
+      "rawSkillSha256": "eba2f73a0c5107c29b8f079ede3734f91b91f77cfc3267ea18eef9df17598575",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 35015,
+      "skillSha256": "91277ce2a67ca7aa722902df8c6edff093903b8e7a3b82bc37407c6d1d516861",
+      "slug": "process-sop-architect",
+      "sourceBundleSha256": "e8f9e5caea750abf45e7edbb955dfe22cc44bbebea11ff9073cb916c7abcef3d",
+      "sourceFiles": {
+        "SKILL.md": "eba2f73a0c5107c29b8f079ede3734f91b91f77cfc3267ea18eef9df17598575",
+        "assets/example_process_spec.json": "c0f2438e75700ce27eaabc6a9f08670b926ec6689c950e7082255dc18de913e7",
+        "assets/presentation_theme.json": "902ae4fd2368d8cbf2123b8b3ac41db3a6f21e44e13ed5004718220d7738813a",
+        "references/mapping_conventions.md": "89ac15698fa1e170ce39316384dce878300dc83082fd9169a987914078ffdd12",
+        "references/presentation_style_guide.md": "55b3343dface920bbf3f79d914bc5ae97c493cca85a8321bdf532cf610292370",
+        "references/process_spec_schema.md": "54cbc3180dc35fad4af63e484f037e27b0b0a7befef32e66d4be94d7789b666a",
+        "references/sop_quality_rules.md": "7a861a2979ef38c0a61c66e632833971563fdfddc44d03add8ea890cf4b1f3fa",
+        "scripts/generate_presentation.py": "b8e0a6ad639964f24359eb0ff9d3ac532582730cdf9963bd625423210b3edb6e",
+        "scripts/generate_process_pack.py": "3c820d306d68d77a59dfd297ca66fdc432fd8f51391c442811798db4e2eeff71",
+        "scripts/validate_process_spec.py": "71f1049fe949ef7d2bcb0594318e99040099756b0b7975abffbd6cdd01f8ccfe"
+      },
+      "sourceKind": "unpacked-skill",
+      "sourcePath": "submissions/process-sop-architect/SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/process-sop-architect/SKILL.md",
+      "tags": [
+        "process-improvement",
+        "sop",
+        "operations",
+        "powerpoint",
+        "productivity"
+      ],
+      "tool": "ProcessSopArchitect"
+    },
+    {
+      "agentBytes": 23208,
+      "agentSha256": "3b70de75d3c7d50223f768b620529331b455d5bbddb043c6a64dc2608fbb77f4",
+      "author": "Kody Wildfeuer",
+      "fileSha256": {
+        "SKILL.md": "b1f1551249a9729c6db50a7fafea052e6957ecc91ea7b5077a74994b1124f4d6",
+        "assets/hello_rapp_agent.py": "4a42921a9bffbbe32b71e5d1956f6b3cafa93a55eef6c10b458b0d64f8fd0a1e",
+        "rapp_agent_converter_agent.py": "3b70de75d3c7d50223f768b620529331b455d5bbddb043c6a64dc2608fbb77f4",
+        "references/rapp-agent-contract.md": "1d2cac52befe8ca62cad3407e5f1056572e6da12c9402c9e1a65407db482e58d",
+        "references/rapp1-protocol.md": "0c7f389b12f2f1d0c396b09fcde67e57acc8fa5be7100e656eb58dd64c2ec0bd",
+        "scripts/toast.py": "e09cfe52304cacc666fd865a31d8bf409d5385f3e34ecb5e210d433d39b4dab7"
+      },
+      "files": [
+        "SKILL.md",
+        "assets/hello_rapp_agent.py",
+        "rapp_agent_converter_agent.py",
+        "references/rapp-agent-contract.md",
+        "references/rapp1-protocol.md",
+        "scripts/toast.py"
+      ],
+      "name": "RAPP Agent Converter",
+      "parameters": 0,
+      "platforms": [
+        "Cowork",
+        "Copilot Studio",
+        "Scout"
+      ],
+      "rawSkillSha256": "870abc90ea5979793510ed0e9162c1de875b723b00a99953c54abb48b6feecca",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 59104,
+      "skillSha256": "b1f1551249a9729c6db50a7fafea052e6957ecc91ea7b5077a74994b1124f4d6",
+      "slug": "rapp-agent-converter",
+      "sourceBundleSha256": "37ac315d2752c58ee7d0bae94d55babac5250167c1fafd63232cc69d27b6acbd",
+      "sourceFiles": {
+        "SKILL.md": "870abc90ea5979793510ed0e9162c1de875b723b00a99953c54abb48b6feecca",
+        "assets/hello_rapp_agent.py": "4a42921a9bffbbe32b71e5d1956f6b3cafa93a55eef6c10b458b0d64f8fd0a1e",
+        "references/rapp-agent-contract.md": "1d2cac52befe8ca62cad3407e5f1056572e6da12c9402c9e1a65407db482e58d",
+        "references/rapp1-protocol.md": "0c7f389b12f2f1d0c396b09fcde67e57acc8fa5be7100e656eb58dd64c2ec0bd",
+        "scripts/toast.py": "e09cfe52304cacc666fd865a31d8bf409d5385f3e34ecb5e210d433d39b4dab7"
+      },
+      "sourceKind": "unpacked-skill",
+      "sourcePath": "submissions/rapp-agent-converter/SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/rapp-agent-converter/SKILL.md",
+      "tags": [
+        "rapp",
+        "agents",
+        "python",
+        "conversion",
+        "portability",
+        "developer-tools"
+      ],
+      "tool": "RappAgentConverter"
+    },
+    {
+      "agentBytes": 14068,
+      "agentSha256": "fa7910f52de141e19d10a411b0dc87ee6d23eb4d89d3424fcffbd25961fc2e2e",
+      "author": "AndrewHessMSFT",
+      "fileSha256": {
+        "SKILL.md": "3ec6e3a427999e67c28c37d3e138927fdea373e7216c204dca7e793b4c86f0af",
+        "assets/template.docx": "e0bec12edd299b7add075eb9c61ae9ef8ca5ce70a0bae6936b3a060f5ed2be87",
+        "redlining_content_agent.py": "fa7910f52de141e19d10a411b0dc87ee6d23eb4d89d3424fcffbd25961fc2e2e",
+        "references/docx-submissions.md": "18f2873cd338bb27c6aaab0f0853624841ceb2b310d453e9979580d9cba659a5",
+        "references/pdf-submissions.md": "bc1605ab6c84fb75ca2461d0d3d603ac4364b04d4648bf15944d363b4dc9d9dc",
+        "scripts/redline.py": "6ac1fc9fe483136a3429b529a9ec099d5eb00355673ef44a4ee92b96cdf07516"
+      },
+      "files": [
+        "SKILL.md",
+        "assets/template.docx",
+        "redlining_content_agent.py",
+        "references/docx-submissions.md",
+        "references/pdf-submissions.md",
+        "scripts/redline.py"
+      ],
+      "name": "Redlining Content",
+      "parameters": 0,
+      "platforms": [
+        "Cowork",
+        "Copilot Studio"
+      ],
+      "rawSkillSha256": "4bb1e259943051cdddc4fa617cae541655983c6d4b50bcd1c401ece12ed1f9dd",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 36033,
+      "skillSha256": "3ec6e3a427999e67c28c37d3e138927fdea373e7216c204dca7e793b4c86f0af",
+      "slug": "redlining-content",
+      "sourceBundleSha256": "da45c747f4e57a5f5a52a6fb221f2c90e1448853884e479dd937209c2174ab69",
+      "sourceFiles": {
+        "SKILL.md": "4bb1e259943051cdddc4fa617cae541655983c6d4b50bcd1c401ece12ed1f9dd",
+        "assets/template.docx": "e0bec12edd299b7add075eb9c61ae9ef8ca5ce70a0bae6936b3a060f5ed2be87",
+        "references/docx-submissions.md": "18f2873cd338bb27c6aaab0f0853624841ceb2b310d453e9979580d9cba659a5",
+        "references/pdf-submissions.md": "bc1605ab6c84fb75ca2461d0d3d603ac4364b04d4648bf15944d363b4dc9d9dc",
+        "scripts/redline.py": "6ac1fc9fe483136a3429b529a9ec099d5eb00355673ef44a4ee92b96cdf07516"
+      },
+      "sourceKind": "unpacked-skill",
+      "sourcePath": "submissions/redlining-content/SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/redlining-content/SKILL.md",
+      "tags": [
+        "documents",
+        "productivity"
+      ],
+      "tool": "RedliningContent"
+    },
+    {
+      "agentBytes": 39283,
+      "agentSha256": "90fd34cb1ca1b2fe490cd890cc2b96093abf8e4247c17a99b49568d6ee243e2b",
+      "author": "Jagmeet Chabra",
+      "fileSha256": {
+        "SKILL.md": "4226889e498878f46d783c955e05f6cda107d0a14d9563aa8e1cd9b15d8c17c8",
+        "references/sources-and-taxonomy.md": "38677af7aef021571bde8ee63495d27737fcbf499e56cede1a18830a69327ba6",
+        "regulation_monitor_agent.py": "90fd34cb1ca1b2fe490cd890cc2b96093abf8e4247c17a99b49568d6ee243e2b",
+        "scripts/build_dashboard.py": "21ff2016aa33f42b193ce1324038b1c7c1d6273ed664874bb6ebd1612bf350e8"
+      },
+      "files": [
+        "SKILL.md",
+        "references/sources-and-taxonomy.md",
+        "regulation_monitor_agent.py",
+        "scripts/build_dashboard.py"
+      ],
+      "name": "Regulation Monitor",
+      "parameters": 0,
+      "platforms": [
+        "Cowork",
+        "Scout"
+      ],
+      "rawSkillSha256": "8f065799eb519f245d5236c981c85799e1b4bf033d762f549327e55fc478cd87",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 99611,
+      "skillSha256": "4226889e498878f46d783c955e05f6cda107d0a14d9563aa8e1cd9b15d8c17c8",
+      "slug": "regulation-monitor",
+      "sourceBundleSha256": "7304753a4c956128aa422efcf202be944eb45074a02b20f1b5b8bdb24a22f780",
+      "sourceFiles": {
+        "SKILL.md": "8f065799eb519f245d5236c981c85799e1b4bf033d762f549327e55fc478cd87",
+        "references/sources-and-taxonomy.md": "38677af7aef021571bde8ee63495d27737fcbf499e56cede1a18830a69327ba6",
+        "scripts/build_dashboard.py": "21ff2016aa33f42b193ce1324038b1c7c1d6273ed664874bb6ebd1612bf350e8"
+      },
+      "sourceKind": "unpacked-skill",
+      "sourcePath": "submissions/regulation-monitor/SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/regulation-monitor/SKILL.md",
+      "tags": [
+        "regulation",
+        "monitoring",
+        "compliance",
+        "dashboard",
+        "research"
+      ],
+      "tool": "RegulationMonitor"
+    },
+    {
+      "agentBytes": 32944,
+      "agentSha256": "c45e6acb7640af30e45890a5d42b0d2b77e3250a198ed3b69491a041fb986b57",
+      "author": "Henry Jammes",
+      "fileSha256": {
+        "SKILL.md": "01a900b8294665e9f0b8818397b9db14409b9112944af54803e86c8d8a8e861d",
+        "references/components.md": "6c9883d4b7c6886ea25407c11050600cf9961d028199d58ac4ffe88079a29b5e",
+        "references/template.html": "4a1df16b645aa62414588cd9e6cb160646eb89e4996603c44d36af2b899a1502",
+        "rich_html_presentation_agent.py": "c45e6acb7640af30e45890a5d42b0d2b77e3250a198ed3b69491a041fb986b57"
+      },
+      "files": [
+        "SKILL.md",
+        "references/components.md",
+        "references/template.html",
+        "rich_html_presentation_agent.py"
+      ],
+      "name": "Rich HTML Presentation",
+      "parameters": 0,
+      "platforms": [
+        "Cowork",
+        "Copilot Studio"
+      ],
+      "rawSkillSha256": "938c44077af990516322bc0b0b1606e03143443910b9e818fd294a58587d20ee",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 84797,
+      "skillSha256": "01a900b8294665e9f0b8818397b9db14409b9112944af54803e86c8d8a8e861d",
+      "slug": "rich-html-presentation",
+      "sourceBundleSha256": "2e18a3b7a205511871fdb53808e53e0dba63dd51f26dc2fb6a889b400491d081",
+      "sourceFiles": {
+        "SKILL.md": "938c44077af990516322bc0b0b1606e03143443910b9e818fd294a58587d20ee",
+        "references/components.md": "6c9883d4b7c6886ea25407c11050600cf9961d028199d58ac4ffe88079a29b5e",
+        "references/template.html": "4a1df16b645aa62414588cd9e6cb160646eb89e4996603c44d36af2b899a1502"
+      },
+      "sourceKind": "unpacked-skill",
+      "sourcePath": "submissions/rich-html-presentation/SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/rich-html-presentation/SKILL.md",
+      "tags": [
+        "presentations",
+        "html",
+        "design",
+        "productivity",
+        "writing"
+      ],
+      "tool": "RichHtmlPresentation"
+    },
+    {
+      "agentBytes": 88483,
+      "agentSha256": "bca21711f2b6e96623e5852f36c2c80c9ae0b150f6852f029d92e3d0a6efc889",
+      "author": "AndrewHessMSFT",
+      "fileSha256": {
+        "SKILL.md": "2c6de8b6786be2c2ca56a1b10452d206111924eaf56584362bf002bdf30226ae",
+        "assets/Basketball_Demo_Data.xlsx": "cdce4ce14810ea74360fbb9c39f9804d58de771ea19ca9b15e245745e811a436",
+        "references/CHART-PATTERNS.md": "b84e3d7d2eb4573e3a5704d3592365ff173e38107409f9a145d0645c1f1f9e00",
+        "references/DEMO-MODE.md": "3d70b7de067ecc1df83af4d4c0ac9dc27c3d7723f2c4589e4c227097e37ed264",
+        "scripts/build_story.py": "484e05c64ab2df1bdda0b1b924b65507feb276b42ee598b55d0d793ee8996f7b",
+        "scrollytelling_data_agent.py": "bca21711f2b6e96623e5852f36c2c80c9ae0b150f6852f029d92e3d0a6efc889"
+      },
+      "files": [
+        "SKILL.md",
+        "assets/Basketball_Demo_Data.xlsx",
+        "references/CHART-PATTERNS.md",
+        "references/DEMO-MODE.md",
+        "scripts/build_story.py",
+        "scrollytelling_data_agent.py"
+      ],
+      "name": "Scrollytelling Data",
+      "parameters": 0,
+      "platforms": [
+        "Copilot Studio"
+      ],
+      "rawSkillSha256": "1d6d9842b4f0c8d650f04ac85e2b12a01532bd727d4bdf5c0b3bb9aa64ef116f",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 223947,
+      "skillSha256": "2c6de8b6786be2c2ca56a1b10452d206111924eaf56584362bf002bdf30226ae",
+      "slug": "scrollytelling-data",
+      "sourceBundleSha256": "3ba14527b6c6b7f91ad13c0c27891d1ea48c802e7c1e24d84b70395f75da32de",
+      "sourceFiles": {
+        "SKILL.md": "1d6d9842b4f0c8d650f04ac85e2b12a01532bd727d4bdf5c0b3bb9aa64ef116f",
+        "assets/Basketball_Demo_Data.xlsx": "cdce4ce14810ea74360fbb9c39f9804d58de771ea19ca9b15e245745e811a436",
+        "references/CHART-PATTERNS.md": "b84e3d7d2eb4573e3a5704d3592365ff173e38107409f9a145d0645c1f1f9e00",
+        "references/DEMO-MODE.md": "3d70b7de067ecc1df83af4d4c0ac9dc27c3d7723f2c4589e4c227097e37ed264",
+        "scripts/build_story.py": "484e05c64ab2df1bdda0b1b924b65507feb276b42ee598b55d0d793ee8996f7b"
+      },
+      "sourceKind": "unpacked-skill",
+      "sourcePath": "submissions/scrollytelling-data/SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/scrollytelling-data/SKILL.md",
+      "tags": [
+        "data",
+        "visualization",
+        "storytelling",
+        "reporting"
+      ],
+      "tool": "ScrollytellingData"
+    },
+    {
+      "agentBytes": 17640,
+      "agentSha256": "751dd92f185fd40146d82b0a72f7cd341370a0b84982d2d9fbb081a9d4788d09",
+      "author": "Mathias Salomonsen",
+      "fileSha256": {
+        "SKILL.md": "116ad42643ed0cadfea2937f9d7c0d5435f1fe6d899c7696c6ebf5c3b093466f",
+        "sharepoint_list_formatter_agent.py": "751dd92f185fd40146d82b0a72f7cd341370a0b84982d2d9fbb081a9d4788d09"
+      },
+      "files": [
+        "SKILL.md",
+        "sharepoint_list_formatter_agent.py"
+      ],
+      "name": "SharePoint List Formatter",
+      "parameters": 0,
+      "platforms": [
+        "Cowork",
+        "Copilot Studio",
+        "Scout"
+      ],
+      "rawSkillSha256": "10e9033ed2c63a887d9c954628f49d0292135f5c267eff7d555e95d161e7a320",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 45363,
+      "skillSha256": "116ad42643ed0cadfea2937f9d7c0d5435f1fe6d899c7696c6ebf5c3b093466f",
+      "slug": "sharepoint-list-formatter",
+      "sourceBundleSha256": "bdf8a31afae13a0a5ad00738ae456a15cdccff4c134d1f9de4b90eebc5f22297",
+      "sourceFiles": {
+        "SKILL.md": "10e9033ed2c63a887d9c954628f49d0292135f5c267eff7d555e95d161e7a320"
+      },
+      "sourceKind": "unpacked-skill",
+      "sourcePath": "submissions/sharepoint-list-formatter/SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/sharepoint-list-formatter/SKILL.md",
+      "tags": [
+        "sharepoint",
+        "microsoft-365",
+        "productivity",
+        "tables",
+        "data"
+      ],
+      "tool": "SharepointListFormatter"
+    },
+    {
+      "agentBytes": 22265,
+      "agentSha256": "fa9891a81fb26ff6a1b48bea7b8b3e4df9ea00a0003b7e297d6708adfa90fc8b",
+      "author": "Marco Rocca",
+      "fileSha256": {
+        "SKILL.md": "c96e2bb20415ab56a53e688b3680e2663d7a1e2ee92fb7cb159b9bead73d189a",
+        "sharepoint_list_insight_report_generator_agent.py": "fa9891a81fb26ff6a1b48bea7b8b3e4df9ea00a0003b7e297d6708adfa90fc8b"
+      },
+      "files": [
+        "SKILL.md",
+        "sharepoint_list_insight_report_generator_agent.py"
+      ],
+      "name": "SharePoint List Insight Report Generator",
+      "parameters": 0,
+      "platforms": [
+        "Copilot Studio"
+      ],
+      "rawSkillSha256": "2a81980f3281035bac7ea867c0347519afe73c644289a4b149895d1db7632ff2",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 56403,
+      "skillSha256": "c96e2bb20415ab56a53e688b3680e2663d7a1e2ee92fb7cb159b9bead73d189a",
+      "slug": "sharepoint-list-insight-report-generator",
+      "sourceBundleSha256": "87daa18ff41ab7c0a7855759d0999510a4a895e53457142babec9584afebfdc2",
+      "sourceFiles": {
+        "SKILL.md": "2a81980f3281035bac7ea867c0347519afe73c644289a4b149895d1db7632ff2"
+      },
+      "sourceKind": "unpacked-skill",
+      "sourcePath": "submissions/sharepoint-list-insight-report-generator/SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/sharepoint-list-insight-report-generator/SKILL.md",
+      "tags": [
+        "sharepoint",
+        "microsoft-365",
+        "lists",
+        "report",
+        "html"
+      ],
+      "tool": "SharepointListInsightReportGenerator"
+    },
+    {
+      "agentBytes": 11185,
+      "agentSha256": "a034e6ed701e52783c20dc6b1d95e8230f63d7ef6638e882ef40b0b3d7d935cf",
+      "author": "Simon Owen",
+      "fileSha256": {
+        "SKILL.md": "4aea1354922b70b503d38ea88d2b3ae0dbebd43a53ddffd7fee885459cecd914",
+        "references/skill-design-checklist.md": "4ac955988501320f635dcc8618f548015612ca582c94a6da37d0706acf4b3f83",
+        "skill_authoring_coach_agent.py": "a034e6ed701e52783c20dc6b1d95e8230f63d7ef6638e882ef40b0b3d7d935cf"
+      },
+      "files": [
+        "SKILL.md",
+        "references/skill-design-checklist.md",
+        "skill_authoring_coach_agent.py"
+      ],
+      "name": "Skill Authoring Coach",
+      "parameters": 0,
+      "platforms": [
+        "Cowork",
+        "Copilot Studio",
+        "Scout"
+      ],
+      "rawSkillSha256": "04504f6bdd66f01d908312332d1ce96307e895bedb1640c820ab96ba420bed17",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 28598,
+      "skillSha256": "4aea1354922b70b503d38ea88d2b3ae0dbebd43a53ddffd7fee885459cecd914",
+      "slug": "skill-authoring-coach",
+      "sourceBundleSha256": "97ab66dc03d5cd69986b4936fad87627f12093dc5f6593220093991098cbaf6a",
+      "sourceFiles": {
+        "SKILL.md": "04504f6bdd66f01d908312332d1ce96307e895bedb1640c820ab96ba420bed17",
+        "references/skill-design-checklist.md": "4ac955988501320f635dcc8618f548015612ca582c94a6da37d0706acf4b3f83"
+      },
+      "sourceKind": "unpacked-skill",
+      "sourcePath": "submissions/skill-authoring-coach/SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/skill-authoring-coach/SKILL.md",
+      "tags": [
+        "skills",
+        "authoring",
+        "documentation",
+        "productivity",
+        "agent"
+      ],
+      "tool": "SkillAuthoringCoach"
+    },
+    {
+      "agentBytes": 28180,
+      "agentSha256": "89cac6a01748a2f767778dd82d2dfc7c8b8a6b624d714175de958e3822b6666e",
+      "author": "Faride Ilanda",
+      "fileSha256": {
+        "SKILL.md": "67d9a2401d17a50723e1199da5ea4c4bb33a2353de15f80e70f51c90bb80e0d4",
+        "stoic_negotiator_agent.py": "89cac6a01748a2f767778dd82d2dfc7c8b8a6b624d714175de958e3822b6666e"
+      },
+      "files": [
+        "SKILL.md",
+        "stoic_negotiator_agent.py"
+      ],
+      "name": "Stoic Negotiator",
+      "parameters": 0,
+      "platforms": [
+        "Copilot Studio",
+        "Cowork"
+      ],
+      "rawSkillSha256": "b74fe8084435475e3f9ea94d324f843df5f6af171719da51197d72d36b72e788",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 72037,
+      "skillSha256": "67d9a2401d17a50723e1199da5ea4c4bb33a2353de15f80e70f51c90bb80e0d4",
+      "slug": "stoic-negotiator",
+      "sourceBundleSha256": "39357ac0658f8c53065bc366e49de98e350ea83dcc53345583a22ec2647386b5",
+      "sourceFiles": {
+        "SKILL.md": "b74fe8084435475e3f9ea94d324f843df5f6af171719da51197d72d36b72e788"
+      },
+      "sourceKind": "unpacked-skill",
+      "sourcePath": "submissions/stoic-negotiator/SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/stoic-negotiator/SKILL.md",
+      "tags": [
+        "negotiation",
+        "decision-making",
+        "offers",
+        "salary",
+        "sales",
+        "commerce",
+        "BATNA",
+        "ZOPA",
+        "deals",
+        "stoicism"
+      ],
+      "tool": "StoicNegotiator"
+    },
+    {
+      "agentBytes": 12886,
+      "agentSha256": "3cb0e67c9a1ad1bd53ddbd6986c2c1b4bf9580ec7477df7434279e3e68368a39",
+      "author": "Srinivas Varukala",
+      "fileSha256": {
+        "SKILL.md": "b1a20017e36483419b09c85a3314e6b071eb5dac0f1a6a92b66cf9060a585a88",
+        "style_analyzer_agent.py": "3cb0e67c9a1ad1bd53ddbd6986c2c1b4bf9580ec7477df7434279e3e68368a39"
+      },
+      "files": [
+        "SKILL.md",
+        "style_analyzer_agent.py"
+      ],
+      "name": "Communication Style Analyzer",
+      "parameters": 0,
+      "platforms": [
+        "Cowork",
+        "Scout"
+      ],
+      "rawSkillSha256": "9a6f6f6b54dfae2bfdb74aefee17f08c5f93344696d36736304ce33efca1ccea",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 32946,
+      "skillSha256": "b1a20017e36483419b09c85a3314e6b071eb5dac0f1a6a92b66cf9060a585a88",
+      "slug": "style-analyzer",
+      "sourceBundleSha256": "0b26c86b6145866f83cea0d079147000e7bf3038086e1f873ee5628a0e2fe765",
+      "sourceFiles": {
+        "SKILL.md": "9a6f6f6b54dfae2bfdb74aefee17f08c5f93344696d36736304ce33efca1ccea"
+      },
+      "sourceKind": "unpacked-skill",
+      "sourcePath": "submissions/style-analyzer/SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/style-analyzer/SKILL.md",
+      "tags": [
+        "writing",
+        "style",
+        "teams",
+        "email",
+        "memory",
+        "productivity"
+      ],
+      "tool": "StyleAnalyzer"
+    },
+    {
+      "agentBytes": 18815,
+      "agentSha256": "a1faf0d6d978e7cddb7d23e1a60d813bf630789972bff7a65789e7556f68d279",
+      "author": "Rafael Lopez Alcaraz",
+      "fileSha256": {
+        "SKILL.md": "8706d486ae578a6eb73f738a152bba389010be2b6d8e5a4d3c3202ffd0b8589e",
+        "tool_tracer_agent.py": "a1faf0d6d978e7cddb7d23e1a60d813bf630789972bff7a65789e7556f68d279"
+      },
+      "files": [
+        "SKILL.md",
+        "tool_tracer_agent.py"
+      ],
+      "name": "Tool Tracer",
+      "parameters": 0,
+      "platforms": [
+        "Copilot Studio"
+      ],
+      "rawSkillSha256": "0f8211b8457f658fc8d0ed829d3677e2212ff5ab4ba8fce4753acb2d545d9b6c",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 48278,
+      "skillSha256": "8706d486ae578a6eb73f738a152bba389010be2b6d8e5a4d3c3202ffd0b8589e",
+      "slug": "tool-tracer",
+      "sourceBundleSha256": "51fc63eafab455a28788d848efedcb3fa561d0ba661c2054e2bc1f57d2770af5",
+      "sourceFiles": {
+        "SKILL.md": "0f8211b8457f658fc8d0ed829d3677e2212ff5ab4ba8fce4753acb2d545d9b6c"
+      },
+      "sourceKind": "unpacked-skill",
+      "sourcePath": "submissions/tool-tracer/SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/tool-tracer/SKILL.md",
+      "tags": [
+        "transparency",
+        "observability",
+        "debugging",
+        "workflow",
+        "logging",
+        "json",
+        "productivity"
+      ],
+      "tool": "ToolTracer"
+    },
+    {
+      "agentBytes": 12174,
+      "agentSha256": "a6d8eb8e80e0afec6dcf6d7aba9dbeb43af8061f5366b8be65b8eea45bbb0aae",
+      "author": "Tim Karlsson",
+      "fileSha256": {
+        "SKILL.md": "05736c3190c093fc57458a25c58aa6d8c2817901d1c11f67303636c0a4ea085b",
+        "vendor_contract_risk_review_agent.py": "a6d8eb8e80e0afec6dcf6d7aba9dbeb43af8061f5366b8be65b8eea45bbb0aae"
+      },
+      "files": [
+        "SKILL.md",
+        "vendor_contract_risk_review_agent.py"
+      ],
+      "name": "Vendor Contract Risk Review",
+      "parameters": 0,
+      "platforms": [
+        "Cowork",
+        "Copilot Studio"
+      ],
+      "rawSkillSha256": "8f037b372a6ad8c8f223cf837dfdf59bcee215e2902c3a7d60564a6ae9bab695",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 31327,
+      "skillSha256": "05736c3190c093fc57458a25c58aa6d8c2817901d1c11f67303636c0a4ea085b",
+      "slug": "vendor-contract-risk-review",
+      "sourceBundleSha256": "b6346607da3803808d64a8dc3a83ebac8efd1948bedaa6ce4b28601cc3d6d625",
+      "sourceFiles": {
+        "SKILL.md": "8f037b372a6ad8c8f223cf837dfdf59bcee215e2902c3a7d60564a6ae9bab695"
+      },
+      "sourceKind": "unpacked-skill",
+      "sourcePath": "submissions/vendor-contract-risk-review/SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/vendor-contract-risk-review/SKILL.md",
+      "tags": [
+        "contracts",
+        "legal",
+        "procurement",
+        "risk",
+        "vendor-management",
+        "review"
+      ],
+      "tool": "VendorContractRiskReview"
+    },
+    {
+      "agentBytes": 29035,
+      "agentSha256": "1175d5dd657078d4e5557cda486369289c16c041ed3a823aabe2169076145997",
+      "author": "Gaurav Mahajan",
+      "fileSha256": {
+        "SKILL.md": "4e0abf6d8986faced693df4410426ce5f49868ae738170ab7d6659ffb6f733a3",
+        "what_to_use_when_agent.py": "1175d5dd657078d4e5557cda486369289c16c041ed3a823aabe2169076145997"
+      },
+      "files": [
+        "SKILL.md",
+        "what_to_use_when_agent.py"
+      ],
+      "name": "What to Use When",
+      "parameters": 0,
+      "platforms": [
+        "Cowork"
+      ],
+      "rawSkillSha256": "2d853d0c2dd281e486bc4b7ec382b02efaf73a253b40ec767556edf56d7cc10f",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 73714,
+      "skillSha256": "4e0abf6d8986faced693df4410426ce5f49868ae738170ab7d6659ffb6f733a3",
+      "slug": "what-to-use-when",
+      "sourceBundleSha256": "ba3c284e7b7f2f5710365726169b9bf3b6e630966e946161d62aaa4eb5588b21",
+      "sourceFiles": {
+        "SKILL.md": "2d853d0c2dd281e486bc4b7ec382b02efaf73a253b40ec767556edf56d7cc10f"
+      },
+      "sourceKind": "unpacked-skill",
+      "sourcePath": "submissions/what-to-use-when/SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/what-to-use-when/SKILL.md",
+      "tags": [
+        "productivity",
+        "automation",
+        "copilot",
+        "routing"
+      ],
+      "tool": "WhatToUseWhen"
+    },
+    {
+      "agentBytes": 23090,
+      "agentSha256": "caa451059d974d144f6bc2f73953b24685bca0d3b217cdfec785985c32e95b28",
+      "author": "Andy Zehr",
+      "fileSha256": {
+        "SKILL.md": "d10b26751c5a19871eac164b7312bfc001e87ace51980ff89b0f0ca480cdf13b",
+        "references/network-map.md": "6aa82a8a2b32a5e23cb2d7f86b24de75b00940798fbcfaf7a0474a9b72af4cbe",
+        "references/process-rail.md": "a0b54750787ef70d7c0025dd6c7d88c7679dcf260ffcb1bf847bc6713117468f",
+        "whiteboard_to_infographic_agent.py": "caa451059d974d144f6bc2f73953b24685bca0d3b217cdfec785985c32e95b28"
+      },
+      "files": [
+        "SKILL.md",
+        "references/network-map.md",
+        "references/process-rail.md",
+        "whiteboard_to_infographic_agent.py"
+      ],
+      "name": "Whiteboard to Infographic",
+      "parameters": 0,
+      "platforms": [
+        "Copilot Studio"
+      ],
+      "rawSkillSha256": "5441327f75e6bb85cbe8878f964f842aef6e9a96f260f665151f232ce8f5782b",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 58846,
+      "skillSha256": "d10b26751c5a19871eac164b7312bfc001e87ace51980ff89b0f0ca480cdf13b",
+      "slug": "whiteboard-to-infographic",
+      "sourceBundleSha256": "6de2c0b5bbda90c7dab60d7df6f6d6db21048fcc17587f2f9a83e48a8b73cdc9",
+      "sourceFiles": {
+        "SKILL.md": "5441327f75e6bb85cbe8878f964f842aef6e9a96f260f665151f232ce8f5782b",
+        "references/network-map.md": "6aa82a8a2b32a5e23cb2d7f86b24de75b00940798fbcfaf7a0474a9b72af4cbe",
+        "references/process-rail.md": "a0b54750787ef70d7c0025dd6c7d88c7679dcf260ffcb1bf847bc6713117468f"
+      },
+      "sourceKind": "unpacked-skill",
+      "sourcePath": "submissions/whiteboard-to-infographic/SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/whiteboard-to-infographic/SKILL.md",
+      "tags": [
+        "infographic",
+        "whiteboard",
+        "powerpoint",
+        "presentations",
+        "diagrams",
+        "design",
+        "consulting"
+      ],
+      "tool": "WhiteboardToInfographic"
+    },
+    {
+      "agentBytes": 12777,
+      "agentSha256": "0637639fc9756e8db171a0f343d80b5d2cdc5b7d31c04d8a54c39381453e7f8a",
+      "author": "Chris Garty",
+      "fileSha256": {
+        "SKILL.md": "70c9d56fd8f50a299e99cc088c93fa30b0bd648eb09fd2e9848795ea423d7184",
+        "references/ai-writing-tells.md": "e6a88cb37b8205b3ddee567ebf8aa4a27b0138e8837fe7fb790590a0ec7850e8",
+        "wikipedia_human_style_writing_agent.py": "0637639fc9756e8db171a0f343d80b5d2cdc5b7d31c04d8a54c39381453e7f8a"
+      },
+      "files": [
+        "SKILL.md",
+        "references/ai-writing-tells.md",
+        "wikipedia_human_style_writing_agent.py"
+      ],
+      "name": "Wikipedia Human Style Writing",
+      "parameters": 0,
+      "platforms": [
+        "Cowork",
+        "Copilot Studio",
+        "Scout"
+      ],
+      "rawSkillSha256": "464ed55bf79bce4f775869445861a8f952e210c77dc42c62a216d1d6945268fe",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 33020,
+      "skillSha256": "70c9d56fd8f50a299e99cc088c93fa30b0bd648eb09fd2e9848795ea423d7184",
+      "slug": "wikipedia-human-style-writing",
+      "sourceBundleSha256": "ca309935dd0d9bbadaff207a1eedaf167154bbadb0ee62c94b338b47b8b35ea2",
+      "sourceFiles": {
+        "SKILL.md": "464ed55bf79bce4f775869445861a8f952e210c77dc42c62a216d1d6945268fe",
+        "references/ai-writing-tells.md": "e6a88cb37b8205b3ddee567ebf8aa4a27b0138e8837fe7fb790590a0ec7850e8"
+      },
+      "sourceKind": "unpacked-skill",
+      "sourcePath": "submissions/wikipedia-human-style-writing/SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/wikipedia-human-style-writing/SKILL.md",
+      "tags": [
+        "writing",
+        "content",
+        "editing",
+        "style",
+        "humanize",
+        "ai-detection",
+        "wikipedia"
+      ],
+      "tool": "WikipediaHumanStyleWriting"
+    },
+    {
+      "agentBytes": 32173,
+      "agentSha256": "e86896a58ac55c03472d47e30711d813e9fcac5e99e9f0af0d9eb42d1e4b6205",
+      "author": "Allan De Castro",
+      "fileSha256": {
+        "SKILL.md": "11178d546efc260e5423fd0fe7396af726237f253e084685be5103d05eef7ebe",
+        "assets/config.example.json": "0c0404b376fc69b16c366f0811e738098392058b577e042a1bd9b488f379a2da",
+        "references/brief-template.md": "28e51704b7dfbb63dfe62cc1439943646056b66e6ffb9dab1a130231e1d3cb57",
+        "references/install-automation.md": "52f2dac3b8e291323745f23e6d08ce42496ef48b783545343d0cf1a840688de7",
+        "references/scout-tools.md": "093cbaafba2a0a6454a5f3418c26049f0cdf5280fcc21f614ef42e8d2a4a4176",
+        "references/signal-rules.md": "a6c4c3c793f7c01d8f9195821f93c865a5b8f79e390b0003633b844eb2fee3b0",
+        "work_brief_agent.py": "e86896a58ac55c03472d47e30711d813e9fcac5e99e9f0af0d9eb42d1e4b6205"
+      },
+      "files": [
+        "SKILL.md",
+        "assets/config.example.json",
+        "references/brief-template.md",
+        "references/install-automation.md",
+        "references/scout-tools.md",
+        "references/signal-rules.md",
+        "work_brief_agent.py"
+      ],
+      "name": "Work Brief",
+      "parameters": 0,
+      "platforms": [
+        "Scout"
+      ],
+      "rawSkillSha256": "0886aab893cecd0e3e7d6d4556f4721831c8ebd691a65ed147a61a41f34a094a",
+      "required": 0,
+      "resultKind": "instructions",
+      "skillBytes": 82263,
+      "skillSha256": "11178d546efc260e5423fd0fe7396af726237f253e084685be5103d05eef7ebe",
+      "slug": "work-brief",
+      "sourceBundleSha256": "9f3959d454a82de39d781b1dbe0e30a59c7193c74aa89ef3a1d583361b6cb532",
+      "sourceFiles": {
+        "SKILL.md": "0886aab893cecd0e3e7d6d4556f4721831c8ebd691a65ed147a61a41f34a094a",
+        "assets/config.example.json": "0c0404b376fc69b16c366f0811e738098392058b577e042a1bd9b488f379a2da",
+        "references/brief-template.md": "28e51704b7dfbb63dfe62cc1439943646056b66e6ffb9dab1a130231e1d3cb57",
+        "references/install-automation.md": "52f2dac3b8e291323745f23e6d08ce42496ef48b783545343d0cf1a840688de7",
+        "references/scout-tools.md": "093cbaafba2a0a6454a5f3418c26049f0cdf5280fcc21f614ef42e8d2a4a4176",
+        "references/signal-rules.md": "a6c4c3c793f7c01d8f9195821f93c865a5b8f79e390b0003633b844eb2fee3b0"
+      },
+      "sourceKind": "unpacked-skill",
+      "sourcePath": "submissions/work-brief/SKILL.md",
+      "sourceUrl": "https://github.com/microsoft/cat-agent-skills/blob/147c2dd84444299b6645f57a1251029f6523e171/submissions/work-brief/SKILL.md",
+      "tags": [
+        "productivity",
+        "automation",
+        "teams",
+        "email",
+        "calendar",
+        "briefing",
+        "multilingual"
+      ],
+      "tool": "WorkBrief"
+    }
+  ],
+  "source": {
+    "commit": "147c2dd84444299b6645f57a1251029f6523e171",
+    "repository": "https://github.com/microsoft/cat-agent-skills"
+  }
+}

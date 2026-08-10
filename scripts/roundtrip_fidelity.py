@@ -25,27 +25,37 @@ def run(*args: str) -> subprocess.CompletedProcess[str]:
 
 
 def main() -> int:
-    skill_dirs = {path.parent for path in ROOT.glob("*/SKILL.md")}
-    agent_dirs = {path.parent for path in ROOT.glob("*/*_agent.py")}
+    skill_dirs = {
+        path.parent
+        for path in ROOT.rglob("SKILL.md")
+        if ".git" not in path.parts
+        and path.relative_to(ROOT).parts[0] != "engine"
+    }
+    pair_agents = list(ROOT.glob("*/*_agent.py"))
+    pair_agents += list(ROOT.glob("cat-agent-skills/*/*_agent.py"))
+    agent_dirs = {path.parent for path in pair_agents}
     if not skill_dirs and not agent_dirs:
         print("No top-level *_agent.py capability pairs found", file=sys.stderr)
         return 1
 
     failures: list[str] = []
     for directory in sorted(skill_dirs - agent_dirs):
-        failures.append(directory.name)
-        print(f"FAIL  {directory.name}\n      SKILL.md has no linked *_agent.py")
+        label = directory.relative_to(ROOT).as_posix()
+        failures.append(label)
+        print(f"FAIL  {label}\n      SKILL.md has no linked *_agent.py")
     for directory in sorted(agent_dirs - skill_dirs):
-        failures.append(directory.name)
-        print(f"FAIL  {directory.name}\n      *_agent.py has no companion SKILL.md")
+        label = directory.relative_to(ROOT).as_posix()
+        failures.append(label)
+        print(f"FAIL  {label}\n      *_agent.py has no companion SKILL.md")
 
     agents = []
     for directory in sorted(skill_dirs & agent_dirs):
         matches = sorted(directory.glob("*_agent.py"))
+        label = directory.relative_to(ROOT).as_posix()
         if len(matches) != 1:
-            failures.append(directory.name)
+            failures.append(label)
             print(
-                f"FAIL  {directory.name}\n"
+                f"FAIL  {label}\n"
                 f"      expected one linked agent, found {len(matches)}"
             )
         else:
@@ -53,14 +63,15 @@ def main() -> int:
     with tempfile.TemporaryDirectory() as tmp:
         work = Path(tmp)
         for agent in agents:
-            slug = agent.parent.name
+            label = agent.parent.relative_to(ROOT).as_posix()
+            temp_name = label.replace("/", "__")
             skill = agent.parent / "SKILL.md"
             problems: list[str] = []
 
             if not skill.is_file():
                 problems.append("missing companion SKILL.md")
             else:
-                restored = work / f"{slug}_restored.py"
+                restored = work / f"{temp_name}_restored.py"
                 result = run(
                     "convert", str(skill), "--to", "agent", "-o", str(restored)
                 )
@@ -72,7 +83,7 @@ def main() -> int:
                 elif restored.read_bytes() != agent.read_bytes():
                     problems.append("SKILL.md restores different agent bytes")
 
-                projected_dir = work / f"{slug}_projection"
+                projected_dir = work / f"{temp_name}_projection"
                 projected = projected_dir / "SKILL.md"
                 result = run(
                     "convert", str(agent), "--to", "skill", "-o", str(projected)
@@ -111,12 +122,12 @@ def main() -> int:
                     problems.append("--tool output is not a function contract")
 
             if problems:
-                failures.append(slug)
-                print(f"FAIL  {slug}")
+                failures.append(label)
+                print(f"FAIL  {label}")
                 for problem in problems:
                     print(f"      {problem}")
             else:
-                print(f"ok    {slug:<28} byte-identical + executable contract")
+                print(f"ok    {label:<52} byte-identical + executable contract")
 
     print()
     if failures:

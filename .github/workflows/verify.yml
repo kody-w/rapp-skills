@@ -23,5 +23,12 @@ jobs:
         run: python3 toast.py selftest
       - name: Verify all linked-agent pairs
         run: python3 scripts/roundtrip_fidelity.py
+      - name: Verify CAT catalog provenance
+        run: python3 scripts/verify_cat_catalog.py
+      - name: Importer safety self-test
+        run: |
+          python3 -m py_compile scripts/import_cat_agent_skills.py
+          python3 -m py_compile scripts/verify_cat_catalog.py
+          python3 scripts/import_cat_agent_skills.py --selftest
       - name: Root launcher contains no converter implementation
         run: test "$(grep -c '^def ' toast.py || true)" = "0"
