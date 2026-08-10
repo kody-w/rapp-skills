@@ -78,7 +78,11 @@ def validate(path: Path) -> list[str]:
 
     if not any(line.strip() for line in lines[end + 1 :]):
         errors.append(f"{path}: Markdown body is empty")
-    if len(lines) > 500:
+    # Converter projections embed the complete linked agent after this marker.
+    # The 500-line recommendation applies to authored instructions, not to the
+    # byte-exact implementation that makes the pair self-contained.
+    authored = text.split("<!-- toaster:generated:begin -->", 1)[0]
+    if len(authored.splitlines()) > 500:
         errors.append(f"{path}: SKILL.md exceeds the recommended 500-line limit")
 
     return errors

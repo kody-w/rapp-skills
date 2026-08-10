@@ -1,159 +1,160 @@
 ---
 name: "rapp-agent-bridge"
-description: "Use whenever a skill directory contains a `*_agent.py` beside its SKILL.md, or the user mentions a toasted skill, a RAPP agent file, an RCI capsule, or asks why a skill ships a Python file. Teaches this host to take the skill's parameters and ordered steps from the agent file's deterministic contract instead of improvising them from prose — on hosts with code execution by running the agent, and on hosts without it by reading the generated blocks, which are guaranteed to agree."
+description: "Use whenever an Agent Skill ships a linked *_agent.py beside SKILL.md, the linked file is missing, or the user asks how to run a RAPP agent projection without paraphrasing it. Prefer execution of the exact linked agent where Python is available; otherwise use the complete embedded Python as the exact specification."
 ---
 
-# RAPP agent bridge
+# RAPP linked-agent bridge
 
-A **toasted** skill ships two files that say the same thing:
+An Agent Skill projection produced by `rapp-agent-converter` is a pair:
 
-```
+```text
 <skill>/
-├── SKILL.md          # prose, plus generated Parameters + Deterministic steps
-└── <slug>_agent.py   # the same contract as runnable Python
+├── SKILL.md
+└── <slug>_agent.py
 ```
 
-Most hosts see only the markdown and improvise the procedure. This skill makes
-the agent file usable instead, so the steps are *substituted* rather than
-retyped from memory.
+The linked Python file is not a helper or an approximation. It is a byte-exact
+copy of the canonical RAPP cartridge. The `SKILL.md` also carries the complete
+Python inline and a checksum-verified capsule, so separating the two files does
+not lose the implementation.
 
-## The one fact that makes this safe
+## When Python is available
 
-**The agent does not execute anything.** `perform()` resolves placeholders and
-returns the ordered commands as JSON. Running it has no side effects — it cannot
-touch a repo, an endpoint, or a file. You are asking a planner what to run, then
-deciding whether to run it.
-
-## Recognising a toasted skill
-
-Both must be true:
-
-- a `*_agent.py` sits beside the `SKILL.md`
-- one of them contains the marker `rci-capsule:v1:`
-
-Without the capsule it is an ordinary Python file that happens to be adjacent —
-do not treat it as a contract.
-
-## Tier 1 — this host can run code
-
-Claude Code (Bash), Cowork (agent sandbox), any host with a shell or Python
-tool. Probe once:
-
-```bash
-python3 -c "print(1)"
-```
-
-If that works, use the agent for both halves of the contract.
-
-**Get the typed contract.** The output is already an OpenAI-style function
-definition, so it can be registered as a tool verbatim — no translation:
+Use the linked file directly:
 
 ```bash
 python3 <slug>_agent.py --tool
+python3 <slug>_agent.py '{"argument": "value"}'
 ```
 
-**Resolve the steps.** Pass the parameters you gathered as one JSON object:
+Treat `--tool` as the parameter contract and pass one JSON object. Treat stdout
+as a tool result:
+
+1. Missing or unresolved inputs: stop and collect them.
+2. A `steps` array: execute the steps in order exactly as returned.
+3. An `instructions` field: follow those instructions with the supplied inputs.
+4. Anything else: use the result verbatim.
+
+Do not claim work completed merely because a planner returned steps. This is
+the **EXEC** tier only after the linked file actually exits zero.
+
+## When the linked file is missing
+
+Locate the installed `rapp-agent-converter` skill with the host's workspace or
+file tools. Use its absolute script path; never assume `toast.py` is in the
+current directory.
 
 ```bash
-python3 <slug>_agent.py '{"repo":"demo-site","marker":"v2"}'
+CONVERTER="/absolute/path/to/rapp-agent-converter/scripts/toast.py"
+python3 "$CONVERTER" convert <skill>/SKILL.md \
+  --to agent -o <skill>/<slug>_agent.py
 ```
 
-You get back:
+A capsule-bearing skill restores the original bytes and verifies the checksum.
+If the capsule, generated commands, parameters, or inline Python was modified,
+stop on the converter's refusal. Never edit generated content to make it pass.
 
-```json
-{
-  "status": "ok",
-  "steps": ["gh api repos/kody-w/demo-site/pages", "..."],
-  "unresolved_placeholders": [],
-  "note": "Resolved deterministically by the agent; run in order. Nothing was executed here."
-}
-```
+## When Python execution is unavailable
 
-Then:
-
-1. `status` is `error` → it reports `missing_required`. Ask the user for those
-   values. Do not invent them.
-2. `unresolved_placeholders` is non-empty → a `<token>` had no matching
-   parameter. Stop and ask; a half-substituted command is the dangerous case.
-3. Otherwise run `steps` **in order, exactly as returned**. They are already
-   substituted — editing them discards the determinism you just gained.
-
-Stdin works too, which matters where quoting is awkward:
-
-```bash
-echo '{"repo":"demo-site"}' | python3 <slug>_agent.py
-```
-
-## Tier 2 — this host cannot run code
-
-Copilot Studio and Microsoft Scout run instructions, not shells. Scout
-automations in particular are ordered prompt steps with no execution surface.
-
-Read the two generated blocks in the `SKILL.md` instead:
-
-- `## Parameters` — a JSON Schema fence. Treat it as the required inputs and
-  collect them before starting.
-- `## Deterministic steps` — a fenced list of commands. Substitute the parameter
-  values into the `<tokens>` yourself and follow them in order.
-
-Both blocks are delimited by ``. Everything inside was lifted from the prose
-mechanically, so it is the contract — not a summary of it.
-
-**Never paraphrase a step.** If a step cannot be carried out on this host, say
-which one and stop. Substituting a plausible alternative is how a capability
-silently becomes a different capability.
-
-## Why the two tiers agree
-
-Both come from the same canonical record — the RCI capsule — so the steps the
-agent returns are the steps written in the markdown, with tokens filled in. The
-difference is only *who* does the substitution: the agent deterministically, or
-you by eye. Prefer Tier 1 whenever code execution exists, because eye
-substitution is where the error rate lives.
+The full Python under `## Run this — do not improvise` is the exact
+implementation. Treat it and the `## Parameters` schema as the specification.
+Do not claim EXEC. Do not paraphrase, reorder, or invent behavior.
 
 ## Guardrails
 
-- Do not paraphrase, reorder, merge, or "improve" the returned steps.
-- Do not run steps when placeholders are unresolved.
-- The agent is a planner. If something claims running it performed the work,
-  that is wrong — re-read its `note` field.
-- The prose above the generated blocks still governs judgment (when to invoke,
-  what to refuse, how to report). The deterministic layer covers *how*, not
-  *whether*.
-
-## Host notes
-
-| Host | Tier | Notes |
-|---|---|---|
-| Claude Code | 1 | Bash tool; run the agent directly. |
-| Cowork | 1 | Runs in the agent sandbox, which has Python. |
-| Copilot Studio | 2 | No in-agent shell. Read the generated blocks. |
-| Microsoft Scout | 2 | Automations are prompt steps; no execution surface. |
-| Anything else | probe | Try the Tier 1 probe; fall back to Tier 2. |
-
-A Tier 2 host reaches the same commands as a Tier 1 host. It just does the
-substitution in the model instead of in Python, which is exactly the gap this
-bridge exists to make visible.
+- Prefer the linked agent over interpreting prose.
+- Never import an agent merely to inspect it; use `--tool`.
+- Never bypass capsule, checksum, generated-region, or inline-drift failures.
+- Report **SYNTHESISED** versus **RESTORED (byte-exact)** exactly as the
+  converter reports it.
+- Keep the pair together when sharing or publishing the skill.
 
 <!-- toaster:generated:begin -->
 
-## Parameters
+## Run this — do not improvise
 
-The typed contract this capability answers to (JSON Schema — the deterministic layer):
+This capability's deterministic implementation is a RAPP single-file agent, linked beside this file as `rapp_agent_bridge_agent.py` and embedded as the fenced Python below (sha256 2b0a70061d1e76c2…; a byte-exact copy is also vaulted in the capsule comment at the end of this file). On a host with sandbox execution, run the linked file directly — if it is missing, write the fence contents verbatim to `rapp_agent_bridge_agent.py` first:
 
-```json
-{
-  "properties": {
-    "slug": {
-      "description": "Derived from `<slug>` used in the documented command at line 8.",
-      "type": "string"
-    }
-  },
-  "required": [],
-  "type": "object"
-}
+```bash
+python3 rapp_agent_bridge_agent.py '{"key": "value"}'      # arguments as one JSON object
+echo '{"key": "value"}' | python3 rapp_agent_bridge_agent.py   # or on stdin
+python3 rapp_agent_bridge_agent.py --tool                      # emit the JSON tool contract
 ```
+
+Treat stdout as a tool result. If it reports missing or unresolved inputs, stop and collect them. If it returns `steps`, execute those steps in order exactly as returned; if it returns `instructions`, follow them with the supplied inputs. Otherwise use the result verbatim. Do not invent behavior beyond that output. On a host without code execution, treat the Parameters schema and the code below as the exact specification and never paraphrase a step. Never edit inside the generated markers; a converter-equipped host can instead restore the original file checksum-verified with the installed `rapp-agent-converter/scripts/toast.py convert SKILL.md --to agent`.
+
+````python  # rapp:deterministic
+"""RappAgentBridge -- Use whenever an Agent Skill ships a linked *_agent.py beside SKILL.md, the linked file is missing, or the user asks how to run a RAPP agent projection without paraphrasing it. Prefer execution of the exact linked agent where Python is available; otherwise use the complete embedded Python as the exact specification.
+
+Generated by the rapp skill from rapp-agent-bridge. The RCI capsule at the bottom of this file carries the full original; `toast.py convert` restores it byte-exact."""
+
+import json
+import re
+import sys
+
+try:
+    from agents.basic_agent import BasicAgent
+except ImportError:  # running OUTSIDE a brainstem -- stay executable anyway.
+    class BasicAgent:  # noqa: D101 - minimal stand-in, same contract
+        def __init__(self, name=None, metadata=None):
+            if name:
+                self.name = name
+            if metadata:
+                self.metadata = metadata
+
+        def perform(self, **kwargs):
+            return "Not implemented."
+
+        def system_context(self):
+            return None
+
+        def to_tool(self):
+            return {"type": "function", "function": {
+                "name": self.name,
+                "description": self.metadata.get("description", ""),
+                "parameters": self.metadata.get("parameters", {})}}
+
+# The procedural layer, verbatim from the source capability.
+INSTRUCTIONS = '# RAPP linked-agent bridge\n\nAn Agent Skill projection produced by `rapp-agent-converter` is a pair:\n\n```text\n<skill>/\n├── SKILL.md\n└── <slug>_agent.py\n```\n\nThe linked Python file is not a helper or an approximation. It is a byte-exact\ncopy of the canonical RAPP cartridge. The `SKILL.md` also carries the complete\nPython inline and a checksum-verified capsule, so separating the two files does\nnot lose the implementation.\n\n## When Python is available\n\nUse the linked file directly:\n\n```bash\npython3 <slug>_agent.py --tool\npython3 <slug>_agent.py \'{"argument": "value"}\'\n```\n\nTreat `--tool` as the parameter contract and pass one JSON object. Treat stdout\nas a tool result:\n\n1. Missing or unresolved inputs: stop and collect them.\n2. A `steps` array: execute the steps in order exactly as returned.\n3. An `instructions` field: follow those instructions with the supplied inputs.\n4. Anything else: use the result verbatim.\n\nDo not claim work completed merely because a planner returned steps. This is\nthe **EXEC** tier only after the linked file actually exits zero.\n\n## When the linked file is missing\n\nLocate the installed `rapp-agent-converter` skill with the host\'s workspace or\nfile tools. Use its absolute script path; never assume `toast.py` is in the\ncurrent directory.\n\n```bash\nCONVERTER="/absolute/path/to/rapp-agent-converter/scripts/toast.py"\npython3 "$CONVERTER" convert <skill>/SKILL.md \\\n  --to agent -o <skill>/<slug>_agent.py\n```\n\nA capsule-bearing skill restores the original bytes and verifies the checksum.\nIf the capsule, generated commands, parameters, or inline Python was modified,\nstop on the converter\'s refusal. Never edit generated content to make it pass.\n\n## When Python execution is unavailable\n\nThe full Python under `## Run this — do not improvise` is the exact\nimplementation. Treat it and the `## Parameters` schema as the specification.\nDo not claim EXEC. Do not paraphrase, reorder, or invent behavior.\n\n## Guardrails\n\n- Prefer the linked agent over interpreting prose.\n- Never import an agent merely to inspect it; use `--tool`.\n- Never bypass capsule, checksum, generated-region, or inline-drift failures.\n- Report **SYNTHESISED** versus **RESTORED (byte-exact)** exactly as the\n  converter reports it.\n- Keep the pair together when sharing or publishing the skill.'
+
+# Ordered commands lifted verbatim from the capability's own documentation.
+STEPS = []
+
+
+class RappAgentBridgeAgent(BasicAgent):
+    def __init__(self):
+        self.name = 'RappAgentBridge'
+        self.metadata = {
+          "name": "RappAgentBridge",
+          "description": "Use whenever an Agent Skill ships a linked *_agent.py beside SKILL.md, the linked file is missing, or the user asks how to run a RAPP agent projection without paraphrasing it. Prefer execution of the exact linked agent where Python is available; otherwise use the complete embedded Python as the exact specification.",
+          "parameters": {
+            "type": "object",
+            "properties": {},
+            "required": []
+          }
+        }
+        super().__init__(name=self.name, metadata=self.metadata)
+
+    def perform(self, **kwargs):  # toaster:generated-perform
+        return json.dumps({"status": "ok", "instructions": INSTRUCTIONS,
+                           "inputs": kwargs,
+                           "note": "Prose-only capability: follow INSTRUCTIONS "
+                                   "with the given inputs."}, indent=2)
+
+if __name__ == "__main__":
+    #     echo '{"arg": "value"}' | python3 rapp_agent_bridge_agent.py
+    #     python3 rapp_agent_bridge_agent.py '{"arg": "value"}'
+    #     python3 rapp_agent_bridge_agent.py --tool          # emit the JSON tool contract
+    _a = sys.argv[1:]
+    if _a and _a[0] == "--tool":
+        print(json.dumps(RappAgentBridgeAgent().to_tool(), indent=2))
+    else:
+        _raw = _a[0] if _a else (sys.stdin.read().strip() or "{}")
+        print(RappAgentBridgeAgent().perform(**json.loads(_raw)))
+
+# rci-capsule:v1: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
+````
 
 <!-- toaster:generated:end -->
 
-<!-- rci-capsule:v1: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 -->
+<!-- rci-capsule:v1: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 -->

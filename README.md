@@ -1,217 +1,157 @@
 # RAPP Skills
 
-Portable **[Toasted Skills](https://kody-w.github.io/rapp-toaster/)** for non-RAPP agent
-systems — `SKILL.md` compatible everywhere, and additionally anchored, portable,
-and provable.
-Each capability lives in its own directory with a standards-compatible
-`SKILL.md`.
+Portable Agent Skills backed by RAPP single-file agents.
 
-This repository is also a design staging area for RAPP agents. A skill can be
-prototyped here for broad compatibility, then converted into a single-file
-`*_agent.py` implementation with its actual source and manifest preserved.
-RAPP runtime capabilities remain **agents**, not skills.
+Each capability is a pair:
 
-## Every skill here is toasted
-
-A raw `SKILL.md` is **bread**: prose with no canonical form underneath it.
-Nothing anchors what it accepts or what it runs, so moving it between platforms
-is a lossy re-render — the prose survives and the implied contract quietly
-changes. That failure accumulates: every hop looks plausible, the file still
-reads correctly, and twenty hops later the capability means something else with
-no commit to blame.
-
-**Toasting** is the one-time pass that ends that. It scans each skill's own
-prose, derives whatever deterministic layer is actually evidenced there (typed
-parameters and ordered commands, never invented — a placeholder mentioned in a
-sentence is documentation, not an input), and freezes the result as a canonical
-record the file carries with it. From that stake onward the skill is measurable.
-
-Every skill in this repo is toasted, and each ships its `*_agent.py` launchpad
-beside it — the "converted into a single-file implementation" this README has
-always promised, now actually produced rather than described.
-
-| | |
-|---|---|
-| skills | 23, all toasted |
-| derived | 24 typed parameters, 68 ordered steps |
-| yielded nothing derivable | 4 — reported, not hidden |
-| launchpad agents | 23, each runs standalone with `python3 <file>.py --tool` |
-| capability preserved | 110 conversion routes checked, all pass |
-| round trip | raw → skill → agent → skill → agent, 23/23 capability-identical |
-| drift | 4,356 conversions — none |
-
-### Why this matters more than tidiness
-
-A toasted skill is **portable without being migrated**. It stays a perfectly
-normal `SKILL.md` that any skill-aware host installs, and it is *additionally* a
-single-file agent, a standard tool contract, and a thing that can be proven
-unchanged since review. Nothing was converted away; nothing was deprecated.
-
-That last property is the one that matters in production. Skills execute against
-real systems with real credentials, and agents are increasingly permitted to
-rewrite them. Without a canonical record, *"does this capability still mean what
-it meant when we approved it?"* has no answer. With one, it is a byte comparison.
-
-### The engine
-
-The toasting described above is not a story about a tool that lives somewhere
-else — [`toast.py`](toast.py) is in this repository, so every claim on this page
-is reproducible here:
-
-```bash
-python3 toast.py roundtrip <skill>/<name>_agent.py   # prove fidelity, exit 1 on drift
-python3 toast.py convert <path> --to skill           # agent.py -> SKILL.md + linked agent
-python3 toast.py convert <path> --to agent           # SKILL.md -> agent.py
-python3 toast.py inspect <path>                      # capsule status, identity, provenance
-python3 toast.py selftest                            # prove every verdict can fire
+```text
+<skill>/
+├── SKILL.md
+└── <slug>_agent.py
 ```
 
-Stdlib-only Python 3.9+, fully offline: no pip install, no network, no
-credentials. It parses agent files with `ast` and never imports or executes them
-to read them.
+The Python file is the executable cartridge. The `SKILL.md` is its Agent Skill
+projection: complete Python inline, a checksum-verified capsule carrying the
+byte-exact original, and instructions for hosts that can or cannot execute the
+linked file. One pair moves unchanged between Copilot Studio, Cowork, Scout,
+RAPP Brainstem, and other Agent Skill hosts.
 
-All 23 launchpad agents in this repository round-trip byte-identical under it,
-and it is wire-compatible with the reference
-[toaster](https://github.com/kody-w/rapp-toaster) in both directions — a skill
-emitted by one restores byte-identically through the other. Exit codes: `0`
-verified, `1` drift or refusal, `2` raw bread (a capsule-less `SKILL.md` has no
-byte-exact return trip yet). Only `1` means drift.
+## One engine
 
-### Using the agent on a host that only reads SKILL.md
+The repository vendors the exact
+[`rapp-agent-converter`](engine/rapp-agent-converter/SKILL.md) skill submitted
+to the CAT Agent Skills gallery:
 
-Shipping the `*_agent.py` is not the same as a host using it — most read the
-markdown and improvise the procedure while the deterministic contract sits
-unused beside them. [`rapp-agent-bridge`](rapp-agent-bridge/SKILL.md) closes
-that: install it once and it teaches the host to run the agent where code
-execution exists (Claude Code, Cowork) and to read the generated blocks where it
-does not (Copilot Studio, Microsoft Scout). Both routes reach the same commands,
-because both come from the same capsule.
-
-The agent is a planner, not an executor — `perform()` substitutes the typed
-parameters into the ordered steps and returns them as JSON without running
-anything, so calling it has no side effects.
-
-### Contributing
-
-Prototype in prose, then toast before opening a PR:
-
-```bash
-toaster.py toast <skill>/SKILL.md     # derive + anchor; idempotent
-toaster.py soak  <skill>/SKILL.md     # prove it does not drift
+```text
+engine/rapp-agent-converter/
+├── SKILL.md
+├── scripts/toast.py
+├── references/
+└── assets/hello_rapp_agent.py
 ```
 
-Then prove the loop still closes — that a skill converted to an agent and back
-is the same capability, not merely a similar-looking file:
+All conversion logic lives there. The root [`toast.py`](toast.py) is only a
+launcher, so this repository cannot drift into a second implementation.
 
 ```bash
-python3 scripts/roundtrip_fidelity.py
+python3 toast.py convert <agent.py> --to skill -o out/SKILL.md
+python3 toast.py convert <SKILL.md> --to agent
+python3 toast.py roundtrip <agent.py>
+python3 toast.py inspect <path>
+python3 toast.py selftest
 ```
 
-It walks every skill through `raw → skill → agent → skill → agent`, asserting
-capability identity at each hop and byte-exactness on the home format. Note that
-`toaster.py roundtrip` will report DRIFT on the *derived* side of the loop — that
-is the capsule's append-only `provenance` trail growing by one entry per hop, the
-ledger working rather than fidelity lost. `roundtrip_fidelity.py` is the check
-that distinguishes the two.
+Python 3.9+, standard library only, fully offline. The converter parses agents
+with `ast`; it never imports or executes a file to read it.
 
-Point it at a folder of never-toasted skills to test the loop's actual entry —
-bread the toaster has never seen, so nothing was tuned to make it pass:
+## What the pair guarantees
 
-```bash
-python3 scripts/roundtrip_fidelity.py ~/.claude/skills --raw
-```
+- `agent.py → SKILL.md → agent.py` restores the exact original bytes.
+- The generated skill ships a byte-exact linked agent beside it.
+- The complete Python also travels inside `SKILL.md`, so the skill remains
+  self-contained if the linked file is separated.
+- A checksum mismatch or edit inside the generated Python fence is an explicit
+  refusal, not a best-effort recovery.
+- Hosts with Python run the linked agent directly. Instruction-only hosts use
+  the same code and parameter schema as the exact specification.
 
-Raw mode additionally proves toasting is idempotent and that each emitted agent
-runs standalone — a capability record can compare clean while the agent it emits
-raises on import, and only executing it catches that.
+The old repo-wide "toast/soak/capability-id" laboratory is not the contract
+here. Fidelity is the concrete property the submitted skill proves: the
+canonical agent leaves and returns byte-identical.
 
-Frontmatter stays within the canonical set (`name`, `description`, `license`,
-`compatibility`, `metadata`, `allowed-tools`, `disable-model-invocation`) so
-these remain importable by the RAR **RAPP Skill Bridge**. Toasting adds no
-frontmatter fields — the canonical record rides as an HTML comment, invisible to
-every renderer.
-
-Implementation: [kody-w/rapp-toaster](https://github.com/kody-w/rapp-toaster).
-
-## Skills
-
-| Skill | Purpose | RAPP conversion target |
-|---|---|---|
-| [`deep-research`](deep-research/SKILL.md) | Evidence-first research using independent collection, experiment, verification, and synthesis tracks | `deep_research_agent.py` |
-| [`rapp-agent-bridge`](rapp-agent-bridge/SKILL.md) | Teaches any skill-aware host to consume the `*_agent.py` beside a toasted skill instead of improvising its procedure | `rapp_agent_bridge_agent.py` |
-| [`rapp1-compliance-sweep`](rapp1-compliance-sweep/SKILL.md) | Literal file/archive RAPP/1 rev-5 audits, target-owned remediation, trust-aware verdicts, and estate recursion | `rapp1_compliance_sweep_agent.py` |
-
-## Workflow skills (RAPP working set)
-
-Battle-tested skills imported from the RAPP (Rapid Agent Prototyping Platform)
-workflow — automation verbs for building, deploying, verifying, and demoing AI
-agents, plus general working-style skills. Sanitized for publication:
-environment-specific values are placeholders like `<function-app>` /
-`<resource-group>`; adapt paths, resource names, and trigger phrasing to your
-own setup.
-
-### RAPP / agent pipeline
-- [`rapp-brainstem`](rapp-brainstem/SKILL.md) — drive the local RAPP brainstem (Flask on :7071) through its single `/chat` endpoint; installs RAPP if missing.
-- [`rapp-pipeline`](rapp-pipeline/SKILL.md) — run the transcript→agent pipeline: projects, quality gates, Copilot Studio + Azure DevOps outputs.
-- [`brainstem-reset`](brainstem-reset/SKILL.md) — verified fresh-install test of the brainstem, exactly as a first-time user would get it.
-
-### Deploy + verify (the "never hand back unverified" family)
-- [`demo-ship`](demo-ship/SKILL.md) — deploy agents to an Azure Function, prove them e2e against the LIVE endpoint, generate an M365-styled HTML demo page, open, notify.
-- [`mcs-deploy`](mcs-deploy/SKILL.md) — Copilot Studio solution import/publish with fresh version naming, children-first publish order, and real question/answer verification.
-- [`ship`](ship/SKILL.md) — commit → push → GitHub Pages → marker-verified live URL.
-- [`exec-proof`](exec-proof/SKILL.md) — pre-demo smoke test on a machine that is NOT yours; GO/NO-GO per platform with evidence.
-- [`flex-unbrick`](flex-unbrick/SKILL.md) — runbook for Azure Flex Consumption apps bricked by a tenant policy that silently disables storage public network access (includes `scripts/unbrick.sh`).
-- [`film-m365`](film-m365/SKILL.md) — film a Copilot Studio agent in the real M365 Copilot surface via Playwright + CDP recording, with a QA gate.
-
-### Working style
-- [`msft-deck`](msft-deck/SKILL.md) — build/restyle/revise .pptx decks in a Microsoft Fluent style with a mandatory visual self-review loop.
-- [`muscle`](muscle/SKILL.md) — the cortex/muscle delegation loop: hand bulk artifact generation to a background CLI model, gate-check the result hands-on, add judgment last.
-- [`overnight`](overnight/SKILL.md) — an unattended improve-to-120 loop with a verifiable ledger and per-pass commits.
-- [`wow`](wow/SKILL.md) — demo-prompt generator with a persistent ledger so suggestions never repeat.
-- [`transcript-miner`](transcript-miner/SKILL.md) — mine your own Claude Code session JSONL for usage patterns, error signatures, and skill candidates (includes `scripts/mine.py`).
-- [`estate-sweep`](estate-sweep/SKILL.md) — clone-and-lint drift sweep across all public repos (includes `scripts/sweep.sh`).
-- [`fy27-priority-agents`](fy27-priority-agents/SKILL.md) — a report-refresh pipeline pattern: grounded extraction → human verification → template-preserving render.
-
-### Vault / twin
-- [`obsidian-vault-steward`](obsidian-vault-steward/SKILL.md) — treat an Obsidian vault as the primary memory system (includes VAULT-STANDARDS.md).
-- [`harvest`](harvest/SKILL.md) — distill a finished vault project into a reusable wiki article.
-- [`digital-twin-builder`](digital-twin-builder/SKILL.md) — analyze vault content into a digital-twin profile with confidence scoring.
-- [`kody-twin`](kody-twin/SKILL.md) — the twin persona that represents the author from the learned profile (rename for your own twin).
-
-## Use
-
-Copy or symlink a skill directory into the Agent Skills location supported by
-your host:
-
-```bash
-git clone https://github.com/kody-w/rapp-skills.git
-```
-
-For Claude Code, for example:
-
-```bash
-ln -s "$PWD/rapp-skills/deep-research" ~/.claude/skills/deep-research
-```
-
-Other compatible hosts can consume the same directory unchanged. If a host
-does not support automatic skill discovery, provide `SKILL.md` as an
-instruction file.
-
-## Add a skill
-
-1. Create `<skill-name>/SKILL.md`.
-2. Use the canonical Agent Skills frontmatter: `name` and `description`.
-3. Keep the main file under 500 lines; place details in `references/`.
-4. Add the intended `*_agent.py` conversion target to this README.
-5. Validate before committing:
+## Verify the repository
 
 ```bash
 python3 scripts/validate_skills.py
-python3 scripts/roundtrip_fidelity.py    # needs toaster.py; see Contributing
+python3 scripts/roundtrip_fidelity.py
 ```
 
-The staging-to-RAPP mapping is documented in
-[`deep-research/references/rapp-agent-conversion.md`](deep-research/references/rapp-agent-conversion.md).
+`roundtrip_fidelity.py` uses only the converter's public CLI. For every
+committed capability it:
+
+1. proves the agent round trip is byte-identical;
+2. restores the agent from the companion `SKILL.md` and compares bytes;
+3. runs `--tool` and validates the emitted function contract.
+
+There are 23 committed capability pairs. The converter under `engine/` is the
+24th `SKILL.md`, but it is infrastructure and is not counted as a converted
+capability pair.
+
+## Skills
+
+### RAPP and agent pipeline
+
+- [`rapp-agent-bridge`](rapp-agent-bridge/SKILL.md) — consume a linked-agent
+  pair without paraphrasing it.
+- [`rapp-brainstem`](rapp-brainstem/SKILL.md) — drive the local brainstem over
+  its single `/chat` endpoint.
+- [`rapp-pipeline`](rapp-pipeline/SKILL.md) — transcript-to-agent pipeline and
+  promotion outputs.
+- [`rapp1-compliance-sweep`](rapp1-compliance-sweep/SKILL.md) — RAPP/1 estate
+  compliance and remediation.
+- [`brainstem-reset`](brainstem-reset/SKILL.md) — first-user clean-install
+  verification.
+
+### Research and knowledge
+
+- [`deep-research`](deep-research/SKILL.md)
+- [`transcript-miner`](transcript-miner/SKILL.md)
+- [`obsidian-vault-steward`](obsidian-vault-steward/SKILL.md)
+- [`harvest`](harvest/SKILL.md)
+- [`digital-twin-builder`](digital-twin-builder/SKILL.md)
+- [`kody-twin`](kody-twin/SKILL.md)
+
+### Build, deploy, and prove
+
+- [`demo-ship`](demo-ship/SKILL.md)
+- [`mcs-deploy`](mcs-deploy/SKILL.md)
+- [`ship`](ship/SKILL.md)
+- [`exec-proof`](exec-proof/SKILL.md)
+- [`flex-unbrick`](flex-unbrick/SKILL.md)
+- [`film-m365`](film-m365/SKILL.md)
+- [`estate-sweep`](estate-sweep/SKILL.md)
+
+### Working style
+
+- [`msft-deck`](msft-deck/SKILL.md)
+- [`muscle`](muscle/SKILL.md)
+- [`overnight`](overnight/SKILL.md)
+- [`wow`](wow/SKILL.md)
+- [`fy27-priority-agents`](fy27-priority-agents/SKILL.md)
+
+## Use
+
+Clone the repository and install or symlink the skill directory your host
+should discover:
+
+```bash
+git clone https://github.com/kody-w/rapp-skills.git
+ln -s "$PWD/rapp-skills/deep-research" ~/.claude/skills/deep-research
+```
+
+Install `engine/rapp-agent-converter` as a skill when the host should be able to
+convert RAPP cartridges and Agent Skills itself.
+
+## Add a capability
+
+1. Write or add the canonical `*_agent.py`.
+2. Project it with the repository engine:
+
+   ```bash
+   python3 toast.py convert path/to/foo_agent.py \
+     --to skill -o foo/SKILL.md
+   ```
+
+3. Commit both files emitted in `foo/`.
+4. Run:
+
+   ```bash
+   python3 scripts/validate_skills.py
+   python3 scripts/roundtrip_fidelity.py
+   ```
+
+Never hand-edit generated content or the capsule. Edit the canonical agent and
+project it again.
 
 ## License
 
