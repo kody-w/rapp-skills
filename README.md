@@ -75,9 +75,8 @@ committed capability it:
 
 There are **106 verified capability pairs**: 30 RAPP-native pairs at the
 repository root and 76 assimilated CAT Agent Skills under
-[`cat-agent-skills/`](cat-agent-skills/). The converter under `engine/` is the
-100th `SKILL.md`, but it is infrastructure and is not counted as a converted
-capability pair.
+[`cat-agent-skills/`](cat-agent-skills/). The one additional `SKILL.md` under
+`engine/` is infrastructure and is not counted as a converted capability pair.
 
 ## CAT Agent Skills catalog
 
