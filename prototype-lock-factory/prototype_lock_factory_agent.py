@@ -21,6 +21,16 @@ Process:
 7. Export only canonical agents, contracts, evidence receipts, and hashes.
    Public export refuses obvious secrets and requires no customer, employee,
    tenant, subscription, endpoint, phone, or email identifiers.
+8. Promote the sanitized public derivative only after export:
+   - validate/test the single-file agent against the public registry SDK;
+   - project agent.py -> SKILL.md with the shared converter and prove a
+     byte-identical round trip;
+   - run the complete public skill validation suite;
+   - submit the exact bytes through the registry mutation/receipt path;
+   - verify the notarized registry hash and the public skills-repo hash.
+9. Commit the canonical private/project source and public derivative with
+   provenance. A public receipt is not proof of the private project, and a
+   private green suite is not permission to publish customer context.
 
 The agent is offline and standard-library only. It scaffolds and gates files;
 the host executes the commands named by the contract and supplies measured
@@ -60,8 +70,8 @@ except ImportError:
 
 __manifest__ = {
     "schema": "rapp-agent/1.0",
-    "name": "@kody-w/prototype_lock_factory",
-    "version": "1.0.0",
+    "name": "@kody-w/prototype_lock_factory_agent",
+    "version": "1.0.1",
     "display_name": "Prototype Lock Factory",
     "description": (
         "Locks an accepted prototype into a canonical project, enforces "
