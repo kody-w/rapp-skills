@@ -73,7 +73,7 @@ committed capability it:
 2. restores the agent from the companion `SKILL.md` and compares bytes;
 3. runs `--tool` and validates the emitted function contract.
 
-There are **99 verified capability pairs**: 23 RAPP-native pairs at the
+There are **106 verified capability pairs**: 30 RAPP-native pairs at the
 repository root and 76 assimilated CAT Agent Skills under
 [`cat-agent-skills/`](cat-agent-skills/). The converter under `engine/` is the
 100th `SKILL.md`, but it is infrastructure and is not counted as a converted
@@ -124,6 +124,13 @@ python3 scripts/import_cat_agent_skills.py \
   compliance and remediation.
 - [`brainstem-reset`](brainstem-reset/SKILL.md) — first-user clean-install
   verification.
+- [`rapplication-egg`](rapplication-egg/SKILL.md) — pack a RAPPlication as a
+  `.egg` and prove it by hatching on a clean path.
+- [`usecase-to-showcase`](usecase-to-showcase/SKILL.md) — customer use-case
+  brief to data plane, grounded agents, deployed app, Copilot Studio suite,
+  films, deck, and catalog entry.
+- [`ecosystem-audit`](ecosystem-audit/SKILL.md) — audit a multi-repo GitHub
+  ecosystem against the invariants its own docs assert.
 
 ### Research and knowledge
 
@@ -143,6 +150,9 @@ python3 scripts/import_cat_agent_skills.py \
 - [`flex-unbrick`](flex-unbrick/SKILL.md)
 - [`film-m365`](film-m365/SKILL.md)
 - [`estate-sweep`](estate-sweep/SKILL.md)
+- [`cs-agent-live`](cs-agent-live/SKILL.md)
+- [`tab-film`](tab-film/SKILL.md)
+- [`showcase-film`](showcase-film/SKILL.md)
 
 ### Working style
 
@@ -150,6 +160,7 @@ python3 scripts/import_cat_agent_skills.py \
 - [`muscle`](muscle/SKILL.md)
 - [`overnight`](overnight/SKILL.md)
 - [`wow`](wow/SKILL.md)
+- [`blindspot`](blindspot/SKILL.md)
 - [`fy27-priority-agents`](fy27-priority-agents/SKILL.md)
 
 ## Use
