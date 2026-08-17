@@ -73,7 +73,7 @@ committed capability it:
 2. restores the agent from the companion `SKILL.md` and compares bytes;
 3. runs `--tool` and validates the emitted function contract.
 
-There are **106 verified capability pairs**: 30 RAPP-native pairs at the
+There are **107 verified capability pairs**: 31 RAPP-native pairs at the
 repository root and 76 assimilated CAT Agent Skills under
 [`cat-agent-skills/`](cat-agent-skills/). The one additional `SKILL.md` under
 `engine/` is infrastructure and is not counted as a converted capability pair.
@@ -128,6 +128,9 @@ python3 scripts/import_cat_agent_skills.py \
 - [`usecase-to-showcase`](usecase-to-showcase/SKILL.md) — customer use-case
   brief to data plane, grounded agents, deployed app, Copilot Studio suite,
   films, deck, and catalog entry.
+- [`prototype-lock-factory`](prototype-lock-factory/SKILL.md) — freeze an
+  accepted transcript into one canonical project, enforce local-before-cloud
+  causal evidence and immutable transport, and export a no-PII handoff.
 - [`ecosystem-audit`](ecosystem-audit/SKILL.md) — audit a multi-repo GitHub
   ecosystem against the invariants its own docs assert.
 
