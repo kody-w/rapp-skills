@@ -44,13 +44,31 @@ def validate(path: Path) -> list[str]:
         return [f"{path}: missing closing frontmatter delimiter"]
 
     fields: dict[str, str] = {}
+    # True while consuming the indented continuation lines of a block scalar
+    # (e.g. "description: >-"): the one multiline form this scanner
+    # deliberately supports. Any other indented line is unrecognized.
+    in_block_scalar = False
     for line_number, line in enumerate(lines[1:end], start=2):
-        if not line or line[0].isspace():
+        if not line or not line.strip():
+            # Blank lines are inert in YAML frontmatter (and legal inside a
+            # block scalar), so they stay skipped.
             continue
+        if line[0].isspace():
+            if in_block_scalar:
+                continue
+            errors.append(
+                f"{path}:{line_number}: unrecognized frontmatter line "
+                f"(indented line outside a block scalar): {line.strip()!r}"
+            )
+            continue
+        in_block_scalar = False
         match = re.match(r"^([a-zA-Z0-9-]+):(?:[ \t]*(.*))?$", line)
         if not match:
             errors.append(f"{path}:{line_number}: invalid frontmatter entry")
             continue
+        raw_value = (match.group(2) or "").strip()
+        if re.fullmatch(r"[>|][+-]?", raw_value):
+            in_block_scalar = True
         key, value = match.group(1), scalar(match.group(2) or "")
         if key not in ALLOWED_FIELDS:
             errors.append(f"{path}:{line_number}: unsupported field {key!r}")

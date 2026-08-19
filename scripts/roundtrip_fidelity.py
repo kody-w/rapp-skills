@@ -50,6 +50,27 @@ def main() -> int:
         return 1
 
     failures: list[str] = []
+
+    pair_files = set(pair_agents)
+    pair_files |= set(ROOT.glob("*/SKILL.md"))
+    pair_files |= set(ROOT.glob("cat-agent-skills/*/SKILL.md"))
+    pair_dirs = {path.parent for path in pair_files}
+    for path in sorted(list(ROOT.rglob("*_agent.py")) + list(ROOT.rglob("SKILL.md"))):
+        if ".git" in path.parts or path in pair_files:
+            continue
+        rel = path.relative_to(ROOT)
+        if rel.parts[0] == "engine":
+            continue
+        if any(parent in pair_dirs for parent in path.parents):
+            continue  # asset/script inside a verified pair directory
+        label = rel.as_posix()
+        failures.append(label)
+        print(
+            f"FAIL  {label}\n"
+            "      stray pair file outside discovery "
+            "(expected <pair>/ or cat-agent-skills/<pair>/)"
+        )
+
     for directory in sorted(skill_dirs - agent_dirs):
         label = directory.relative_to(ROOT).as_posix()
         failures.append(label)
