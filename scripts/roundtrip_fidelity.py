@@ -165,7 +165,7 @@ def main() -> int:
                         raise ValueError("empty function name")
                     if function["parameters"]["type"] != "object":
                         raise ValueError("parameters.type must be 'object'")
-                except (ValueError, KeyError):
+                except (ValueError, KeyError, TypeError):
                     problems.append("--tool output is not a function contract")
 
             if problems:
