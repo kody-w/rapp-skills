@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import argparse
 import json
 import subprocess
 import sys
@@ -25,6 +26,10 @@ def run(*args: str) -> subprocess.CompletedProcess[str]:
 
 
 def main() -> int:
+    argparse.ArgumentParser(
+        description="Prove every committed Agent Skill pair restores byte-identical "
+        "through the converter's public CLI."
+    ).parse_args()
     engine_toast = ROOT / "engine" / "rapp-agent-converter" / "scripts" / "toast.py"
     cat_toast = ROOT / "cat-agent-skills" / "rapp-agent-converter" / "scripts" / "toast.py"
     if engine_toast.read_bytes() != cat_toast.read_bytes():
@@ -61,8 +66,16 @@ def main() -> int:
         rel = path.relative_to(ROOT)
         if rel.parts[0] == "engine":
             continue
-        if any(parent in pair_dirs for parent in path.parents):
-            continue  # asset/script inside a verified pair directory
+        pair_dir = next((p for p in path.parents if p in pair_dirs), None)
+        if pair_dir is not None:
+            if path.name == "SKILL.md":
+                continue  # backstopped by the skill_dirs pairing check
+            if path.relative_to(pair_dir).parts[0] in {
+                "assets",
+                "references",
+                "scripts",
+            }:
+                continue  # asset/script inside a verified pair directory
         label = rel.as_posix()
         failures.append(label)
         print(
@@ -148,9 +161,11 @@ def main() -> int:
                 try:
                     contract = json.loads(tool.stdout)
                     function = contract["function"]
-                    assert function["name"]
-                    assert function["parameters"]["type"] == "object"
-                except (AssertionError, KeyError, json.JSONDecodeError):
+                    if not function["name"]:
+                        raise ValueError("empty function name")
+                    if function["parameters"]["type"] != "object":
+                        raise ValueError("parameters.type must be 'object'")
+                except (ValueError, KeyError):
                     problems.append("--tool output is not a function contract")
 
             if problems:

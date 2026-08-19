@@ -73,6 +73,16 @@ committed capability it:
 2. restores the agent from the companion `SKILL.md` and compares bytes;
 3. runs `--tool` and validates the emitted function contract.
 
+CI ([`verify.yml`](.github/workflows/verify.yml)) runs both scripts on every
+push and pull request, plus the converter selftest, the CAT catalog
+provenance oracle ([`scripts/verify_cat_catalog.py`](scripts/verify_cat_catalog.py),
+also under `python3 -O`), the importer selftest, and a guard that the root
+launcher carries no converter implementation.
+[`scripts/vbrainstem_probe.py`](scripts/vbrainstem_probe.py) is a manual
+extra: it drives a pair inside the live browser runtime at
+<https://kody-w.github.io/vbrainstem/> (requires Playwright) to prove the
+pairs execute with no local Python at all.
+
 There are **107 verified capability pairs**: 31 RAPP-native pairs at the
 repository root and 76 assimilated CAT Agent Skills under
 [`cat-agent-skills/`](cat-agent-skills/). The one additional `SKILL.md` under
@@ -180,15 +190,17 @@ convert RAPP cartridges and Agent Skills itself.
 
 ## Add a capability
 
-1. Write or add the canonical `*_agent.py`.
+1. Write the canonical agent at `foo/foo_agent.py`. Pair files live only in
+   their pair directory: a `*_agent.py` left anywhere else fails the
+   fidelity gate.
 2. Project it with the repository engine:
 
    ```bash
-   python3 toast.py convert path/to/foo_agent.py \
+   python3 toast.py convert foo/foo_agent.py \
      --to skill -o foo/SKILL.md
    ```
 
-3. Commit both files emitted in `foo/`.
+3. Commit both files in `foo/`.
 4. Run:
 
    ```bash
@@ -197,7 +209,8 @@ convert RAPP cartridges and Agent Skills itself.
    ```
 
 Never hand-edit generated content or the capsule. Edit the canonical agent and
-project it again.
+project it again, adding `--force` — the converter refuses to overwrite an
+existing `SKILL.md` whose content changed without it.
 
 ## License
 

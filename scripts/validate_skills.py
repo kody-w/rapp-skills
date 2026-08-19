@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import argparse
 import re
 import sys
 from pathlib import Path
@@ -47,7 +48,19 @@ def validate(path: Path) -> list[str]:
     # True while consuming the indented continuation lines of a block scalar
     # (e.g. "description: >-"): the one multiline form this scanner
     # deliberately supports. Any other indented line is unrecognized.
+    # Continuation lines are accumulated into the field value so the
+    # required-field and length checks apply to the real content, not the
+    # ">-" indicator literal.
     in_block_scalar = False
+    block_key = ""
+    block_lines: list[str] = []
+
+    def close_block_scalar() -> None:
+        nonlocal in_block_scalar
+        if in_block_scalar:
+            fields[block_key] = " ".join(block_lines).strip()
+        in_block_scalar = False
+
     for line_number, line in enumerate(lines[1:end], start=2):
         if not line or not line.strip():
             # Blank lines are inert in YAML frontmatter (and legal inside a
@@ -55,26 +68,30 @@ def validate(path: Path) -> list[str]:
             continue
         if line[0].isspace():
             if in_block_scalar:
+                block_lines.append(line.strip())
                 continue
             errors.append(
                 f"{path}:{line_number}: unrecognized frontmatter line "
                 f"(indented line outside a block scalar): {line.strip()!r}"
             )
             continue
-        in_block_scalar = False
+        close_block_scalar()
         match = re.match(r"^([a-zA-Z0-9-]+):(?:[ \t]*(.*))?$", line)
         if not match:
             errors.append(f"{path}:{line_number}: invalid frontmatter entry")
             continue
         raw_value = (match.group(2) or "").strip()
+        key, value = match.group(1), scalar(match.group(2) or "")
         if re.fullmatch(r"[>|][+-]?", raw_value):
             in_block_scalar = True
-        key, value = match.group(1), scalar(match.group(2) or "")
+            block_key = key
+            block_lines = []
         if key not in ALLOWED_FIELDS:
             errors.append(f"{path}:{line_number}: unsupported field {key!r}")
         if key in fields:
             errors.append(f"{path}:{line_number}: duplicate field {key!r}")
         fields[key] = value
+    close_block_scalar()
 
     name = fields.get("name", "")
     description = fields.get("description", "")
@@ -110,7 +127,14 @@ def validate(path: Path) -> list[str]:
 
 
 def main() -> int:
-    root = Path(sys.argv[1] if len(sys.argv) > 1 else ".").resolve()
+    parser = argparse.ArgumentParser(
+        description="Validate the frontmatter and body of every SKILL.md under a root."
+    )
+    parser.add_argument(
+        "root", nargs="?", default=".",
+        help="directory to scan (default: current directory)",
+    )
+    root = Path(parser.parse_args().root).resolve()
     skills = sorted(
         path for path in root.rglob("SKILL.md") if ".git" not in path.parts
     )

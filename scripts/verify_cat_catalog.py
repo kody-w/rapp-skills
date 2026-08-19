@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import argparse
 import hashlib
 import importlib.util
 import json
@@ -50,6 +51,10 @@ def tree_hash(files: dict[str, bytes]) -> str:
 
 
 def main() -> int:
+    argparse.ArgumentParser(
+        description="Verify every CAT catalog file, capsule, and provenance hash "
+        "against catalog.json."
+    ).parse_args()
     manifest = json.loads((COLLECTION / "catalog.json").read_text())
     check(manifest["counts"] == EXPECTED_COUNTS)
     check(len(manifest["skills"]) == 76)
