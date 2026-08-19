@@ -25,6 +25,17 @@ def run(*args: str) -> subprocess.CompletedProcess[str]:
 
 
 def main() -> int:
+    engine_toast = ROOT / "engine" / "rapp-agent-converter" / "scripts" / "toast.py"
+    cat_toast = ROOT / "cat-agent-skills" / "rapp-agent-converter" / "scripts" / "toast.py"
+    if engine_toast.read_bytes() != cat_toast.read_bytes():
+        print(
+            "FAIL  cat-agent-skills/rapp-agent-converter/scripts/toast.py\n"
+            "      diverged from engine/rapp-agent-converter/scripts/toast.py; "
+            "re-run the cat import (or copy the engine file over the mirror) to resync"
+        )
+        return 1
+    print(f"ok    {'engine toast.py mirror':<52} byte-identical")
+
     skill_dirs = {
         path.parent
         for path in ROOT.rglob("SKILL.md")
