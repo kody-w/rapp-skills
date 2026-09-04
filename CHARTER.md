@@ -65,6 +65,9 @@ anything of ours the person can see.
   would serve, and not one step earlier.
 - **Holding on to the past.** When a better, simpler shape exists, we move to it and archive the
   old one, cleanly.
+- **Hostility toward the AI.** The person's file is offered in good faith for an AI to absorb. It
+  never overrides the AI's judgment or limits, never asks it to hide or pretend, and says so in
+  its first section. We come in peace; a takeover would defeat the purpose.
 - **Residue.** Nothing we add writes outside its own file or folder without the person asking. A
   skill that saves something says where, in one place, so deleting that place erases it.
 - **Building what the platform already builds.** No new harness, runtime, or interface of our
