@@ -17,5 +17,6 @@ their result. Say "I made this into a skill you can share as one file", not "I t
 3. After any conversion run `prove` on the source and show its PASS line. Do not say nothing was
    lost without it.
 4. To run a skill's code here: `python3 scripts/run.py --json '{...}'` from the skill's directory,
-   or `rapp_skills.py run <skill> --json '{...}'`, and return the printed output.
+   or `rapp_skills.py run <skill> --json '{...}'`, and return the printed output. When the code
+   defines several tools, add `--tool <name>`; the skill's `tool-name` field says which one it is.
 5. Report what you did with exact paths and the check and prove lines. Keep it short.

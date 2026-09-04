@@ -114,34 +114,86 @@ def install_shims():
         _sys.modules["utils.azure_file_storage"] = st_mod
 
 
-def load_agent(path):
-    """Import an agent file by path and return (module, agent instance)."""
+def _import_agent_module(path):
     install_shims()
     path = _Path(path).resolve()
-    spec = __import__("importlib.util").util.spec_from_file_location("skill_agent_" + path.stem, path)
-    module = __import__("importlib.util").util.module_from_spec(spec)
+    util = __import__("importlib.util").util
+    spec = util.spec_from_file_location("skill_agent_" + path.stem, path)
+    module = util.module_from_spec(spec)
     _sys.modules[spec.name] = module
     spec.loader.exec_module(module)
+    return module
+
+
+def _agent_name(agent):
+    return str(agent.metadata.get("name") or agent.name)
+
+
+def _agents_in(module):
+    """[(attribute name, instance), ...] for every agent the module defines, in definition order.
+
+    An agent is a class defined in that module that subclasses BasicAgent (not
+    BasicAgent itself), has a callable perform, and whose name does not start
+    with "_". This is what a server serves from the file, so it is what a skill
+    sees too.
+    """
     base = _sys.modules["agents.basic_agent"].BasicAgent
-    candidates = [
-        obj for obj in vars(module).values()
-        if isinstance(obj, type) and issubclass(obj, base) and obj is not base
-        and obj.__module__ == module.__name__
-    ]
-    if not candidates:
-        raise RuntimeError(f"{path.name}: no BasicAgent subclass found")
-    return module, candidates[-1]()
+    agents = []
+    for attr, obj in list(vars(module).items()):
+        if attr.startswith("_") or not isinstance(obj, type):
+            continue
+        if obj is base or not issubclass(obj, base) or obj.__module__ != module.__name__:
+            continue
+        if not callable(getattr(obj, "perform", None)):
+            continue
+        agents.append((attr, obj()))
+    return agents
+
+
+def load_agents(path):
+    """Import an agent file by path and return [(attribute name, agent instance), ...]."""
+    agents = _agents_in(_import_agent_module(path))
+    if not agents:
+        raise RuntimeError(f"{_Path(path).name}: no BasicAgent subclass found")
+    return agents
+
+
+def load_agent(path, tool_name=None):
+    """Import an agent file by path and return (module, agent instance).
+
+    The file's only agent when it defines one. When it defines several, the one
+    whose tool name equals tool_name; without a match, an error naming them all.
+    """
+    module = _import_agent_module(path)
+    agents = _agents_in(module)
+    if not agents:
+        raise RuntimeError(f"{_Path(path).name}: no BasicAgent subclass found")
+    if len(agents) == 1:
+        return module, agents[0][1]
+    names = [_agent_name(agent) for _, agent in agents]
+    if tool_name is not None:
+        for name, (_, agent) in zip(names, agents):
+            if name == tool_name:
+                return module, agent
+        raise RuntimeError(f"{_Path(path).name} has no agent named {tool_name!r}; it defines: {', '.join(names)}")
+    raise RuntimeError(f"{_Path(path).name} defines {len(agents)} agents ({', '.join(names)}); choose one by its tool name")
 
 
 def main(argv=None):
     import argparse
     ap = argparse.ArgumentParser(description="Run this skill's agent locally.")
     ap.add_argument("--json", default=None, help="arguments as a JSON object")
+    ap.add_argument("--tool", default=None, help="which agent to run when agent.py defines several (its tool name)")
     ap.add_argument("--describe", action="store_true", help="print the agent's tool definition")
     ap.add_argument("pairs", nargs="*", help="key=value arguments (alternative to --json)")
     args = ap.parse_args(argv)
     here = _Path(__file__).resolve().parent
-    module, agent = load_agent(here / "agent.py")
+    try:
+        module, agent = load_agent(here / "agent.py", args.tool)
+    except RuntimeError as exc:
+        hint = " (run again with --tool <name>)" if args.tool is None and "choose one" in str(exc) else ""
+        print(f"error: {exc}{hint}", file=_sys.stderr)
+        return 2
     if args.describe:
         print(_json.dumps(agent.to_tool(), indent=2))
         return 0

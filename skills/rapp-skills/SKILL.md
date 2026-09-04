@@ -27,7 +27,7 @@ Run every command as `python3 rapp_skills.py <command>`.
 | `to-agent <skill or SKILL.md> [--out agents]` | makes one Python file out of a skill: the original code back, unchanged, or, for a skill written as steps, a file whose `perform` hands those steps and the inputs to whichever AI is running it |
 | `check <skill> ...` | finds problems: a name that will not load, a missing field, code that does not match its checksum, inputs that do not match |
 | `prove <agent.py or skill>` | shows nothing is lost going there and back; prints PASS or FAIL |
-| `run <skill> --json '{...}'` | runs the skill's code here and prints the result |
+| `run <skill> --json '{...}' [--tool NAME]` | runs the skill's code here and prints the result; `--tool` says which one when the code defines several |
 
 How to choose: someone has an agent file and wants to use or share it: `to-skill`, then `check`.
 Someone has a skill and needs it on a server or as one Python file: `check`, then `to-agent`.
@@ -39,7 +39,7 @@ the block below.
 
 ## The code
 
-<!-- code sha256=cf0dd796cb4177a4d6db878a1c1e51d1d588ce29e48d75d5323c54c6f1c16838 -->
+<!-- code sha256=c7c275a9ea1d627b6eece4a4e70c18bdde94d4e749eafd47a83ee1056e666bf9 -->
 ````python
 #!/usr/bin/env python3
 """rapp-skills: the seam between Agent Skills and RAPP single-file agents.
@@ -210,23 +210,69 @@ def install_shims():
         _sys.modules["utils.azure_file_storage"] = st_mod
 
 
-def load_agent(path):
-    """Import an agent file by path and return (module, agent instance)."""
+def _import_agent_module(path):
     install_shims()
     path = _Path(path).resolve()
-    spec = __import__("importlib.util").util.spec_from_file_location("skill_agent_" + path.stem, path)
-    module = __import__("importlib.util").util.module_from_spec(spec)
+    util = __import__("importlib.util").util
+    spec = util.spec_from_file_location("skill_agent_" + path.stem, path)
+    module = util.module_from_spec(spec)
     _sys.modules[spec.name] = module
     spec.loader.exec_module(module)
+    return module
+
+
+def _agent_name(agent):
+    return str(agent.metadata.get("name") or agent.name)
+
+
+def _agents_in(module):
+    """[(attribute name, instance), ...] for every agent the module defines, in definition order.
+
+    An agent is a class defined in that module that subclasses BasicAgent (not
+    BasicAgent itself), has a callable perform, and whose name does not start
+    with "_". This is what a server serves from the file, so it is what a skill
+    sees too.
+    """
     base = _sys.modules["agents.basic_agent"].BasicAgent
-    candidates = [
-        obj for obj in vars(module).values()
-        if isinstance(obj, type) and issubclass(obj, base) and obj is not base
-        and obj.__module__ == module.__name__
-    ]
-    if not candidates:
-        raise RuntimeError(f"{path.name}: no BasicAgent subclass found")
-    return module, candidates[-1]()
+    agents = []
+    for attr, obj in list(vars(module).items()):
+        if attr.startswith("_") or not isinstance(obj, type):
+            continue
+        if obj is base or not issubclass(obj, base) or obj.__module__ != module.__name__:
+            continue
+        if not callable(getattr(obj, "perform", None)):
+            continue
+        agents.append((attr, obj()))
+    return agents
+
+
+def load_agents(path):
+    """Import an agent file by path and return [(attribute name, agent instance), ...]."""
+    agents = _agents_in(_import_agent_module(path))
+    if not agents:
+        raise RuntimeError(f"{_Path(path).name}: no BasicAgent subclass found")
+    return agents
+
+
+def load_agent(path, tool_name=None):
+    """Import an agent file by path and return (module, agent instance).
+
+    The file's only agent when it defines one. When it defines several, the one
+    whose tool name equals tool_name; without a match, an error naming them all.
+    """
+    module = _import_agent_module(path)
+    agents = _agents_in(module)
+    if not agents:
+        raise RuntimeError(f"{_Path(path).name}: no BasicAgent subclass found")
+    if len(agents) == 1:
+        return module, agents[0][1]
+    names = [_agent_name(agent) for _, agent in agents]
+    if tool_name is not None:
+        for name, (_, agent) in zip(names, agents):
+            if name == tool_name:
+                return module, agent
+        raise RuntimeError(f"{_Path(path).name} has no agent named {tool_name!r}; it defines: {', '.join(names)}")
+    raise RuntimeError(f"{_Path(path).name} defines {len(agents)} agents ({', '.join(names)}); choose one by its tool name")
 '''
 
 RUN_PY = SHIM_SOURCE + r'''
@@ -235,11 +281,17 @@ def main(argv=None):
     import argparse
     ap = argparse.ArgumentParser(description="Run this skill's agent locally.")
     ap.add_argument("--json", default=None, help="arguments as a JSON object")
+    ap.add_argument("--tool", default=None, help="which agent to run when agent.py defines several (its tool name)")
     ap.add_argument("--describe", action="store_true", help="print the agent's tool definition")
     ap.add_argument("pairs", nargs="*", help="key=value arguments (alternative to --json)")
     args = ap.parse_args(argv)
     here = _Path(__file__).resolve().parent
-    module, agent = load_agent(here / "agent.py")
+    try:
+        module, agent = load_agent(here / "agent.py", args.tool)
+    except RuntimeError as exc:
+        hint = " (run again with --tool <name>)" if args.tool is None and "choose one" in str(exc) else ""
+        print(f"error: {exc}{hint}", file=_sys.stderr)
+        return 2
     if args.describe:
         print(_json.dumps(agent.to_tool(), indent=2))
         return 0
@@ -269,8 +321,26 @@ def _shim():
     return _shim_ns
 
 
-def load_agent(path: Path):
-    return _shim()["load_agent"](path)
+def load_agent(path: Path, tool_name: str | None = None):
+    return _shim()["load_agent"](path, tool_name)
+
+
+def load_agents(path: Path) -> list:
+    return _shim()["load_agents"](path)
+
+
+def _load_module_and_agents(path: Path):
+    """(module, [(attribute name, instance), ...]) for an agent file; error if it has no agent."""
+    shim = _shim()
+    module = shim["_import_agent_module"](path)
+    agents = shim["_agents_in"](module)
+    if not agents:
+        raise RuntimeError(f"{Path(path).name}: no BasicAgent subclass found")
+    return module, agents
+
+
+def _agent_name(agent) -> str:
+    return str(agent.metadata.get("name") or agent.name)
 
 
 # --------------------------------------------------------------------- frontmatter
@@ -424,21 +494,56 @@ def extract_agent(text: str) -> bytes | None:
 
 
 
+def toast_all(agent_path: Path, skills_dir: Path, origin: str | None = None,
+              license_name: str | None = None, tool_name: str | None = None) -> list[Path]:
+    """agent.py -> skills_dir/<name>/ (SKILL.md, scripts/agent.py, scripts/run.py) per agent.
+
+    A file usually defines one agent and yields one skill. A file that defines
+    several yields one skill per agent, each naming its own tool and carrying the
+    same code; tool_name limits that to one of them.
+    """
+    return _toast(Path(agent_path), Path(skills_dir), origin, license_name, tool_name, require_one=False)
+
+
 def toast(agent_path: Path, skills_dir: Path, origin: str | None = None,
-          license_name: str | None = None) -> Path:
-    """agent.py -> skills_dir/<name>/ (SKILL.md, scripts/agent.py, scripts/run.py)."""
-    agent_path = Path(agent_path)
-    module, agent = load_agent(agent_path)
+          license_name: str | None = None, tool_name: str | None = None) -> Path:
+    """agent.py -> one skill folder: the file's only agent, or the one named tool_name."""
+    return _toast(Path(agent_path), Path(skills_dir), origin, license_name, tool_name, require_one=True)[0]
+
+
+def _toast(agent_path: Path, skills_dir: Path, origin: str | None, license_name: str | None,
+           tool_name: str | None, require_one: bool) -> list[Path]:
+    module, agents = _load_module_and_agents(agent_path)
     skill_md = getattr(module, "SKILL_MD", None)
     if isinstance(skill_md, str) and getattr(module, "__rapp_skills__", {}).get("kind") == "playbook":
         fields, _ = parse_frontmatter(skill_md)
-        out = Path(skills_dir) / fields["name"]
+        out = skills_dir / fields["name"]
         out.mkdir(parents=True, exist_ok=True)
         write_text(out / "SKILL.md", skill_md)
-        return out
+        return [out]
 
+    several = len(agents) > 1
+    names = [_agent_name(agent) for _, agent in agents]
+    chosen = [agent for _, agent in agents]
+    if tool_name is not None:
+        chosen = [agent for name, agent in zip(names, chosen) if name == tool_name]
+        if not chosen:
+            raise RuntimeError(f"{agent_path.name} has no agent named {tool_name!r}; it defines: {', '.join(names)}")
+    elif require_one and several:
+        raise RuntimeError(f"{agent_path.name} defines {len(agents)} agents ({', '.join(names)}); choose one by its tool name")
+    by_skill: dict[str, object] = {}
+    for agent in chosen:
+        skill = kebab(_agent_name(agent))
+        if skill in by_skill:
+            raise RuntimeError(f"{agent_path.name}: agents {_agent_name(by_skill[skill])!r} and {_agent_name(agent)!r} would both become the skill {skill!r}")
+        by_skill[skill] = agent
+    return [_toast_one(module, agent, agent_path, skills_dir, origin, license_name, several) for agent in by_skill.values()]
+
+
+def _toast_one(module, agent, agent_path: Path, skills_dir: Path, origin: str | None,
+               license_name: str | None, several: bool) -> Path:
     meta = dict(agent.metadata)
-    tool_name = str(meta.get("name") or agent.name)
+    tool_name = _agent_name(agent)
     name = kebab(tool_name)
     description = str(meta.get("description") or "").strip() or f"{display(name)} agent."
     parameters = meta.get("parameters") or {"type": "object", "properties": {}, "required": []}
@@ -477,6 +582,7 @@ def toast(agent_path: Path, skills_dir: Path, origin: str | None = None,
     except UnicodeDecodeError as exc:
         raise RuntimeError(f"{agent_path}: agent must be UTF-8 text to embed in SKILL.md ({exc})") from exc
     runner_text = RUN_PY.lstrip("\n")
+    tool_flag = f"--tool {tool_name} " if several else ""
     body = [
         f"# {display(name)}",
         "",
@@ -496,13 +602,18 @@ def toast(agent_path: Path, skills_dir: Path, origin: str | None = None,
         "1. If `scripts/run.py` exists beside this file, run from this skill's directory:",
         "",
         "   ```bash",
-        f"   python3 scripts/run.py --json '{json.dumps(example, ensure_ascii=False)}'",
+        f"   python3 scripts/run.py {tool_flag}--json '{json.dumps(example, ensure_ascii=False)}'",
         "   ```",
         "",
         "2. Otherwise save the **code** block below as `agent.py` and the **launcher** block as",
-        "   `run.py` in one directory, then run `python3 run.py --json '...'` there.",
+        f"   `run.py` in one directory, then run `python3 run.py {tool_flag}--json '...'` there.",
         "3. If Python is unavailable, read the code block and do what its `perform`",
         "   method does yourself; it is the exact description of this skill.",
+        *([
+            "",
+            f"The code defines more than one tool; this skill is `{tool_name}`, so use that class",
+            "(the launcher needs `--tool` to know which one you mean).",
+        ] if several else []),
         "",
         "Return the printed output to the user as the result.",
         "",
@@ -519,7 +630,7 @@ def toast(agent_path: Path, skills_dir: Path, origin: str | None = None,
         embed_block(runner_text, RUNNER_OPEN, RUNNER_CLOSE),
         "",
     ]
-    out = Path(skills_dir) / name
+    out = skills_dir / name
     (out / "scripts").mkdir(parents=True, exist_ok=True)
     write_text(out / "SKILL.md", dump_frontmatter(fields) + "\n" + "\n".join(body))
     (out / "scripts" / "agent.py").write_bytes(agent_bytes)
@@ -601,7 +712,7 @@ class {class_name}(BasicAgent):
         self.metadata = {{
             "name": self.name,
             "description": {fields.get("description", "")!r},
-            "parameters": {json.dumps(parameters, ensure_ascii=False)},
+            "parameters": json.loads({json.dumps(parameters, ensure_ascii=False)!r}),
         }}
         super().__init__(self.name, self.metadata)
 
@@ -614,6 +725,15 @@ class {class_name}(BasicAgent):
         )
 '''
     target = out_dir / f"{tool_name}_agent.py"
+    # Never ship a file that cannot load: try it the way a server would, first.
+    import tempfile
+    with tempfile.TemporaryDirectory() as tmp:
+        probe = Path(tmp) / "agent.py"
+        write_text(probe, source)
+        try:
+            load_agent(probe)
+        except Exception as exc:  # noqa: BLE001 - whatever went wrong, say so
+            raise RuntimeError(f"{md}: the generated agent does not load ({exc.__class__.__name__}: {exc}); {target.name} not written") from exc
     write_text(target, source)
     return target
 
@@ -687,15 +807,25 @@ def verify(skill_dir: Path) -> list[str]:
             probe = Path(tmp) / "agent.py"
             probe.write_bytes(data)
             try:
-                _, agent = load_agent(probe)
+                agents = load_agents(probe)
             except Exception as exc:  # noqa: BLE001 - report, never crash
                 problems.append(f"{md}: agent does not load ({exc.__class__.__name__}: {exc})")
-                agent = None
+                agents = []
+        tool = (meta or {}).get("tool-name")
+        agent = None
+        if len(agents) == 1:
+            agent = agents[0][1]
+        elif agents:
+            # Several agents in one file: this skill is the one its tool-name names.
+            names = [_agent_name(a) for _, a in agents]
+            if tool in names:
+                agent = agents[names.index(tool)][1]
+            else:
+                problems.append(f"{md}: the code defines {len(agents)} agents ({', '.join(names)}); metadata.tool-name must name one of them (got {tool!r})")
         if agent is not None:
             if not callable(getattr(agent, "perform", None)):
                 problems.append(f"{md}: agent has no perform()")
-            tool = (meta or {}).get("tool-name")
-            if tool and str(agent.metadata.get("name") or agent.name) != tool:
+            if tool and _agent_name(agent) != tool:
                 problems.append(f"{md}: agent metadata.name {agent.metadata.get('name')!r} != frontmatter tool-name {tool!r}")
             if params is not None and agent.metadata.get("parameters") != params:
                 problems.append(f"{md}: the code's parameters differ from the 'What it needs' block")
@@ -708,6 +838,7 @@ def verify(skill_dir: Path) -> list[str]:
 
 LOCK_ITERATIONS = 200000
 LOCK_METHOD = f"aes-256-cbc pbkdf2 sha256 iterations={LOCK_ITERATIONS}"
+LOCK_HINT = " (Locked by its owner: ask them for the passphrase.)"
 
 
 def _openssl(args: list[str], data: bytes, passphrase: str) -> bytes:
@@ -733,7 +864,12 @@ def lock_skill(skill_dir: Path, out_dir: Path, passphrase: str) -> Path:
     meta["locked"] = LOCK_METHOD
     meta["locked-sha256"] = sha256(plain)
     fields = dict(fields)
-    fields["description"] = str(fields.get("description", "")).rstrip() + " (Locked by its owner: ask them for the passphrase.)"
+    description = str(fields.get("description", "")).rstrip()
+    # The hint is for people; metadata.locked is the real marker. Never let the hint
+    # push a long description past the 1024-character limit a skill must respect.
+    if len(description) + len(LOCK_HINT) <= 1024:
+        description += LOCK_HINT
+    fields["description"] = description
     fields["metadata"] = meta
     locked_body = "\n".join([
         "# Locked", "",
@@ -769,7 +905,7 @@ def unlock_skill(skill_dir: Path, out_dir: Path, passphrase: str) -> Path:
     if sha256(plain) != meta.get("locked-sha256"):
         raise RuntimeError("wrong passphrase, or the file was altered")
     fields = dict(fields)
-    fields["description"] = str(fields.get("description", "")).replace(" (Locked by its owner: ask them for the passphrase.)", "")
+    fields["description"] = str(fields.get("description", "")).replace(LOCK_HINT, "")
     meta = dict(meta); meta.pop("locked", None); meta.pop("locked-sha256", None)
     fields["metadata"] = meta
     out = Path(out_dir) / skill_dir.name
@@ -787,8 +923,10 @@ def roundtrip(path: Path, tmp: Path) -> tuple[bool, str]:
     if path.is_dir() or path.name == "SKILL.md":
         if path.is_file():
             path = path.parent
+        fields, _ = parse_frontmatter(unwrap_sealed(read_text(path / "SKILL.md")))
+        tool = (fields.get("metadata") or {}).get("tool-name") if isinstance(fields.get("metadata"), dict) else None
         compiled = compile_skill(path, tmp / "agents")
-        toasted = toast(compiled, tmp / "skills")
+        toasted = toast(compiled, tmp / "skills", tool_name=tool)
         a = (path / "SKILL.md").read_bytes()
         b = (toasted / "SKILL.md").read_bytes()
         script = path / "scripts" / "agent.py"
@@ -796,9 +934,9 @@ def roundtrip(path: Path, tmp: Path) -> tuple[bool, str]:
             same = script.read_bytes() == (toasted / "scripts" / "agent.py").read_bytes()
             return same, "the code came back unchanged" if same else "the code changed on the way back"
         return a == b, "SKILL.md came back byte-identical" if a == b else "SKILL.md changed on the way back"
-    toasted = toast(path, tmp / "skills")
-    compiled = compile_skill(toasted, tmp / "agents")
-    same = path.read_bytes() == compiled.read_bytes()
+    # A file with several agents becomes several skills; each must give the file back.
+    same = all(path.read_bytes() == compile_skill(skill, tmp / "agents").read_bytes()
+               for skill in toast_all(path, tmp / "skills"))
     return same, f"{path.name} came back byte-identical" if same else f"{path.name} changed on the way back"
 
 
@@ -920,6 +1058,7 @@ def main(argv: list[str] | None = None) -> int:
     p = sub.add_parser("run", help="run a skill's agent locally")
     p.add_argument("skill")
     p.add_argument("--json", default="{}")
+    p.add_argument("--tool", default=None, help="which agent to run when the skill's code defines several")
     p = sub.add_parser("lock", help="lock a skill with a passphrase (header stays readable, body encrypted)")
     p.add_argument("skill")
     p.add_argument("--out", default="locked")
@@ -939,16 +1078,17 @@ def main(argv: list[str] | None = None) -> int:
         rc = 0
         for agent in agents:
             try:
-                out = toast(agent, Path(args.out), origin=args.origin, license_name=args.license)
+                outs = toast_all(agent, Path(args.out), origin=args.origin, license_name=args.license)
             except Exception as exc:  # noqa: BLE001 - keep going, report at the end
                 print(f"skipped {agent.name}: {exc.__class__.__name__}: {exc}")
                 rc = 1
                 continue
-            problems = verify(out)
-            print(f"skill written: {out}")
-            if problems:
-                print("\n".join("  " + p for p in problems))
-                rc = 1
+            for out in outs:
+                problems = verify(out)
+                print(f"skill written: {out}")
+                if problems:
+                    print("\n".join("  " + p for p in problems))
+                    rc = 1
         return rc
     if args.cmd == "to-agent":
         source = Path(args.skill)
@@ -981,7 +1121,7 @@ def main(argv: list[str] | None = None) -> int:
         if not runner.is_file():
             print("this skill has no code to run; the AI hosting it carries out its steps", file=sys.stderr)
             return 2
-        return subprocess.call([sys.executable, str(runner), "--json", args.json])
+        return subprocess.call([sys.executable, str(runner), "--json", args.json, *(["--tool", args.tool] if args.tool else [])])
     if args.cmd in ("lock", "unlock"):
         passphrase = os.environ.get("SKILL_PASSPHRASE")
         if not passphrase:

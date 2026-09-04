@@ -1,9 +1,13 @@
 """rapp-skills: the conversion is lossless, the skills are standard, the hosts do not drift."""
 from __future__ import annotations
 
+import contextlib
+import importlib.util
+import io
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -11,11 +15,17 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "skills" / "rapp-skills" / "scripts"))
-import rapp_skills as rs  # noqa: E402
+# RAPP_SKILLS_UNDER_TEST points these tests at another copy of the converter (for
+# example one extracted from an older commit) to show a test really catches a bug.
+CONVERTER = Path(os.environ.get("RAPP_SKILLS_UNDER_TEST") or ROOT / "skills" / "rapp-skills" / "scripts" / "rapp_skills.py").resolve()
+_spec = importlib.util.spec_from_file_location("rapp_skills", CONVERTER)
+rs = importlib.util.module_from_spec(_spec)
+sys.modules["rapp_skills"] = rs
+_spec.loader.exec_module(rs)
 
 FIXTURES = ROOT / "tests" / "fixtures"
 HELLO = FIXTURES / "hello_world_agent.py"
+PAIR = FIXTURES / "pair_agent.py"
 BRIEF = FIXTURES / "writing-brief"
 
 
@@ -120,6 +130,139 @@ class ToastAndCompile(unittest.TestCase):
             self.assertEqual(compiled.name, "writing_brief_agent.py")
             rs.write_text(d / "SKILL.md", sealed.replace("Turn a rough idea", "Turn a polished idea"))
             self.assertTrue(any("seal does not match" in p for p in rs.verify(d)))
+
+
+class ReviewDefects(unittest.TestCase):
+    """One test per confirmed defect. Each fails on the converter before its fix."""
+
+    def test_defect1_compiled_schema_with_json_literals_imports(self):
+        """A step-by-step skill whose inputs use true/false/null must compile to a file that loads.
+
+        The schema used to be pasted into the Python file as JSON text, so `true`,
+        `false` and `null` were NameErrors, and nothing noticed because the compiled
+        file was never loaded. Now the schema travels as a JSON string and the
+        compiled file is loaded before it is written; if it cannot load, compile
+        refuses instead of shipping a broken file.
+        """
+        schema = {
+            "type": "object",
+            "properties": {
+                "topic": {"type": "string", "description": "What to write about (¡en cualquier idioma!)"},
+                "draft": {"type": "boolean", "default": False},
+                "limit": {"type": ["integer", "null"], "default": None},
+                "public": {"type": "boolean", "default": True},
+            },
+            "required": ["topic"],
+            "additionalProperties": False,
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            skill = Path(tmp) / "every-literal"
+            skill.mkdir()
+            rs.write_text(skill / "SKILL.md", "---\nname: \"every-literal\"\ndescription: \"Uses every JSON literal in its inputs.\"\n---\n\n"
+                          "# Every Literal\n\n## What it needs\n\n```json\n" + json.dumps(schema, indent=2, ensure_ascii=False) + "\n```\n\nWrite about the topic.\n")
+            self.assertEqual(rs.verify(skill), [])
+            compiled = rs.compile_skill(skill, Path(tmp) / "agents")
+            _, agent = rs.load_agent(compiled)
+            self.assertEqual(agent.metadata["parameters"], schema)
+            self.assertIn("¡en cualquier idioma!", agent.perform(topic="skills"))
+            # A skill whose name Python cannot turn into a class name verifies fine but
+            # cannot compile to something that loads: compile must say so, not ship it.
+            bad = Path(tmp) / "3d-print"
+            bad.mkdir()
+            rs.write_text(bad / "SKILL.md", "---\nname: \"3d-print\"\ndescription: \"A name that is not a Python class name.\"\n---\n\n# 3d Print\n\nPrint it.\n")
+            self.assertEqual(rs.verify(bad), [])
+            with self.assertRaises(RuntimeError) as caught:
+                rs.compile_skill(bad, Path(tmp) / "agents")
+            self.assertIn("does not load", str(caught.exception))
+            self.assertFalse((Path(tmp) / "agents" / "3d_print_agent.py").exists(), "a file that cannot load must not be written")
+
+    def test_defect2_file_with_several_agents_yields_one_skill_each(self):
+        """A file defining several agents is several tools on a server, so it is several skills.
+
+        The loader used to keep only the last class in the file, silently, so
+        to-skill wrote one skill for the wrong agent and check compared against the
+        wrong class. Now every public agent is found in definition order, each gets
+        its own skill naming its own tool, check and the launcher pick by tool name,
+        and the launcher refuses to guess when the name is missing.
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            skills = Path(tmp) / "skills"
+            with contextlib.redirect_stdout(io.StringIO()):
+                self.assertEqual(rs.main(["to-skill", str(PAIR), "--out", str(skills)]), 0)
+            self.assertEqual(sorted(p.name for p in skills.iterdir()), ["farewell", "greet"])
+            for name, tool in (("greet", "GreetAgent"), ("farewell", "FarewellAgent")):
+                skill = skills / name
+                self.assertEqual(rs.verify(skill), [])
+                fields, body = rs.parse_frontmatter(rs.read_text(skill / "SKILL.md"))
+                self.assertEqual(fields["metadata"]["tool-name"], tool)
+                self.assertIn(f"--tool {tool} ", body, "the run instructions must say which tool")
+                self.assertEqual((skill / "scripts" / "agent.py").read_bytes(), PAIR.read_bytes())
+            # The launcher runs the tool asked for, and refuses to guess between the two.
+            out = skills / "greet"
+            result = run_py("scripts/run.py", "--tool", "FarewellAgent", "--json", '{"name": "Ada", "until": "Monday"}', cwd=out)
+            self.assertEqual(result.stdout.strip(), "Goodbye, Ada! See you Monday.", result.stderr)
+            result = run_py("scripts/run.py", "--tool", "GreetAgent", "--json", '{"name": "Ada"}', cwd=out)
+            self.assertEqual(result.stdout.strip(), "Hello, Ada!", result.stderr)
+            result = run_py("scripts/run.py", "--json", '{"name": "Ada"}', cwd=out)
+            self.assertNotEqual(result.returncode, 0, "two agents and no --tool must not silently pick one")
+            self.assertIn("GreetAgent", result.stderr)
+            self.assertIn("FarewellAgent", result.stderr)
+            self.assertIn("--tool", result.stderr)
+            # The loader: every public agent, in the order the file defines them; the
+            # underscore-named one is left out, exactly as a server would leave it out.
+            self.assertEqual([attr for attr, _ in rs.load_agents(PAIR)], ["GreetAgent", "FarewellAgent"])
+            with self.assertRaises(RuntimeError) as caught:
+                rs.load_agent(PAIR)
+            self.assertIn("GreetAgent", str(caught.exception))
+            self.assertIn("FarewellAgent", str(caught.exception))
+            _, agent = rs.load_agent(PAIR, "FarewellAgent")
+            self.assertEqual(agent.metadata["name"], "FarewellAgent")
+            _, agent = rs.load_agent(HELLO)
+            self.assertEqual(agent.metadata["name"], "HelloWorldAgent", "one agent needs no tool name")
+            # check compares against the class the skill names, not the last one in the file.
+            md = skills / "greet" / "SKILL.md"
+            good = rs.read_text(md)
+            rs.write_text(md, good.replace('tool-name: "GreetAgent"', 'tool-name: "FarewellAgent"'))
+            self.assertTrue(any("parameters differ" in p for p in rs.verify(skills / "greet")))
+            rs.write_text(md, good.replace('tool-name: "GreetAgent"', 'tool-name: "NoSuchAgent"'))
+            self.assertTrue(any("must name one of them" in p for p in rs.verify(skills / "greet")))
+            rs.write_text(md, good)
+            ok, msg = rs.roundtrip(PAIR, Path(tmp) / "rt")
+            self.assertTrue(ok, msg)
+
+    @unittest.skipUnless(shutil.which("openssl"), "locking needs the openssl command")
+    def test_defect3_lock_keeps_long_description_within_limit(self):
+        """Locking a skill with a long description must still produce a valid skill.
+
+        lock used to append its 52-character hint to the description no matter what,
+        so a description near the 1024-character limit (including the 1000-plus-dots
+        one to-skill itself writes) came out too long and the locked file failed
+        check. Now the hint is added only when it fits; metadata.locked already says
+        the file is locked.
+        """
+        long_description = ("Greets the user at considerable length, explaining the history of greetings. " * 20).strip()
+        source = HELLO.read_text(encoding="utf-8").replace('"description": "Says hello to the user."', '"description": ' + json.dumps(long_description))
+        self.assertNotEqual(source, HELLO.read_text(encoding="utf-8"))
+        with tempfile.TemporaryDirectory() as tmp:
+            agent = Path(tmp) / "long_hello_agent.py"
+            rs.write_text(agent, source)
+            skill = rs.toast(agent, Path(tmp) / "skills")
+            fields, _ = rs.parse_frontmatter(rs.read_text(skill / "SKILL.md"))
+            self.assertTrue(973 <= len(fields["description"]) <= 1024, len(fields["description"]))
+            self.assertEqual(rs.verify(skill), [])
+            locked = rs.lock_skill(skill, Path(tmp) / "locked", "open sesame")
+            self.assertEqual(rs.verify(locked), [], "a locked skill must still be a valid skill")
+            locked_fields, _ = rs.parse_frontmatter(rs.read_text(locked / "SKILL.md"))
+            self.assertLessEqual(len(locked_fields["description"]), 1024)
+            self.assertTrue(locked_fields["metadata"]["locked"])
+            unlocked = rs.unlock_skill(locked, Path(tmp) / "unlocked", "open sesame")
+            self.assertEqual((unlocked / "SKILL.md").read_bytes(), (skill / "SKILL.md").read_bytes())
+            # A short description still gets the hint for people reading the header.
+            short = rs.toast(HELLO, Path(tmp) / "skills-short")
+            short_locked = rs.lock_skill(short, Path(tmp) / "locked-short", "open sesame")
+            short_fields, _ = rs.parse_frontmatter(rs.read_text(short_locked / "SKILL.md"))
+            self.assertIn("Locked by its owner", short_fields["description"])
+            self.assertEqual(rs.verify(short_locked), [])
 
 
 class RepositoryIsConsistent(unittest.TestCase):
