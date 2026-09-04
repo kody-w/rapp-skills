@@ -39,7 +39,7 @@ the block below.
 
 ## The code
 
-<!-- code sha256=c7c275a9ea1d627b6eece4a4e70c18bdde94d4e749eafd47a83ee1056e666bf9 -->
+<!-- code sha256=e9d5fe4ca5bda8d43506fb438a94b2b3fac0de349c91e4703e7d46d7b1bd7352 -->
 ````python
 #!/usr/bin/env python3
 """rapp-skills: the seam between Agent Skills and RAPP single-file agents.
@@ -437,7 +437,9 @@ def snake(name: str) -> str:
 
 
 def pascal(name: str) -> str:
-    return "".join(part.capitalize() for part in kebab(name).split("-"))
+    name = "".join(part.capitalize() for part in kebab(name).split("-"))
+    # A class name cannot start with a digit; "3d-print" becomes Skill3dPrint.
+    return ("Skill" + name) if name[:1].isdigit() else name
 
 
 def display(name: str) -> str:
@@ -1094,12 +1096,23 @@ def main(argv: list[str] | None = None) -> int:
         source = Path(args.skill)
         skills = sorted(d for d in source.iterdir() if (d / "SKILL.md").is_file()) if source.is_dir() and not (source / "SKILL.md").is_file() else [source]
         rc = 0
+        written: dict[str, Path] = {}
         for skill in skills:
             try:
-                print(compile_skill(skill, Path(args.out)))
+                target = compile_skill(skill, Path(args.out))
             except Exception as exc:  # noqa: BLE001
                 print(f"skipped {skill}: {exc.__class__.__name__}: {exc}")
                 rc = 1
+                continue
+            digest = sha256(target.read_bytes())
+            if digest in written and written[digest] != target:
+                # Several skills came from one file of several tools; a server loading the
+                # folder would register every tool once per copy. Keep the first copy only.
+                target.unlink()
+                print(f"{skill.name}: same code as {written[digest].name}; not written again")
+                continue
+            written[digest] = target
+            print(target)
         return rc
     if args.cmd == "check":
         rc = 0

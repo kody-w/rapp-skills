@@ -165,16 +165,16 @@ class ReviewDefects(unittest.TestCase):
             _, agent = rs.load_agent(compiled)
             self.assertEqual(agent.metadata["parameters"], schema)
             self.assertIn("¡en cualquier idioma!", agent.perform(topic="skills"))
-            # A skill whose name Python cannot turn into a class name verifies fine but
-            # cannot compile to something that loads: compile must say so, not ship it.
+            # A skill whose name starts with a digit still compiles to a class Python accepts.
             bad = Path(tmp) / "3d-print"
             bad.mkdir()
             rs.write_text(bad / "SKILL.md", "---\nname: \"3d-print\"\ndescription: \"A name that is not a Python class name.\"\n---\n\n# 3d Print\n\nPrint it.\n")
             self.assertEqual(rs.verify(bad), [])
-            with self.assertRaises(RuntimeError) as caught:
-                rs.compile_skill(bad, Path(tmp) / "agents")
-            self.assertIn("does not load", str(caught.exception))
-            self.assertFalse((Path(tmp) / "agents" / "3d_print_agent.py").exists(), "a file that cannot load must not be written")
+            digit = rs.compile_skill(bad, Path(tmp) / "agents")
+            self.assertEqual(digit.name, "3d_print_agent.py")
+            _, digit_agent = rs.load_agent(digit)
+            self.assertEqual(type(digit_agent).__name__, "Skill3dPrintAgent")
+            self.assertEqual(digit_agent.metadata["name"], "3d_print")
 
     def test_defect2_file_with_several_agents_yields_one_skill_each(self):
         """A file defining several agents is several tools on a server, so it is several skills.
@@ -263,6 +263,22 @@ class ReviewDefects(unittest.TestCase):
             short_fields, _ = rs.parse_frontmatter(rs.read_text(short_locked / "SKILL.md"))
             self.assertIn("Locked by its owner", short_fields["description"])
             self.assertEqual(rs.verify(short_locked), [])
+
+
+class FolderConversion(unittest.TestCase):
+    def test_folder_to_agent_writes_shared_code_once(self):
+        """Two skills from one file of two tools restore to one Python file, not two copies."""
+        with tempfile.TemporaryDirectory() as tmp:
+            skills = Path(tmp) / "skills"
+            rc = rs.main(["to-skill", str(FIXTURES / "pair_agent.py"), "--out", str(skills)])
+            self.assertEqual(rc, 0)
+            self.assertEqual(sorted(p.name for p in skills.iterdir()), ["farewell", "greet"])
+            agents = Path(tmp) / "agents"
+            rc = rs.main(["to-agent", str(skills), "--out", str(agents)])
+            self.assertEqual(rc, 0)
+            files = sorted(p.name for p in agents.iterdir())
+            self.assertEqual(len(files), 1, files)
+            self.assertEqual((agents / files[0]).read_bytes(), (FIXTURES / "pair_agent.py").read_bytes())
 
 
 class RepositoryIsConsistent(unittest.TestCase):
