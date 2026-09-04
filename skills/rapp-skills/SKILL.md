@@ -39,7 +39,7 @@ the block below.
 
 ## The code
 
-<!-- code sha256=78e34d9373cf8c524c3c971b18aa3ab9928765fc6c7a2128a9ae3a2f29b83885 -->
+<!-- code sha256=02ad6044f18804f3f0d45143e648de39ab6a3c86a83c41dca24eebf6001e60dc -->
 ````python
 #!/usr/bin/env python3
 """rapp-skills: the seam between Agent Skills and RAPP single-file agents.
@@ -135,7 +135,8 @@ class BasicAgent:
 class AzureFileStorageManager:
     """Local stand-in for the cloud storage helper some agents import.
 
-    Files live under $AGENT_STORAGE (default ~/.agent-storage).
+    Used only if the agent itself saves something. Everything goes under one
+    folder, $AGENT_STORAGE (default ~/.agent-storage); delete it to erase all of it.
     """
 
     def __init__(self, share_name=None, **kwargs):

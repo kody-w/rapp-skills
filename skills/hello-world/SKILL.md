@@ -144,7 +144,8 @@ class BasicAgent:
 class AzureFileStorageManager:
     """Local stand-in for the cloud storage helper some agents import.
 
-    Files live under $AGENT_STORAGE (default ~/.agent-storage).
+    Used only if the agent itself saves something. Everything goes under one
+    folder, $AGENT_STORAGE (default ~/.agent-storage); delete it to erase all of it.
     """
 
     def __init__(self, share_name=None, **kwargs):

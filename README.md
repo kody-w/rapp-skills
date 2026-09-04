@@ -9,7 +9,8 @@ Skills you can use, share as one file, and take anywhere. Why: [CHARTER.md](CHAR
   one Python file, make it one. Nothing is lost, and it turns back into a skill any time.
 
 Works in Claude Code and GitHub Copilot CLI today, and in anything else that reads
-[Agent Skills](https://agentskills.io). There is nothing to install.
+[Agent Skills](https://agentskills.io). There is nothing to install, and nothing to uninstall:
+delete a skill's folder and your AI is back to exactly how it was.
 
 ## Use a skill
 
@@ -50,7 +51,9 @@ python3 rapp_skills.py run skills/hello-world --json '{"name": "Ada"}'
 ## What is inside a skill file
 
 A short header your tool reads (name, description, what it needs). How to run it. Then the code
-that does the work, unchanged, with its checksum, and the small launcher that runs it. Nothing in
+that does the work, unchanged, with its checksum, and the small launcher that runs it. The
+launcher writes nothing anywhere. If a skill's code saves something, it goes under one folder,
+`~/.agent-storage`, and deleting that folder erases it. Nothing in
 the file names this project or any other platform. Open
 [`skills/hello-world/SKILL.md`](skills/hello-world/SKILL.md) to see one.
 

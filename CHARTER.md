@@ -22,6 +22,11 @@ it in plain words. It carries its own code, so it runs. Share it by sending the 
 **Nowhere to go and nothing to learn.** No installs, no accounts, no terms. When more is needed,
 the AI fetches it, the way it fetches anything else it needs, and the person never hears how.
 
+**A way out that costs nothing.** If any of this ever causes friction, the person deletes the file.
+That removes the whole layer and returns their AI to exactly its native baseline. Nothing is left
+behind, nothing else changes, and nothing needs uninstalling. Being easy to leave is how we earn
+the right to stay.
+
 ## How we do it
 
 Underneath, one medium carries every skill and every person's file across devices and AIs the
@@ -45,6 +50,8 @@ still runs that file. It is one place a skill can go. It is never required.
   would serve, and not one step earlier.
 - **Holding on to the past.** When a better, simpler shape exists, we move to it and archive the
   old one, cleanly.
+- **Residue.** Nothing we add writes outside its own file or folder without the person asking. A
+  skill that saves something says where, in one place, so deleting that place erases it.
 
 ## How we know it is working
 

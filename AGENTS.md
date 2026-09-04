@@ -24,3 +24,6 @@ scale, never a prerequisite.
   introduce it earlier. Users never hear "plugin" or "marketplace" either: an AI that needs the
   converter takes it from the one self-contained `skills/rapp-skills/SKILL.md`; tools that fetch
   abilities on their own do so silently. A copied skill folder must always be enough.
+- **Reversible by deletion.** Nothing writes outside the skill's folder unless the agent's own code
+  saves, and then only under `~/.agent-storage`. Deleting a skill folder must return the host to
+  its exact native baseline. Never add a hook, a setting change, or a background process.
