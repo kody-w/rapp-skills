@@ -233,6 +233,21 @@ def load_agent(path: Path):
 # --------------------------------------------------------------------- frontmatter
 
 
+def unwrap_sealed(text: str) -> str:
+    """A sealed skill wraps a plain skill between RAW-SKILL markers with its sha256.
+
+    Returns the plain skill inside after checking the seal; returns text unchanged
+    when it is not sealed. Raises when the seal does not match.
+    """
+    m = re.search(r"<!-- RAW-SKILL-BEGIN sha256=([0-9a-f]{64}) -->\n(.*?)\n<!-- RAW-SKILL-END -->", text, re.S)
+    if not m:
+        return text
+    for candidate in (m.group(2) + "\n", m.group(2)):
+        if sha256(candidate.encode("utf-8")) == m.group(1):
+            return candidate
+    raise ValueError("sealed skill: the seal does not match the contents")
+
+
 def parse_frontmatter(text: str) -> tuple[dict, str]:
     """Flat YAML frontmatter: scalars plus one-level maps. Returns (fields, body)."""
     if not text.startswith("---\n"):
@@ -488,7 +503,7 @@ def _skill_md(path: Path) -> tuple[Path, Path]:
 def compile_skill(skill_dir: Path, out_dir: Path) -> Path:
     """<skill>/ or SKILL.md -> out_dir/<snake>_agent.py."""
     skill_dir, md = _skill_md(skill_dir)
-    text = read_text(md)
+    text = unwrap_sealed(read_text(md))
     fields, body = parse_frontmatter(text)
     name = fields["name"]
     out_dir = Path(out_dir)
@@ -569,8 +584,8 @@ def verify(skill_dir: Path) -> list[str]:
     problems: list[str] = []
     if not md.is_file():
         return [f"{skill_dir}: no SKILL.md"]
-    text = read_text(md)
     try:
+        text = unwrap_sealed(read_text(md))
         fields, body = parse_frontmatter(text)
     except ValueError as exc:
         return [f"{md}: {exc}"]

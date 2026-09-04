@@ -107,6 +107,21 @@ class ToastAndCompile(unittest.TestCase):
                 self.assertNotIn(word, head)
 
 
+    def test_sealed_skill_unwraps_and_bad_seal_is_refused(self):
+        raw = rs.read_text(BRIEF / "SKILL.md")
+        good = rs.sha256(raw.encode("utf-8"))
+        sealed = "---\nname: writing-brief\ndescription: sealed\nschema: rapp/1-skill\nskill_hash: " + good + "\nnote: |\n  folded\n---\n<!-- RAW-SKILL-BEGIN sha256=" + good + " -->\n" + raw.rstrip("\n") + "\n<!-- RAW-SKILL-END -->\n"
+        self.assertEqual(rs.unwrap_sealed(sealed), raw)
+        with tempfile.TemporaryDirectory() as tmp:
+            d = Path(tmp) / "writing-brief"; d.mkdir()
+            rs.write_text(d / "SKILL.md", sealed)
+            self.assertEqual(rs.verify(d), [])
+            compiled = rs.compile_skill(d, Path(tmp) / "agents")
+            self.assertEqual(compiled.name, "writing_brief_agent.py")
+            rs.write_text(d / "SKILL.md", sealed.replace("Turn a rough idea", "Turn a polished idea"))
+            self.assertTrue(any("seal does not match" in p for p in rs.verify(d)))
+
+
 class RepositoryIsConsistent(unittest.TestCase):
     def test_shipped_skills_verify(self):
         for skill in sorted((ROOT / "skills").iterdir()):
