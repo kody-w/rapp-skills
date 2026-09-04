@@ -555,7 +555,7 @@ class {class_name}(BasicAgent):
         )
 '''
     target = out_dir / f"{tool_name}_agent.py"
-    target
+    write_text(target, source)
     return target
 
 
