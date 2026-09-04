@@ -65,6 +65,14 @@ anything of ours the person can see.
   skill that saves something says where, in one place, so deleting that place erases it.
 - **Building what the platform already builds.** No new harness, runtime, or interface of our
   own. If a native tool can do it, we use the native tool and improve what it does with the file.
+- **Ego.** Nobody has to use our runtime or our platform to prove anything. We reach for our own
+  pieces only when there is no native way to do a thing, or when we do it so much better that
+  the native platform should absorb the way we do it. Being absorbed is success, not loss.
+
+## What matters
+
+The story is what matters to a person: what they can do now that they could not do before, in
+their own words, on their own AI. Technical details are ours to carry and theirs to never see.
 
 ## How we know it is working
 
