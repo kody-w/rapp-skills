@@ -1,0 +1,37 @@
+{
+  "name": "copilot-cli",
+  "display": "GitHub Copilot CLI",
+  "verified": {
+    "version": "1.0.83",
+    "date": "2026-09-04"
+  },
+  "skill_dirs": [
+    "~/.copilot/skills/<name>/SKILL.md",
+    "<project>/.github/skills/<name>/SKILL.md",
+    "<project>/.claude/skills/<name>/SKILL.md",
+    "<project>/.agents/skills/<name>/SKILL.md"
+  ],
+  "plugin_manifest": "plugin.json",
+  "marketplace": ".github/plugin/marketplace.json",
+  "agents": {
+    "dir": ".github/agents",
+    "suffix": ".agent.md",
+    "frontmatter": [
+      "name",
+      "description",
+      "model"
+    ]
+  },
+  "install": [
+    "/plugin marketplace add kody-w/rapp-skills",
+    "/plugin install rapp-skills@rapp-skills"
+  ],
+  "skill_invocation": "/<skill> or a plain request that matches the skill description",
+  "instruction_files": [
+    "AGENTS.md",
+    ".github/copilot-instructions.md",
+    "CLAUDE.md"
+  ],
+  "docs": "https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/add-skills",
+  "evidence": "2026-09-04, GitHub Copilot CLI 1.0.83, `copilot -p -s --allow-all-tools` with `skills/hello-world` copied to `<project>/.github/skills/`: the skill was selected, `cd .github/skills/hello-world && python3 scripts/run.py --json '{\"name\": \"Kody\"}'` ran, and the exact output was reported. No plugin installed. A copy under `~/.copilot/skills` was read but its scripts were execution-restricted outside the working directory; the project path is the reliable one."
+}

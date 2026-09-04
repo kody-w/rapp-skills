@@ -1,0 +1,35 @@
+{
+  "name": "claude-code",
+  "display": "Claude Code",
+  "verified": {
+    "version": "2.1.260",
+    "date": "2026-09-04"
+  },
+  "skill_dirs": [
+    "~/.claude/skills/<name>/SKILL.md",
+    "<project>/.claude/skills/<name>/SKILL.md",
+    "<plugin>/skills/<name>/SKILL.md"
+  ],
+  "plugin_manifest": ".claude-plugin/plugin.json",
+  "marketplace": ".claude-plugin/marketplace.json",
+  "agents": {
+    "dir": "agents",
+    "suffix": ".md",
+    "frontmatter": [
+      "name",
+      "description",
+      "tools",
+      "model"
+    ]
+  },
+  "install": [
+    "/plugin marketplace add kody-w/rapp-skills",
+    "/plugin install rapp-skills@rapp-skills"
+  ],
+  "skill_invocation": "/rapp-skills:<skill> or a plain request that matches the skill description",
+  "instruction_files": [
+    "CLAUDE.md"
+  ],
+  "docs": "https://code.claude.com/docs/en/skills",
+  "evidence": "2026-09-04, Claude Code 2.1.260, `claude -p` with `skills/hello-world` copied to `<project>/.claude/skills/`: the skill was selected, `scripts/run.py --json '{\"name\": \"Kody\"}'` ran, and the exact output `Hello, Kody! Welcome to the RAPP Agent ecosystem.` was reported. No plugin installed."
+}
