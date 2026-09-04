@@ -418,9 +418,13 @@ class ConverterReview2(unittest.TestCase):
                     store.write_file("link/x.txt", "x")
                 self.assertEqual(list(elsewhere.iterdir()), [])
             # A memory context is one folder name, nothing that could be a path.
-            for bad in ("", ".", "..", "a/b", "a\\b", "a\nb", "../other", 5):
+            for bad in (".", "..", "a/b", "a\\b", "a\nb", "../other", 5):
                 with self.subTest(context=bad), self.assertRaises(ValueError):
                     store.set_memory_context(bad)
+            # An empty name is a reset to the shared folder, as on a server (review round three).
+            store.set_memory_context("user-1")
+            self.assertTrue(store.set_memory_context(""))
+            self.assertIsNone(store.current_guid)
             store.set_memory_context("user-1")
             store.write_json({"k": 1})
             self.assertEqual(store.read_json(), {"k": 1})
@@ -472,6 +476,38 @@ class AliasAgent(BasicAgent):
         same_class = BasicAgent is agents.basic_agent.BasicAgent is basic_agent.BasicAgent
         same_store = DynamicsStorageManager is AzureFileStorageManager
         return "same class: %s; same store: %s" % (same_class, same_store)
+'''
+
+
+MEMORY_AGENT = '''from agents.basic_agent import BasicAgent
+from utils.azure_file_storage import AzureFileStorageManager
+
+
+class ContextPeekAgent(BasicAgent):
+    """Reads the storage helper the way library memory agents do: its attributes, not only its methods."""
+
+    def __init__(self):
+        self.name = "ContextPeekAgent"
+        self.metadata = {
+            "name": self.name,
+            "description": "Reports what the storage helper exposes.",
+            "parameters": {"type": "object", "properties": {"user_guid": {"type": "string"}}, "required": []},
+        }
+        super().__init__(self.name, self.metadata)
+        self.storage_manager = AzureFileStorageManager()
+
+    def perform(self, **kwargs):
+        s = self.storage_manager
+        out = {"before": s.current_guid, "share_name": s.share_name, "default_file_name": s.default_file_name,
+               "storage_root": str(s.storage_root), "shared_memory_path": str(s.shared_memory_path)}
+        s.set_memory_context(kwargs.get("user_guid") or "g1")
+        s.write_json({"seen": True})
+        folder = s.ensure_directory_exists("sub")
+        s.write_file("sub/note.txt", "hi")
+        out.update({"after": s.current_guid, "memory_path": str(s.current_memory_path), "sub": str(folder)})
+        s.set_memory_context(None)
+        out.update({"reset": s.current_guid, "reset_path": str(s.current_memory_path)})
+        return out
 '''
 
 
@@ -583,6 +619,65 @@ class ConverterReview3(unittest.TestCase):
                 self.assertEqual(launcher.AzureFileStorageManager("").root, storage / "default")
             for path in tmp.rglob("*"):
                 self.assertTrue(path == storage or storage in path.parents or path.is_relative_to(tmp / "skills"), path)
+
+    def test_defect10_storage_stand_in_exposes_what_a_server_does(self):
+        """The storage stand-in carries the attributes agents read, not only the methods they call.
+
+        Library memory agents read storage_manager.current_guid (nine of them) and
+        eight call ensure_directory_exists; the stand-in had neither, so those
+        agents converted and checked but crashed when run. Now it exposes the
+        server's attributes with the server's reset rules (None, "" or the marker
+        guid means shared), and ensure_directory_exists makes a folder inside the
+        store; every path stays under $AGENT_STORAGE.
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp = Path(tmp).resolve()  # paths the helper returns are resolved (macOS: /var -> /private/var)
+            agent = tmp / "context_peek_agent.py"
+            rs.write_text(agent, MEMORY_AGENT)
+            skill = rs.toast(agent, tmp / "skills")
+            self.assertEqual(rs.verify(skill), [])
+            store = tmp / "storage"
+            result = subprocess.run([sys.executable, "scripts/run.py", "--json", "{}"], cwd=skill,
+                                    capture_output=True, text=True, env=dict(os.environ, AGENT_STORAGE=str(store)))
+            self.assertEqual(result.returncode, 0, result.stderr)
+            out = json.loads(result.stdout)
+            root = store / "default"
+            self.assertEqual(out, {
+                "before": None, "share_name": None, "default_file_name": "memory.json",
+                "storage_root": str(root), "shared_memory_path": str(root),
+                "after": "g1", "memory_path": str(root / "g1"), "sub": str(root / "g1" / "sub"),
+                "reset": None, "reset_path": str(root),
+            })
+            self.assertEqual(json.loads((root / "g1" / "memory.json").read_text()), {"seen": True})
+            self.assertEqual((root / "g1" / "sub" / "note.txt").read_text(), "hi")
+            # The same rules, checked directly on the launcher's helper.
+            launcher = load_launcher(skill)
+            with mock.patch.dict(os.environ, {"AGENT_STORAGE": str(store)}):
+                helper = launcher.AzureFileStorageManager(" Team ")
+            self.assertEqual(helper.share_name, "team")
+            self.assertIs(helper.storage_root, helper.root)
+            self.assertEqual(helper.current_memory_path, helper.shared_memory_path)
+            for reset in (None, "", helper.DEFAULT_MARKER_GUID):
+                with self.subTest(reset=reset):
+                    self.assertTrue(helper.set_memory_context("g2"))
+                    self.assertEqual((helper.current_guid, helper.current_memory_path), ("g2", helper.root / "g2"))
+                    self.assertTrue(helper.set_memory_context(reset))
+                    self.assertEqual((helper.current_guid, helper.current_memory_path), (None, helper.shared_memory_path))
+            for bad in ("a/b", "..", "trailing.", "CON", 5):
+                with self.subTest(guid=bad), self.assertRaises(ValueError):
+                    helper.set_memory_context(bad)
+            self.assertIsNone(helper.current_guid, "a refused context leaves the current one alone")
+            made = helper.ensure_directory_exists("reports/2026")
+            self.assertTrue(made.is_dir())
+            self.assertEqual(made, helper.root / "reports" / "2026")
+            for escape in ("../out", str(tmp / "out"), "reports/../../out"):
+                with self.subTest(directory=escape), self.assertRaises(ValueError) as caught:
+                    helper.ensure_directory_exists(escape)
+                self.assertIn("path escapes data directory", str(caught.exception))
+            self.assertFalse((tmp / "out").exists())
+            self.assertFalse((store / "out").exists())
+            for path in store.rglob("*"):
+                self.assertTrue(path == store / "shares" or root in path.parents or helper.root in path.parents or path in (root, helper.root), path)
 
     def test_defect9_parameters_section_is_found_however_it_is_written(self):
         """The 'What it needs' schema is found in ordinary variants, and an empty section is a problem.

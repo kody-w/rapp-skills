@@ -47,27 +47,47 @@ class AzureFileStorageManager:
     shares/, named by the sha256 of the name (lower-cased, trimmed), as on a server.
     """
 
+    DEFAULT_MARKER_GUID = "c0p110t0-aaaa-bbbb-cccc-123456789abc"
+    _RESERVED_STEMS = {"CON", "PRN", "AUX", "NUL", *("COM%d" % i for i in range(1, 10)), *("LPT%d" % i for i in range(1, 10))}
+
     def __init__(self, share_name=None, **kwargs):
         root = _os.environ.get("AGENT_STORAGE") or str(_Path.home() / ".agent-storage")
         self.base = _Path(root)
         share = str(share_name or "").strip().lower()
+        self.share_name = share or None
         if share:
             self.root = self.base / "shares" / _hashlib.sha256(share.encode("utf-8")).hexdigest()
         else:
             self.root = self.base / "default"
         self.root.mkdir(parents=True, exist_ok=True)
-        self._context = ""
+        # What agents read off the helper, named as on a server: the share's folder,
+        # the shared memory folder, the memory file name, and the current context.
+        self.storage_root = self.root
+        self.shared_memory_path = self.root
+        self.default_file_name = "memory.json"
+        self.current_guid = None
+        self.current_memory_path = self.shared_memory_path
 
     def set_memory_context(self, user_guid=None):
-        """One sub-folder per user. None means the folder itself (shared)."""
-        if user_guid is None:
-            self._context = ""
-            return
-        bad = (not isinstance(user_guid, str) or user_guid in ("", ".", "..")
-               or any(ch in "/\\" or ord(ch) < 32 or ord(ch) == 127 for ch in user_guid))
-        if bad:
-            raise ValueError(f"memory context must be a single folder name (no separators, not empty, not . or ..): {user_guid!r}")
-        self._context = user_guid
+        """One sub-folder per user. None, "" or the marker guid means the shared folder. Returns True."""
+        if user_guid is None or user_guid == "" or user_guid == self.DEFAULT_MARKER_GUID:
+            self.current_guid = None
+            self.current_memory_path = self.shared_memory_path
+            return True
+        self._folder_name(user_guid)
+        self.current_guid = user_guid
+        self.current_memory_path = self.root / user_guid
+        return True
+
+    def _folder_name(self, user_guid):
+        """user_guid when it is one literal folder name; ValueError otherwise (the server's rule)."""
+        if not isinstance(user_guid, str):
+            raise ValueError("user_guid must be a string")
+        if (user_guid in ("", ".", "..") or user_guid.endswith((".", " "))
+                or any(ch in '<>:"/\\|?*' or ord(ch) < 32 for ch in user_guid)
+                or user_guid.split(".", 1)[0].upper() in self._RESERVED_STEMS):
+            raise ValueError("user_guid must be a single path component")
+        return user_guid
 
     def _inside(self, *parts):
         """The resolved path of root/parts; refuses anything that leaves this share's folder.
@@ -83,9 +103,15 @@ class AzureFileStorageManager:
         return p
 
     def _path(self, file_path):
-        p = self._inside(self._context, file_path or "memory.json")
+        p = self._inside(self.current_guid or "", file_path or self.default_file_name)
         p.parent.mkdir(parents=True, exist_ok=True)
         return p
+
+    def ensure_directory_exists(self, directory_path=""):
+        """Create a folder inside the store, under the current memory context, and return its path."""
+        d = self._inside(self.current_guid or "", directory_path or "")
+        d.mkdir(parents=True, exist_ok=True)
+        return d
 
     def read_json(self, file_path=None):
         p = self._path(file_path)
@@ -109,7 +135,7 @@ class AzureFileStorageManager:
         return True
 
     def list_files(self, directory=""):
-        d = self._inside(self._context, directory)
+        d = self._inside(self.current_guid or "", directory)
         return [x.name for x in d.iterdir()] if d.exists() else []
 
     def delete_file(self, file_path):
