@@ -53,7 +53,7 @@ EMPTY_PARAMETERS = {"type": "object", "properties": {}, "required": []}
 # the converter and the runner can never disagree about the contract.
 
 SHIM_SOURCE = r'''
-import json as _json, os as _os, sys as _sys, types as _types
+import hashlib as _hashlib, json as _json, os as _os, sys as _sys, types as _types
 from pathlib import Path as _Path
 
 
@@ -97,12 +97,19 @@ class AzureFileStorageManager:
     Used only if the agent itself saves something. Everything goes under one
     folder, $AGENT_STORAGE (default ~/.agent-storage); delete it to erase all of it.
     Nothing can be read or written outside that folder: a path that would leave it
-    (".." or an absolute path) is refused, the same as on a real server.
+    (".." or an absolute path) is refused, the same as on a real server. A share
+    name never becomes a path either: each named share gets its own folder under
+    shares/, named by the sha256 of the name (lower-cased, trimmed), as on a server.
     """
 
     def __init__(self, share_name=None, **kwargs):
         root = _os.environ.get("AGENT_STORAGE") or str(_Path.home() / ".agent-storage")
-        self.root = _Path(root) / (share_name or "default")
+        self.base = _Path(root)
+        share = str(share_name or "").strip().lower()
+        if share:
+            self.root = self.base / "shares" / _hashlib.sha256(share.encode("utf-8")).hexdigest()
+        else:
+            self.root = self.base / "default"
         self.root.mkdir(parents=True, exist_ok=True)
         self._context = ""
 
@@ -118,7 +125,12 @@ class AzureFileStorageManager:
         self._context = user_guid
 
     def _inside(self, *parts):
-        """The resolved path of root/parts; refuses anything that leaves the root."""
+        """The resolved path of root/parts; refuses anything that leaves this share's folder.
+
+        The folder checked against is always a fixed child of self.base (the
+        $AGENT_STORAGE folder), never anything a caller chose, so nothing an agent
+        passes in can move the boundary.
+        """
         base = self.root.resolve()
         p = self.root.joinpath(*parts).resolve()
         if p != base and base not in p.parents:
@@ -166,25 +178,69 @@ class AzureFileStorageManager:
         return self._path(file_path).exists()
 
 
+def get_storage_manager(*args, **kwargs):
+    """What utils.storage_factory hands out on a server: the one storage helper."""
+    return AzureFileStorageManager(*args, **kwargs)
+
+
+# Every module name a RAPP agent may import, and what each must hold. This is
+# exactly what a server exposes: BasicAgent under three names (a bare import works
+# there because the agents folder is on sys.path), and one local storage helper
+# under the three names cloud agents use for it.
+_BASIC_AGENT_ALIASES = ("basic_agent", "agents.basic_agent", "openrappter.agents.basic_agent")
+_STORAGE_ALIASES = {
+    "utils.azure_file_storage": {"AzureFileStorageManager": AzureFileStorageManager},
+    "utils.dynamics_storage": {"DynamicsStorageManager": AzureFileStorageManager},
+    "utils.storage_factory": {"get_storage_manager": get_storage_manager},
+}
+
+
+def _shim_table():
+    """{module name: {attribute: value}} for install_shims, from the alias tables above.
+
+    Every BasicAgent alias exposes one class: the one an already-present alias
+    holds (a real server's, when running inside one), else the stand-in above.
+    """
+    base = BasicAgent
+    for name in _BASIC_AGENT_ALIASES:
+        present = _sys.modules.get(name)
+        if isinstance(getattr(present, "BasicAgent", None), type):
+            base = present.BasicAgent
+            break
+    table = {name: {"BasicAgent": base} for name in _BASIC_AGENT_ALIASES}
+    table.update(_STORAGE_ALIASES)
+    return table
+
+
+def _register_module(dotted, attrs):
+    """Put a module holding attrs in sys.modules under dotted, creating parent packages as needed.
+
+    A module already present under any of those names is left exactly as it is;
+    a parent only gains a __path__ (so it counts as a package) and an attribute
+    for the child when it has neither.
+    """
+    parts = dotted.split(".")
+    parent = None
+    for depth in range(1, len(parts) + 1):
+        name = ".".join(parts[:depth])
+        module = _sys.modules.get(name)
+        if module is None:
+            module = _types.ModuleType(name)
+            if depth == len(parts):
+                for attr, value in attrs.items():
+                    setattr(module, attr, value)
+            _sys.modules[name] = module
+        if depth < len(parts) and not hasattr(module, "__path__"):
+            module.__path__ = []
+        if parent is not None and not hasattr(parent, parts[depth - 1]):
+            setattr(parent, parts[depth - 1], module)
+        parent = module
+
+
 def install_shims():
-    """Make agents.basic_agent and utils.azure_file_storage importable."""
-    if "agents.basic_agent" not in _sys.modules:
-        agents_mod = _types.ModuleType("agents")
-        agents_mod.__path__ = []
-        ba_mod = _types.ModuleType("agents.basic_agent")
-        ba_mod.BasicAgent = BasicAgent
-        agents_mod.basic_agent = ba_mod
-        _sys.modules.setdefault("agents", agents_mod)
-        _sys.modules["agents.basic_agent"] = ba_mod
-    if "utils.azure_file_storage" not in _sys.modules:
-        utils_mod = _sys.modules.get("utils") or _types.ModuleType("utils")
-        if not hasattr(utils_mod, "__path__"):
-            utils_mod.__path__ = []
-        st_mod = _types.ModuleType("utils.azure_file_storage")
-        st_mod.AzureFileStorageManager = AzureFileStorageManager
-        utils_mod.azure_file_storage = st_mod
-        _sys.modules.setdefault("utils", utils_mod)
-        _sys.modules["utils.azure_file_storage"] = st_mod
+    """Make every module name in the alias tables importable; never replace one already imported."""
+    for dotted, attrs in _shim_table().items():
+        _register_module(dotted, attrs)
 
 
 def _import_agent_module(path):
@@ -629,11 +685,63 @@ def _toast_one(module, agent, agent_path: Path, skills_dir: Path, origin: str | 
 # ------------------------------------------------------------------------- compile
 
 
-def _parameters_block(body: str) -> dict | None:
-    m = re.search(r"## (?:What it needs|Parameters)\s*\n+```json\n(.*?)\n```", body, re.S)
+PARAMETERS_HEADING_RE = re.compile(r"^##[ \t]+(?:What it needs|Parameters)[ \t]*:?[ \t]*\r?$", re.M | re.I)
+NEXT_HEADING_RE = re.compile(r"^#{1,2}[ \t]", re.M)
+FENCE_OPEN_RE = re.compile(r"^[ \t]{0,3}(`{3,}|~{3,})[ \t]*[^`\r\n]*\r?$", re.M)
+
+
+def _parameters_section(body: str) -> str | None:
+    """The text under the 'What it needs' (or 'Parameters') heading, or None when there is no such heading.
+
+    The heading may carry a trailing colon and CRLF line ends; the section runs to
+    the next level-1 or level-2 heading, or the end of the file.
+    """
+    m = PARAMETERS_HEADING_RE.search(body)
     if not m:
         return None
-    return json.loads(m.group(1))
+    end = NEXT_HEADING_RE.search(body, m.end())
+    return body[m.end():end.start() if end else len(body)]
+
+
+def _first_fenced_block(section: str) -> str | None:
+    """The inside of the first fenced code block in section (3+ backticks or tildes, any tag), or None."""
+    m = FENCE_OPEN_RE.search(section)
+    if not m:
+        return None
+    marker = m.group(1)
+    close = re.compile(r"^[ \t]{0,3}" + re.escape(marker[0]) + "{" + str(len(marker)) + r",}[ \t]*\r?$", re.M)
+    c = close.search(section, m.end())
+    return section[m.end():c.start() if c else len(section)]
+
+
+def _parameters_block(body: str) -> dict | None:
+    """The JSON-schema object in the 'What it needs' section.
+
+    Three outcomes, so a skill can never get a schema it did not write: the schema
+    when the section holds a JSON object (in its first fenced block, or bare on a
+    line of its own); None when there is no such section; ValueError when the
+    section exists but holds nothing that parses as a JSON object.
+    """
+    section = _parameters_section(body)
+    if section is None:
+        return None
+    fenced = _first_fenced_block(section)
+    if fenced is not None:
+        try:
+            schema = json.loads(fenced)
+        except json.JSONDecodeError as exc:
+            raise ValueError(f"the 'What it needs' JSON block is not valid JSON ({exc})") from exc
+    else:
+        m = re.search(r"^[ \t]*\{", section, re.M)
+        if not m:
+            raise ValueError("the 'What it needs' section has no JSON object in it (put the schema in a ```json block)")
+        try:
+            schema, _ = json.JSONDecoder().raw_decode(section, m.end() - 1)
+        except json.JSONDecodeError as exc:
+            raise ValueError(f"the 'What it needs' JSON object is not valid JSON ({exc})") from exc
+    if not isinstance(schema, dict):
+        raise ValueError(f"the 'What it needs' block must be a JSON object, not {type(schema).__name__}")
+    return schema
 
 
 def _skill_md(path: Path) -> tuple[Path, Path]:
@@ -660,7 +768,9 @@ def compile_skill(skill_dir: Path, out_dir: Path) -> Path:
         target.write_bytes(agent_bytes)
         return target
 
-    parameters = _parameters_block(body) or DEFAULT_PARAMETERS
+    parameters = _parameters_block(body)  # verify passed, so this is the schema or None
+    if parameters is None:
+        parameters = DEFAULT_PARAMETERS
     class_name = pascal(name) + "Agent"
     tool_name = snake(name)
     source = f'''"""{display(name)} -- playbook agent compiled by rapp-skills {VERSION} from SKILL.md.
@@ -762,8 +872,8 @@ def verify(skill_dir: Path) -> list[str]:
     params = None
     try:
         params = _parameters_block(body)
-    except json.JSONDecodeError as exc:
-        problems.append(f"{md}: the 'What it needs' JSON block is not valid JSON ({exc})")
+    except ValueError as exc:
+        problems.append(f"{md}: {exc}")
     if params is not None and params.get("type") != "object":
         problems.append(f"{md}: the 'What it needs' schema must have type object")
 

@@ -1,4 +1,4 @@
-import json as _json, os as _os, sys as _sys, types as _types
+import hashlib as _hashlib, json as _json, os as _os, sys as _sys, types as _types
 from pathlib import Path as _Path
 
 
@@ -42,12 +42,19 @@ class AzureFileStorageManager:
     Used only if the agent itself saves something. Everything goes under one
     folder, $AGENT_STORAGE (default ~/.agent-storage); delete it to erase all of it.
     Nothing can be read or written outside that folder: a path that would leave it
-    (".." or an absolute path) is refused, the same as on a real server.
+    (".." or an absolute path) is refused, the same as on a real server. A share
+    name never becomes a path either: each named share gets its own folder under
+    shares/, named by the sha256 of the name (lower-cased, trimmed), as on a server.
     """
 
     def __init__(self, share_name=None, **kwargs):
         root = _os.environ.get("AGENT_STORAGE") or str(_Path.home() / ".agent-storage")
-        self.root = _Path(root) / (share_name or "default")
+        self.base = _Path(root)
+        share = str(share_name or "").strip().lower()
+        if share:
+            self.root = self.base / "shares" / _hashlib.sha256(share.encode("utf-8")).hexdigest()
+        else:
+            self.root = self.base / "default"
         self.root.mkdir(parents=True, exist_ok=True)
         self._context = ""
 
@@ -63,7 +70,12 @@ class AzureFileStorageManager:
         self._context = user_guid
 
     def _inside(self, *parts):
-        """The resolved path of root/parts; refuses anything that leaves the root."""
+        """The resolved path of root/parts; refuses anything that leaves this share's folder.
+
+        The folder checked against is always a fixed child of self.base (the
+        $AGENT_STORAGE folder), never anything a caller chose, so nothing an agent
+        passes in can move the boundary.
+        """
         base = self.root.resolve()
         p = self.root.joinpath(*parts).resolve()
         if p != base and base not in p.parents:
@@ -111,25 +123,69 @@ class AzureFileStorageManager:
         return self._path(file_path).exists()
 
 
+def get_storage_manager(*args, **kwargs):
+    """What utils.storage_factory hands out on a server: the one storage helper."""
+    return AzureFileStorageManager(*args, **kwargs)
+
+
+# Every module name a RAPP agent may import, and what each must hold. This is
+# exactly what a server exposes: BasicAgent under three names (a bare import works
+# there because the agents folder is on sys.path), and one local storage helper
+# under the three names cloud agents use for it.
+_BASIC_AGENT_ALIASES = ("basic_agent", "agents.basic_agent", "openrappter.agents.basic_agent")
+_STORAGE_ALIASES = {
+    "utils.azure_file_storage": {"AzureFileStorageManager": AzureFileStorageManager},
+    "utils.dynamics_storage": {"DynamicsStorageManager": AzureFileStorageManager},
+    "utils.storage_factory": {"get_storage_manager": get_storage_manager},
+}
+
+
+def _shim_table():
+    """{module name: {attribute: value}} for install_shims, from the alias tables above.
+
+    Every BasicAgent alias exposes one class: the one an already-present alias
+    holds (a real server's, when running inside one), else the stand-in above.
+    """
+    base = BasicAgent
+    for name in _BASIC_AGENT_ALIASES:
+        present = _sys.modules.get(name)
+        if isinstance(getattr(present, "BasicAgent", None), type):
+            base = present.BasicAgent
+            break
+    table = {name: {"BasicAgent": base} for name in _BASIC_AGENT_ALIASES}
+    table.update(_STORAGE_ALIASES)
+    return table
+
+
+def _register_module(dotted, attrs):
+    """Put a module holding attrs in sys.modules under dotted, creating parent packages as needed.
+
+    A module already present under any of those names is left exactly as it is;
+    a parent only gains a __path__ (so it counts as a package) and an attribute
+    for the child when it has neither.
+    """
+    parts = dotted.split(".")
+    parent = None
+    for depth in range(1, len(parts) + 1):
+        name = ".".join(parts[:depth])
+        module = _sys.modules.get(name)
+        if module is None:
+            module = _types.ModuleType(name)
+            if depth == len(parts):
+                for attr, value in attrs.items():
+                    setattr(module, attr, value)
+            _sys.modules[name] = module
+        if depth < len(parts) and not hasattr(module, "__path__"):
+            module.__path__ = []
+        if parent is not None and not hasattr(parent, parts[depth - 1]):
+            setattr(parent, parts[depth - 1], module)
+        parent = module
+
+
 def install_shims():
-    """Make agents.basic_agent and utils.azure_file_storage importable."""
-    if "agents.basic_agent" not in _sys.modules:
-        agents_mod = _types.ModuleType("agents")
-        agents_mod.__path__ = []
-        ba_mod = _types.ModuleType("agents.basic_agent")
-        ba_mod.BasicAgent = BasicAgent
-        agents_mod.basic_agent = ba_mod
-        _sys.modules.setdefault("agents", agents_mod)
-        _sys.modules["agents.basic_agent"] = ba_mod
-    if "utils.azure_file_storage" not in _sys.modules:
-        utils_mod = _sys.modules.get("utils") or _types.ModuleType("utils")
-        if not hasattr(utils_mod, "__path__"):
-            utils_mod.__path__ = []
-        st_mod = _types.ModuleType("utils.azure_file_storage")
-        st_mod.AzureFileStorageManager = AzureFileStorageManager
-        utils_mod.azure_file_storage = st_mod
-        _sys.modules.setdefault("utils", utils_mod)
-        _sys.modules["utils.azure_file_storage"] = st_mod
+    """Make every module name in the alias tables importable; never replace one already imported."""
+    for dotted, attrs in _shim_table().items():
+        _register_module(dotted, attrs)
 
 
 def _import_agent_module(path):

@@ -11,6 +11,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import types
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -384,7 +385,9 @@ class ConverterReview2(unittest.TestCase):
             storage = tmp / "storage"
             with mock.patch.dict(os.environ, {"AGENT_STORAGE": str(storage)}):
                 store = launcher.AzureFileStorageManager("share")
-            root = storage / "share"
+            # A named share lives in its own folder under shares/, named by the sha256 of
+            # the name (review round three; the same layout a server uses).
+            root = storage / "shares" / rs.sha256(b"share")
             self.assertTrue(root.is_dir())
             # Paths that would leave the folder are refused, and nothing is written.
             with self.assertRaises(ValueError) as caught:
@@ -424,9 +427,228 @@ class ConverterReview2(unittest.TestCase):
             self.assertTrue((root / "user-1" / "memory.json").is_file())
             store.set_memory_context(None)
             self.assertIn("user-1", store.list_files())
-            # Everything the store touched lives under its one folder.
+            # Everything the store touched lives under its one folder (shares/ is that folder's parent).
             for path in storage.rglob("*"):
+                if path == storage / "shares":
+                    continue
                 self.assertIn(root, [path] + list(path.parents), path)
+
+
+STORAGE_AGENT = '''"""An agent written the way most library agents are: bare imports a server resolves from its own folder."""
+from basic_agent import BasicAgent
+from utils.storage_factory import get_storage_manager
+
+
+class NoteAgent(BasicAgent):
+    def __init__(self):
+        self.name = "NoteAgent"
+        self.metadata = {
+            "name": self.name,
+            "description": "Keeps one note.",
+            "parameters": {"type": "object", "properties": {"note": {"type": "string"}}, "required": ["note"]},
+        }
+        super().__init__(self.name, self.metadata)
+
+    def perform(self, **kwargs):
+        store = get_storage_manager()
+        store.write_json({"note": kwargs["note"]})
+        return "kept: " + store.read_json()["note"]
+'''
+
+OTHER_ALIASES_AGENT = '''from openrappter.agents.basic_agent import BasicAgent
+from utils.dynamics_storage import DynamicsStorageManager
+from utils.azure_file_storage import AzureFileStorageManager
+import agents.basic_agent
+import basic_agent
+
+
+class AliasAgent(BasicAgent):
+    def __init__(self):
+        self.name = "AliasAgent"
+        self.metadata = {"name": self.name, "description": "Imports every name a server exposes."}
+        super().__init__(self.name, self.metadata)
+
+    def perform(self, **kwargs):
+        same_class = BasicAgent is agents.basic_agent.BasicAgent is basic_agent.BasicAgent
+        same_store = DynamicsStorageManager is AzureFileStorageManager
+        return "same class: %s; same store: %s" % (same_class, same_store)
+'''
+
+
+def load_launcher(skill: Path):
+    """The launcher a toasted skill ships (scripts/run.py) as a module: the shim its agent runs under."""
+    spec = importlib.util.spec_from_file_location("launcher_" + skill.name.replace("-", "_"), skill / "scripts" / "run.py")
+    launcher = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(launcher)
+    return launcher
+
+
+class ConverterReview3(unittest.TestCase):
+    """Third review round: one test per confirmed defect. Each fails on the converter before its fix."""
+
+    def test_defect7_bare_and_factory_imports_convert_check_and_run(self):
+        """An agent importing the names a server exposes converts, checks and runs.
+
+        The launcher's shim registered only agents.basic_agent and
+        utils.azure_file_storage, by hand. Most library agents write
+        `from basic_agent import BasicAgent` (a server puts its agents folder on
+        sys.path), and some use openrappter.agents.basic_agent,
+        utils.dynamics_storage or utils.storage_factory; none of those could be
+        converted, checked or run. Now one alias table names every module a
+        server exposes, and a loop registers them without replacing anything
+        already imported.
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp = Path(tmp)
+            agent = tmp / "note_agent.py"
+            rs.write_text(agent, STORAGE_AGENT)
+            skill = rs.toast(agent, tmp / "skills")
+            self.assertEqual(skill.name, "note")
+            self.assertEqual(rs.verify(skill), [], "check must accept an agent with bare imports")
+            store = tmp / "storage"
+            result = subprocess.run([sys.executable, "scripts/run.py", "--json", '{"note": "milk"}'], cwd=skill,
+                                    capture_output=True, text=True, env=dict(os.environ, AGENT_STORAGE=str(store)))
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(result.stdout.strip(), "kept: milk")
+            self.assertTrue((store / "default" / "memory.json").is_file(), "the factory hands out the local store")
+            ok, msg = rs.roundtrip(agent, tmp / "rt")
+            self.assertTrue(ok, msg)
+            # The other names a server exposes, all resolving to the same objects.
+            other = tmp / "alias_agent.py"
+            rs.write_text(other, OTHER_ALIASES_AGENT)
+            other_skill = rs.toast(other, tmp / "skills")
+            self.assertEqual(rs.verify(other_skill), [])
+            result = run_py("scripts/run.py", cwd=other_skill)
+            self.assertEqual(result.stdout.strip(), "same class: True; same store: True", result.stderr)
+            # A module already imported under one of those names is never replaced, and an
+            # alias that is missing joins the class the present ones hold (a server's, when
+            # running inside one) instead of bringing a second BasicAgent.
+            planted = types.ModuleType("utils.dynamics_storage")
+            planted.DynamicsStorageManager = object
+            missing = ("openrappter", "openrappter.agents", "openrappter.agents.basic_agent")
+            saved = {k: sys.modules.get(k) for k in ("utils", "utils.dynamics_storage", *missing)}
+            try:
+                sys.modules["utils.dynamics_storage"] = planted
+                for key in missing:
+                    sys.modules.pop(key, None)
+                namespace: dict = {}
+                exec(compile(rs.SHIM_SOURCE, "<shim>", "exec"), namespace)
+                namespace["install_shims"]()
+                self.assertIs(sys.modules["utils.dynamics_storage"], planted)
+                present = sys.modules["agents.basic_agent"].BasicAgent
+                self.assertIs(sys.modules["openrappter.agents.basic_agent"].BasicAgent, present)
+                self.assertIsNot(present, namespace["BasicAgent"], "the alias joins the class already present")
+                self.assertTrue(hasattr(sys.modules["openrappter"], "__path__"), "a created parent is a package")
+            finally:
+                for key, value in saved.items():
+                    if value is None:
+                        sys.modules.pop(key, None)
+                    else:
+                        sys.modules[key] = value
+
+    def test_defect8_share_name_cannot_leave_agent_storage(self):
+        """A share name is a name, never a path: every share lives under $AGENT_STORAGE.
+
+        The launcher's storage stand-in built its folder as $AGENT_STORAGE/<share_name>,
+        so a share named "../x" or an absolute path put the whole store outside
+        the one folder the docstring promises, and the path check then contained
+        files against that escaped folder. Now a share is a folder under shares/
+        named by the sha256 of the normalised name, as on a server, and the
+        boundary is always a fixed child of $AGENT_STORAGE.
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp = Path(tmp)
+            launcher = load_launcher(rs.toast(HELLO, tmp / "skills"))
+            storage = tmp / "storage"
+            outside = tmp / "outside"
+            with mock.patch.dict(os.environ, {"AGENT_STORAGE": str(storage)}):
+                for share in ("../x", str(outside), "sub/dir", "  Share  ", "share"):
+                    with self.subTest(share=share):
+                        store = launcher.AzureFileStorageManager(share)
+                        self.assertEqual(store.base, storage)
+                        self.assertEqual(store.root.parent, storage / "shares")
+                        self.assertEqual(store.root.name, rs.sha256(share.strip().lower().encode("utf-8")))
+                        store.write_json({"share": share})
+                        self.assertEqual(store.read_json(), {"share": share})
+                        with self.assertRaises(ValueError) as caught:
+                            store.write_file("../escaped.txt", "x")
+                        self.assertIn("path escapes data directory", str(caught.exception))
+                self.assertFalse((tmp / "x").exists(), "'../x' must not become a folder beside the store")
+                self.assertFalse(outside.exists(), "an absolute share name must not become a folder")
+                # Case and surrounding whitespace do not make a different share; a real name does.
+                self.assertEqual(launcher.AzureFileStorageManager("  Share  ").root, launcher.AzureFileStorageManager("share").root)
+                self.assertNotEqual(launcher.AzureFileStorageManager("share").root, launcher.AzureFileStorageManager("other").root)
+                unnamed = launcher.AzureFileStorageManager()
+                self.assertEqual(unnamed.root, storage / "default")
+                self.assertEqual(launcher.AzureFileStorageManager("").root, storage / "default")
+            for path in tmp.rglob("*"):
+                self.assertTrue(path == storage or storage in path.parents or path.is_relative_to(tmp / "skills"), path)
+
+    def test_defect9_parameters_section_is_found_however_it_is_written(self):
+        """The 'What it needs' schema is found in ordinary variants, and an empty section is a problem.
+
+        One strict regex accepted only "## What it needs" followed directly by a
+        ```json fence with LF line ends. A trailing colon, CRLF, a sentence before
+        the fence, a fence tagged JSON or " json", a longer fence, a tilde fence, or
+        a bare JSON object all went unseen: check passed, prove passed, and the
+        compiled tool silently got the default "request" schema. Now the section is
+        found by its heading, then its first fenced block or first bare object; a
+        section with nothing parseable is reported instead of defaulted.
+        """
+        schema = {"type": "object", "properties": {"topic": {"type": "string", "description": "What to cover"}}, "required": ["topic"]}
+        block = json.dumps(schema, indent=2)
+        variants = {
+            "colon": "## What it needs:\n\n```json\n" + block + "\n```\n",
+            "crlf": ("## What it needs\r\n\r\n```json\r\n" + block + "\r\n```\r\n").replace("\n", "\r\n").replace("\r\r\n", "\r\n"),
+            "sentence": "## What it needs\n\nPass these as one JSON object:\n\n```json\n" + block + "\n```\n",
+            "upper-tag": "## What it needs\n\n```JSON\n" + block + "\n```\n",
+            "spaced-tag": "## What it needs\n\n``` json\n" + block + "\n```\n",
+            "long-fence": "## What it needs\n\n````json\n" + block + "\n````\n",
+            "tilde-fence": "## What it needs\n\n~~~json\n" + block + "\n~~~\n",
+            "no-tag": "## What it needs\n\n```\n" + block + "\n```\n",
+            "bare-object": "## What it needs\n\n" + block + "\n",
+            "parameters-heading": "## Parameters\n\n```json\n" + block + "\n```\n",
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp = Path(tmp)
+            for variant, section in variants.items():
+                with self.subTest(variant=variant):
+                    body = "# Outline\n\nMake an outline.\n\n" + section + "\n## Steps\n\n1. Write it.\n"
+                    self.assertEqual(rs._parameters_block(body), schema)
+                    skill = tmp / variant / "outline"
+                    skill.mkdir(parents=True)
+                    rs.write_text(skill / "SKILL.md", '---\nname: "outline"\ndescription: "Outlines a topic."\n---\n\n' + body)
+                    self.assertEqual(rs.verify(skill), [])
+                    compiled = rs.compile_skill(skill, tmp / variant / "agents")
+                    _, agent = rs.load_agent(compiled)
+                    self.assertEqual(agent.metadata["parameters"], schema, "the compiled tool must carry the written schema")
+            # No section at all: the default schema, on purpose.
+            absent = tmp / "absent" / "outline"
+            absent.mkdir(parents=True)
+            rs.write_text(absent / "SKILL.md", '---\nname: "outline"\ndescription: "Outlines a topic."\n---\n\n# Outline\n\nMake an outline.\n')
+            self.assertIsNone(rs._parameters_block("# Outline\n\nMake an outline.\n"))
+            self.assertEqual(rs.verify(absent), [])
+            _, agent = rs.load_agent(rs.compile_skill(absent, tmp / "absent" / "agents"))
+            self.assertEqual(agent.metadata["parameters"], rs.DEFAULT_PARAMETERS)
+            # A section that holds nothing parseable is a problem, never a silent default.
+            empties = {
+                "prose": "## What it needs\n\nJust the topic.\n",
+                "empty": "## What it needs\n",
+                "bad-json": "## What it needs\n\n```json\n{\"type\": \"object\",\n```\n",
+                "not-an-object": "## What it needs\n\n```json\n[\"topic\"]\n```\n",
+            }
+            for variant, section in empties.items():
+                with self.subTest(variant=variant):
+                    body = "# Outline\n\n" + section + "\n## Steps\n\n1. Write it.\n"
+                    with self.assertRaises(ValueError):
+                        rs._parameters_block(body)
+                    skill = tmp / ("bad-" + variant) / "outline"
+                    skill.mkdir(parents=True)
+                    rs.write_text(skill / "SKILL.md", '---\nname: "outline"\ndescription: "Outlines a topic."\n---\n\n' + body)
+                    problems = rs.verify(skill)
+                    self.assertTrue(any("What it needs" in p for p in problems), problems)
+                    with self.assertRaises(RuntimeError):
+                        rs.compile_skill(skill, tmp / ("bad-" + variant) / "agents")
 
 
 class FolderConversion(unittest.TestCase):
@@ -483,6 +705,11 @@ class RepositoryIsConsistent(unittest.TestCase):
     def test_runner_in_skill_equals_converter_runner(self):
         shipped = rs.read_text(ROOT / "skills" / "hello-world" / "scripts" / "run.py")
         self.assertEqual(shipped, rs.RUN_PY.lstrip("\n"))
+
+    def test_shim_embeds_verbatim_in_a_js_template(self):
+        """A browser page pastes SHIM_SOURCE into a JS raw template: no backtick, no dollar-brace."""
+        self.assertNotIn("`", rs.SHIM_SOURCE)
+        self.assertNotIn("${", rs.SHIM_SOURCE)
 
 
 if __name__ == "__main__":
