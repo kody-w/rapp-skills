@@ -39,6 +39,15 @@ byte for byte. That is what lets the same capability run in a chat tool, on a se
 team's shared runtime without a rewrite. The Brainstem, our own local runtime, still exists and
 still runs that file. It is one place a skill can go. It is never required.
 
+## Where the effort goes
+
+We are no longer building a harness, a runtime, a chat window, or any other technical part of an
+AI. The native platforms build those, and they build them faster every month. Our work is the
+one file and what happens when a native AI absorbs it: the AI gets better at helping that person,
+invisibly, wherever it is invoked, and the person keeps every benefit when they move to the next
+AI. Our value is measured by how much better the platform in front of the person becomes, not by
+anything of ours the person can see.
+
 ## What we refuse
 
 - **Jargon.** Users hear capabilities, never concepts. If explaining a feature needs a glossary,
@@ -52,6 +61,8 @@ still runs that file. It is one place a skill can go. It is never required.
   old one, cleanly.
 - **Residue.** Nothing we add writes outside its own file or folder without the person asking. A
   skill that saves something says where, in one place, so deleting that place erases it.
+- **Building what the platform already builds.** No new harness, runtime, or interface of our
+  own. If a native tool can do it, we use the native tool and improve what it does with the file.
 
 ## How we know it is working
 
