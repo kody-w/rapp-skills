@@ -1,5 +1,7 @@
 # Charter
 
+Canonical copy, dated prior art, and posts: https://github.com/kody-w/rapp-mission
+
 ## Why we exist
 
 AI should belong to everyone. Not to the people who learned the vocabulary, not to the people on
