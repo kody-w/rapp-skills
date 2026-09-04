@@ -8,6 +8,10 @@ AI should belong to everyone. Not to the people who learned the vocabulary, not 
 the right platform, not to the people with the right subscription. Everyone, wherever they are,
 on whatever device they have, with whatever AI they already use, without going to school for it.
 
+The frontier we care about is the human and AI frontier, not only the technical one. That
+includes people with disabilities and learning differences, for whom a wall of concepts is not an
+inconvenience but a locked door. If it works for them, it works for everyone.
+
 If what we build adds complexity to a person's life instead of removing it, we have failed and
 should not exist. That is the test for every change.
 
