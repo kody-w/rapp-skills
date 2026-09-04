@@ -39,7 +39,7 @@ the block below.
 
 ## The code
 
-<!-- code sha256=e9cfd85f624936e991677013e03cc360bc099a0e6cb45bf9b537497e31cb046d -->
+<!-- code sha256=7643cc884538530422e0b3753688587300b4e44f9fd8a89c3c31b8a42782b8a0 -->
 ````python
 #!/usr/bin/env python3
 """rapp-skills: the seam between Agent Skills and RAPP single-file agents.
@@ -210,7 +210,7 @@ class AzureFileStorageManager:
 
 
 def install_shims():
-    """Make `agents.basic_agent` and `utils.azure_file_storage` importable."""
+    """Make agents.basic_agent and utils.azure_file_storage importable."""
     if "agents.basic_agent" not in _sys.modules:
         agents_mod = _types.ModuleType("agents")
         agents_mod.__path__ = []

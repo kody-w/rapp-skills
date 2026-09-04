@@ -167,7 +167,7 @@ class AzureFileStorageManager:
 
 
 def install_shims():
-    """Make `agents.basic_agent` and `utils.azure_file_storage` importable."""
+    """Make agents.basic_agent and utils.azure_file_storage importable."""
     if "agents.basic_agent" not in _sys.modules:
         agents_mod = _types.ModuleType("agents")
         agents_mod.__path__ = []
