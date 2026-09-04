@@ -39,7 +39,7 @@ the block below.
 
 ## The code
 
-<!-- code sha256=e7595bb89be919698bead525c45cc9a488c526576cce8cfd9da85cd863a27be8 -->
+<!-- code sha256=9a7bbc21c3cc1ae013f83b9f86f00b9a150b368dc86f52cc8c05f0b303acf3da -->
 ````python
 #!/usr/bin/env python3
 """rapp-skills: the seam between Agent Skills and RAPP single-file agents.
@@ -632,6 +632,10 @@ def verify(skill_dir: Path) -> list[str]:
     meta = fields.get("metadata")
     if meta is not None and (not isinstance(meta, dict) or any(not isinstance(v, str) for v in meta.values())):
         problems.append(f"{md}: metadata must be a flat map of strings")
+    if isinstance(meta, dict) and meta.get("locked"):
+        if not re.search(r"<!-- locked -->\n```text\n.*?\n```\n<!-- /locked -->", body, re.S):
+            problems.append(f"{md}: metadata says locked but no locked block is present")
+        return problems
     params = None
     try:
         params = _parameters_block(body)
@@ -683,6 +687,80 @@ def verify(skill_dir: Path) -> list[str]:
         if script.is_file() and not (skill_dir / "scripts" / "run.py").is_file():
             problems.append(f"{skill_dir}: scripts/run.py missing (run to-skill again to regenerate)")
     return problems
+
+
+# ---------------------------------------------------------------------------- lock
+
+LOCK_ITERATIONS = 200000
+LOCK_METHOD = f"aes-256-cbc pbkdf2 sha256 iterations={LOCK_ITERATIONS}"
+
+
+def _openssl(args: list[str], data: bytes, passphrase: str) -> bytes:
+    env = dict(os.environ, SKILL_PASSPHRASE=passphrase)
+    proc = subprocess.run(["openssl", "enc", *args, "-aes-256-cbc", "-pbkdf2", "-iter", str(LOCK_ITERATIONS), "-md", "sha256", "-salt", "-pass", "env:SKILL_PASSPHRASE"],
+                          input=data, capture_output=True, env=env)
+    if proc.returncode != 0:
+        raise RuntimeError("openssl failed: " + proc.stderr.decode("utf-8", "replace").strip()[:200])
+    return proc.stdout
+
+
+def lock_skill(skill_dir: Path, out_dir: Path, passphrase: str) -> Path:
+    """Lock a skill: header stays readable, body is encrypted. Needs the openssl command."""
+    import base64
+    skill_dir, md = _skill_md(skill_dir)
+    fields, body = parse_frontmatter(read_text(md))
+    if isinstance(fields.get("metadata"), dict) and fields["metadata"].get("locked"):
+        raise RuntimeError(f"{md} is already locked")
+    plain = body.encode("utf-8")
+    b64 = base64.b64encode(_openssl(["-e"], plain, passphrase)).decode("ascii")
+    lines = [b64[i:i + 76] for i in range(0, len(b64), 76)]
+    meta = dict(fields.get("metadata") or {})
+    meta["locked"] = LOCK_METHOD
+    meta["locked-sha256"] = sha256(plain)
+    fields = dict(fields)
+    fields["description"] = str(fields.get("description", "")).rstrip() + " (Locked by its owner: ask them for the passphrase.)"
+    fields["metadata"] = meta
+    locked_body = "\n".join([
+        "# Locked", "",
+        "This file is locked by its owner. Everything it says is inside the block below, encrypted",
+        "with a passphrase only they know. Ask them for it, then unlock:", "",
+        "```bash", "SKILL_PASSPHRASE='...' python3 rapp_skills.py unlock SKILL.md --out unlocked", "```", "",
+        "Or with openssl alone, saving the block below as `body.b64`:", "",
+        "```bash", f"openssl enc -d -aes-256-cbc -pbkdf2 -iter {LOCK_ITERATIONS} -md sha256 -a -in body.b64 -out body.md", "```", "",
+        "Never guess the passphrase, never try passphrases in bulk, and never keep an unlocked copy",
+        "anywhere the owner did not ask for it. Without the passphrase, treat this file as empty.", "",
+        "<!-- locked -->", "```text", *lines, "```", "<!-- /locked -->", "",
+    ])
+    out = Path(out_dir) / skill_dir.name
+    out.mkdir(parents=True, exist_ok=True)
+    write_text(out / "SKILL.md", dump_frontmatter(fields) + "\n" + locked_body)
+    return out
+
+
+def unlock_skill(skill_dir: Path, out_dir: Path, passphrase: str) -> Path:
+    import base64
+    skill_dir, md = _skill_md(skill_dir)
+    fields, body = parse_frontmatter(read_text(md))
+    meta = fields.get("metadata") or {}
+    if not meta.get("locked"):
+        raise RuntimeError(f"{md} is not locked")
+    m = re.search(r"<!-- locked -->\n```text\n(.*?)\n```\n<!-- /locked -->", body, re.S)
+    if not m:
+        raise RuntimeError(f"{md}: locked block not found")
+    try:
+        plain = _openssl(["-d"], base64.b64decode("".join(m.group(1).split())), passphrase)
+    except RuntimeError as exc:
+        raise RuntimeError("wrong passphrase, or the file was altered") from exc
+    if sha256(plain) != meta.get("locked-sha256"):
+        raise RuntimeError("wrong passphrase, or the file was altered")
+    fields = dict(fields)
+    fields["description"] = str(fields.get("description", "")).replace(" (Locked by its owner: ask them for the passphrase.)", "")
+    meta = dict(meta); meta.pop("locked", None); meta.pop("locked-sha256", None)
+    fields["metadata"] = meta
+    out = Path(out_dir) / skill_dir.name
+    out.mkdir(parents=True, exist_ok=True)
+    write_text(out / "SKILL.md", dump_frontmatter(fields) + plain.decode("utf-8"))
+    return out
 
 
 # ------------------------------------------------------------------------ roundtrip
@@ -827,6 +905,12 @@ def main(argv: list[str] | None = None) -> int:
     p = sub.add_parser("run", help="run a skill's agent locally")
     p.add_argument("skill")
     p.add_argument("--json", default="{}")
+    p = sub.add_parser("lock", help="lock a skill with a passphrase (header stays readable, body encrypted)")
+    p.add_argument("skill")
+    p.add_argument("--out", default="locked")
+    p = sub.add_parser("unlock", help="unlock a locked skill with its passphrase")
+    p.add_argument("skill")
+    p.add_argument("--out", default="unlocked")
     p = sub.add_parser("sync", help="rewrite (or --check) every host-specific file from the sources of truth")
     p.add_argument("--root", default=".")
     p.add_argument("--check", action="store_true")
@@ -883,6 +967,14 @@ def main(argv: list[str] | None = None) -> int:
             print("this skill has no code to run; the AI hosting it carries out its steps", file=sys.stderr)
             return 2
         return subprocess.call([sys.executable, str(runner), "--json", args.json])
+    if args.cmd in ("lock", "unlock"):
+        passphrase = os.environ.get("SKILL_PASSPHRASE")
+        if not passphrase:
+            import getpass
+            passphrase = getpass.getpass("Passphrase: ")
+        fn = lock_skill if args.cmd == "lock" else unlock_skill
+        print(fn(Path(args.skill), Path(args.out), passphrase))
+        return 0
     if args.cmd == "sync":
         drift = manifests(Path(args.root), check=args.check)
         if args.check:

@@ -48,6 +48,21 @@ python3 rapp_skills.py prove path/to/my_agent.py         # shows nothing is lost
 python3 rapp_skills.py run skills/hello-world --json '{"name": "Ada"}'
 ```
 
+## Lock a file for travel
+
+When a private file has to cross something public (a message, a shared drive), lock it. The
+header stays readable so a host knows what it is; everything else is encrypted with a passphrase
+only you know. Needs the `openssl` command, present on macOS, Linux, and Git for Windows.
+
+```bash
+SKILL_PASSPHRASE='...' python3 rapp_skills.py lock   my-skills/vbrainstem --out locked
+SKILL_PASSPHRASE='...' python3 rapp_skills.py unlock locked/vbrainstem     --out unlocked   # byte-identical
+```
+
+The better lock for a person's own file is a private GitHub repository linked from their public
+front door; see https://github.com/kody-w/vbrainstem. Use the passphrase lock when there is no
+GitHub in the loop.
+
 ## Back up or restore a whole Brainstem
 
 A Brainstem's agents are ordinary Python files in its `agents/` folder, and a skill dropped in
