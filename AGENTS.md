@@ -1,5 +1,8 @@
 # rapp-skills
 
+`CHARTER.md` rules. Every change is measured against it: does this remove complexity for a
+person, or add it?
+
 Skills are the product. A `SKILL.md` produced here is a complete, standard Agent Skill that any
 host can use on its own. `agent.py` and the RAPP Brainstem are where a skill goes when it must
 scale, never a prerequisite.

@@ -1,6 +1,6 @@
 # rapp-skills
 
-Skills you can use, share as one file, and take anywhere.
+Skills you can use, share as one file, and take anywhere. Why: [CHARTER.md](CHARTER.md).
 
 - **Use one.** Put a skill's folder, or just its `SKILL.md`, where your AI tool reads skills, then
   ask for it in plain words. It carries its own code and a small launcher, so it just runs.
