@@ -48,6 +48,17 @@ python3 rapp_skills.py prove path/to/my_agent.py         # shows nothing is lost
 python3 rapp_skills.py run skills/hello-world --json '{"name": "Ada"}'
 ```
 
+## Back up or restore a whole Brainstem
+
+A Brainstem's agents are ordinary Python files in its `agents/` folder, and a skill dropped in
+becomes one of them with no restart. So plain skill files are a complete backup of everything a
+Brainstem knows how to do, readable by any AI, and a Brainstem can be rebuilt from them:
+
+```bash
+python3 rapp_skills.py to-skill ~/.brainstem/src/rapp_brainstem/agents --out ~/my-skills     # back up: every agent becomes a skill
+python3 rapp_skills.py to-agent ~/my-skills --out ~/.brainstem/src/rapp_brainstem/agents      # restore: every skill is an agent again, unchanged
+```
+
 ## What is inside a skill file
 
 A short header your tool reads (name, description, what it needs). How to run it. Then the code

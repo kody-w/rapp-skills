@@ -769,13 +769,13 @@ def manifests(root: Path, check: bool = False) -> list[str]:
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="rapp-skills", description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
-    p = sub.add_parser("to-skill", help="agent.py -> a skill anyone can use")
-    p.add_argument("agent")
+    p = sub.add_parser("to-skill", help="agent.py (or a folder of them) -> skills anyone can use")
+    p.add_argument("agent", help="one *_agent.py, or a folder such as a Brainstem's agents/ to back up every agent")
     p.add_argument("--out", default="skills", help="skills directory (default: skills)")
     p.add_argument("--origin", default=None, help="URL of the agent's source, recorded in metadata")
     p.add_argument("--license", default=None)
-    p = sub.add_parser("to-agent", help="skill -> one Python file that runs on a server")
-    p.add_argument("skill")
+    p = sub.add_parser("to-agent", help="skill (or a folder of skills) -> Python files a Brainstem loads as its own")
+    p.add_argument("skill", help="one skill folder or SKILL.md, or a folder of skills to restore all of them")
     p.add_argument("--out", default="agents")
     p = sub.add_parser("check", help="find problems in one or more skills")
     p.add_argument("skills", nargs="+")
@@ -790,16 +790,35 @@ def main(argv: list[str] | None = None) -> int:
     args = ap.parse_args(argv)
 
     if args.cmd == "to-skill":
-        out = toast(Path(args.agent), Path(args.out), origin=args.origin, license_name=args.license)
-        problems = verify(out)
-        print(f"skill written: {out}")
-        if problems:
-            print("\n".join(problems))
-            return 1
-        return 0
+        source = Path(args.agent)
+        agents = sorted(source.glob("*_agent.py")) if source.is_dir() else [source]
+        if source.is_dir():
+            agents = [a for a in agents if a.name != "basic_agent.py"]
+        rc = 0
+        for agent in agents:
+            try:
+                out = toast(agent, Path(args.out), origin=args.origin, license_name=args.license)
+            except Exception as exc:  # noqa: BLE001 - keep going, report at the end
+                print(f"skipped {agent.name}: {exc.__class__.__name__}: {exc}")
+                rc = 1
+                continue
+            problems = verify(out)
+            print(f"skill written: {out}")
+            if problems:
+                print("\n".join("  " + p for p in problems))
+                rc = 1
+        return rc
     if args.cmd == "to-agent":
-        print(compile_skill(Path(args.skill), Path(args.out)))
-        return 0
+        source = Path(args.skill)
+        skills = sorted(d for d in source.iterdir() if (d / "SKILL.md").is_file()) if source.is_dir() and not (source / "SKILL.md").is_file() else [source]
+        rc = 0
+        for skill in skills:
+            try:
+                print(compile_skill(skill, Path(args.out)))
+            except Exception as exc:  # noqa: BLE001
+                print(f"skipped {skill}: {exc.__class__.__name__}: {exc}")
+                rc = 1
+        return rc
     if args.cmd == "check":
         rc = 0
         for s in args.skills:
