@@ -34,12 +34,12 @@ class ToastAndCompile(unittest.TestCase):
             out = rs.toast(HELLO, Path(tmp) / "skills", origin="https://example.invalid/hello", license_name="MIT")
             self.assertEqual(out.name, "hello-world")
             self.assertEqual(rs.verify(out), [])
-            fields, body = rs.parse_frontmatter((out / "SKILL.md").read_text(encoding="utf-8"))
+            fields, body = rs.parse_frontmatter(rs.read_text(out / "SKILL.md"))
             self.assertEqual(set(fields), {"name", "description", "license", "compatibility", "metadata"})
             self.assertEqual(fields["metadata"]["tool-name"], "HelloWorldAgent")
             self.assertEqual(fields["metadata"]["agent-sha256"], rs.sha256(HELLO.read_bytes()))
             self.assertEqual((out / "scripts" / "agent.py").read_bytes(), HELLO.read_bytes())
-            self.assertEqual(rs.extract_agent((out / "SKILL.md").read_text(encoding="utf-8")), HELLO.read_bytes())
+            self.assertEqual(rs.extract_agent(rs.read_text(out / "SKILL.md")), HELLO.read_bytes())
 
     def test_toasted_skill_runs_locally(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -60,10 +60,10 @@ class ToastAndCompile(unittest.TestCase):
             self.assertEqual(rs.verify(drop / "SKILL.md"), [])
             compiled = rs.compile_skill(drop / "SKILL.md", Path(tmp) / "agents")
             self.assertEqual(compiled.read_bytes(), HELLO.read_bytes())
-            text = (drop / "SKILL.md").read_text(encoding="utf-8")
+            text = rs.read_text(drop / "SKILL.md")
             runner = re.search(r"<!-- runner -->\n```python\n(.*?)\n```\n<!-- /runner -->", text, re.S).group(1)
             (drop / "agent.py").write_bytes(rs.extract_agent(text))
-            (drop / "run.py").write_text(runner + "\n", encoding="utf-8")
+            rs.write_text(drop / "run.py", runner + "\n")
             result = run_py("run.py", "--json", '{"name": "Grace"}', cwd=drop)
             self.assertEqual(result.stdout.strip(), "Hello, Grace! Welcome to the RAPP Agent ecosystem.", result.stderr)
 
@@ -85,15 +85,15 @@ class ToastAndCompile(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             out = rs.toast(HELLO, Path(tmp) / "skills")
             md = out / "SKILL.md"
-            good = md.read_text(encoding="utf-8")
-            md.write_text(good.replace('name: "hello-world"', 'name: "Hello World"'), encoding="utf-8")
+            good = rs.read_text(md)
+            rs.write_text(md, good.replace('name: "hello-world"', 'name: "Hello World"'))
             self.assertTrue(any("name must be" in p for p in rs.verify(out)))
-            md.write_text(good.replace("Hello, {name}!", "Hello, {name}?"), encoding="utf-8")
+            rs.write_text(md, good.replace("Hello, {name}!", "Hello, {name}?"))
             self.assertTrue(any("sha256" in p for p in rs.verify(out)))
-            md.write_text(good.replace('description: ', 'model: "opus"\ndescription: ', 1), encoding="utf-8")
+            rs.write_text(md, good.replace('description: ', 'model: "opus"\ndescription: ', 1))
             self.assertTrue(any("non-standard frontmatter" in p for p in rs.verify(out)))
             (out / "scripts" / "agent.py").write_bytes(b"print('tampered')\n")
-            md.write_text(good, encoding="utf-8")
+            rs.write_text(md, good)
             self.assertTrue(any("differs from the agent embedded" in p for p in rs.verify(out)))
 
 
@@ -101,7 +101,7 @@ class ToastAndCompile(unittest.TestCase):
         """What a host is fed is a plain skill: no product names, no scaling pitch."""
         with tempfile.TemporaryDirectory() as tmp:
             out = rs.toast(HELLO, Path(tmp) / "skills")
-            text = (out / "SKILL.md").read_text(encoding="utf-8")
+            text = rs.read_text(out / "SKILL.md")
             head = text.split("<!-- agent sha256=")[0].lower()
             for word in ("rapp", "brainstem", "scale this skill"):
                 self.assertNotIn(word, head)
@@ -128,7 +128,7 @@ class RepositoryIsConsistent(unittest.TestCase):
             self.assertEqual(data["name"], path.stem)
 
     def test_runner_in_skill_equals_converter_runner(self):
-        shipped = (ROOT / "skills" / "hello-world" / "scripts" / "run.py").read_text(encoding="utf-8")
+        shipped = rs.read_text(ROOT / "skills" / "hello-world" / "scripts" / "run.py")
         self.assertEqual(shipped, rs.RUN_PY.lstrip("\n"))
 
 

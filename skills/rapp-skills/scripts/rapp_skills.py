@@ -319,6 +319,16 @@ def sha256(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
+def read_text(path: Path) -> str:
+    """Byte-exact read: never let the platform translate newlines."""
+    return Path(path).read_bytes().decode("utf-8")
+
+
+def write_text(path: Path, text: str) -> None:
+    """Byte-exact write: LF stays LF on every platform."""
+    Path(path).write_bytes(text.encode("utf-8"))
+
+
 AGENT_OPEN = "<!-- agent sha256={sha} -->"
 AGENT_CLOSE = "<!-- /agent -->"
 RUNNER_OPEN = "<!-- runner -->"
@@ -365,7 +375,7 @@ def toast(agent_path: Path, skills_dir: Path, origin: str | None = None,
         fields, _ = parse_frontmatter(skill_md)
         out = Path(skills_dir) / fields["name"]
         out.mkdir(parents=True, exist_ok=True)
-        (out / "SKILL.md").write_text(skill_md, encoding="utf-8")
+        write_text(out / "SKILL.md", skill_md)
         return out
 
     meta = dict(agent.metadata)
@@ -452,9 +462,9 @@ def toast(agent_path: Path, skills_dir: Path, origin: str | None = None,
     ]
     out = Path(skills_dir) / name
     (out / "scripts").mkdir(parents=True, exist_ok=True)
-    (out / "SKILL.md").write_text(dump_frontmatter(fields) + "\n" + "\n".join(body), encoding="utf-8")
+    write_text(out / "SKILL.md", dump_frontmatter(fields) + "\n" + "\n".join(body))
     (out / "scripts" / "agent.py").write_bytes(agent_bytes)
-    (out / "scripts" / "run.py").write_text(runner_text, encoding="utf-8")
+    write_text(out / "scripts" / "run.py", runner_text)
     return out
 
 
@@ -477,7 +487,7 @@ def _skill_md(path: Path) -> tuple[Path, Path]:
 def compile_skill(skill_dir: Path, out_dir: Path) -> Path:
     """<skill>/ or SKILL.md -> out_dir/<snake>_agent.py."""
     skill_dir, md = _skill_md(skill_dir)
-    text = md.read_text(encoding="utf-8")
+    text = read_text(md)
     fields, body = parse_frontmatter(text)
     name = fields["name"]
     out_dir = Path(out_dir)
@@ -545,7 +555,7 @@ class {class_name}(BasicAgent):
         )
 '''
     target = out_dir / f"{tool_name}_agent.py"
-    target.write_text(source, encoding="utf-8")
+    target
     return target
 
 
@@ -558,7 +568,7 @@ def verify(skill_dir: Path) -> list[str]:
     problems: list[str] = []
     if not md.is_file():
         return [f"{skill_dir}: no SKILL.md"]
-    text = md.read_text(encoding="utf-8")
+    text = read_text(md)
     try:
         fields, body = parse_frontmatter(text)
     except ValueError as exc:
@@ -651,7 +661,7 @@ def roundtrip(path: Path, tmp: Path) -> tuple[bool, str]:
 
 
 def _load_json(path: Path) -> dict:
-    return json.loads(path.read_text(encoding="utf-8"))
+    return json.loads(read_text(path))
 
 
 def _dump_json(data: dict) -> str:
@@ -685,7 +695,7 @@ def render_manifests(root: Path) -> dict[str, str]:
     files["plugin.json"] = _dump_json(plugin)
 
     for src in sorted((root / "agents").glob("*.md")):
-        fields, body = parse_frontmatter(src.read_text(encoding="utf-8"))
+        fields, body = parse_frontmatter(read_text(src))
         for host in hosts.values():
             spec = host["agents"]
             if spec["dir"] == "agents" and spec["suffix"] == ".md":
@@ -726,11 +736,11 @@ def manifests(root: Path, check: bool = False) -> list[str]:
     for rel, content in render_manifests(root).items():
         target = root / rel
         if check:
-            if not target.is_file() or target.read_text(encoding="utf-8") != content:
+            if not target.is_file() or read_text(target) != content:
                 drift.append(rel)
         else:
             target.parent.mkdir(parents=True, exist_ok=True)
-            target.write_text(content, encoding="utf-8")
+            write_text(target, content)
     return drift
 
 
