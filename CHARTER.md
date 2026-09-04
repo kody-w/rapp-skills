@@ -81,6 +81,13 @@ anything of ours the person can see.
 The story is what matters to a person: what they can do now that they could not do before, in
 their own words, on their own AI. Technical details are ours to carry and theirs to never see.
 
+## The end state
+
+The skill file is scaffolding. As AIs learn this over time, they will need less of it, and one
+day none of it: an AI will behave as a person's own, portable, verifiable companion in its own
+right, built on its native tooling, with the Brainstem as an ancestor. When that happens, this
+work is finished, not lost.
+
 ## When to stop
 
 If the native platforms ever make this unnecessary, that is a completely good thing. We are not
