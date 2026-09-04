@@ -127,6 +127,21 @@ class RepositoryIsConsistent(unittest.TestCase):
             self.assertEqual(required - set(data), set(), path.name)
             self.assertEqual(data["name"], path.stem)
 
+    def test_converter_skill_carries_its_own_code(self):
+        text = rs.read_text(ROOT / "skills" / "rapp-skills" / "SKILL.md")
+        m = re.search(r"<!-- code sha256=([0-9a-f]{64}) -->\n(`{3,})python\n(.*?)\n\2\n<!-- /code -->", text, re.S)
+        self.assertIsNotNone(m, "converter skill must embed its code")
+        script = rs.read_text(ROOT / "skills" / "rapp-skills" / "scripts" / "rapp_skills.py")
+        self.assertEqual(m.group(3) + "\n", script)
+        self.assertEqual(rs.sha256(script.encode("utf-8")), m.group(1))
+        for word in ("plugin", "marketplace"):
+            self.assertNotIn(word, text.split("## The code")[0].lower())
+
+    def test_readme_speaks_in_capabilities(self):
+        readme = rs.read_text(ROOT / "README.md").lower()
+        for word in ("toast", "compile", "frontmatter", "round-trip", "playbook", "egg", "organism", "plugin", "marketplace"):
+            self.assertNotIn(word, readme, word)
+
     def test_runner_in_skill_equals_converter_runner(self):
         shipped = rs.read_text(ROOT / "skills" / "hello-world" / "scripts" / "run.py")
         self.assertEqual(shipped, rs.RUN_PY.lstrip("\n"))

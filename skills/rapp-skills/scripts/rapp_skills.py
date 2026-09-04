@@ -596,6 +596,14 @@ def verify(skill_dir: Path) -> list[str]:
     if params is not None and params.get("type") != "object":
         problems.append(f"{md}: the 'What it needs' schema must have type object")
 
+    code_match = re.search(r"<!-- code sha256=([0-9a-f]{64}) -->\n(`{3,})python\n(.*?)\n\2\n<!-- /code -->", text, re.S)
+    if code_match:
+        expected, inner = code_match.group(1), code_match.group(3)
+        if not any(sha256(c.encode("utf-8")) == expected for c in (inner + "\n", inner)):
+            problems.append(f"{md}: embedded code does not match its sha256 {expected[:12]}")
+        bundled = skill_dir / "scripts" / "rapp_skills.py"
+        if bundled.is_file() and sha256(bundled.read_bytes()) != expected:
+            problems.append(f"{bundled}: differs from the code embedded in SKILL.md (run sync)")
     try:
         embedded = extract_agent(text)
     except ValueError as exc:
@@ -727,6 +735,16 @@ def render_manifests(root: Path) -> dict[str, str]:
             hosts_md.append(f"Verified: {host['evidence']}")
         hosts_md.append("")
     files["HOSTS.md"] = "\n".join(hosts_md).rstrip("\n") + "\n"
+
+    # The converter skill carries its own code, so one file gives an AI the capability.
+    meta_md = root / "skills" / "rapp-skills" / "SKILL.md"
+    script = root / "skills" / "rapp-skills" / "scripts" / "rapp_skills.py"
+    if meta_md.is_file() and script.is_file():
+        text = read_text(meta_md)
+        head = text.split("\n<!-- code sha256=")[0].rstrip("\n")
+        code = read_text(script)
+        block = embed_block(code, f"<!-- code sha256={sha256(code.encode('utf-8'))} -->", "<!-- /code -->")
+        files["skills/rapp-skills/SKILL.md"] = head + "\n\n" + block + "\n"
     return files
 
 

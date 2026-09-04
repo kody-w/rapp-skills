@@ -18,4 +18,6 @@ scale, never a prerequisite.
   names, plugin and agent descriptions, replies) says what they can do, never what a concept is
   called. No "toast", "compile", "frontmatter", "round-trip", "playbook", "egg", "organism".
   Reserve deeper packaging (jackets, eggs) for the moment nothing else would serve; do not
-  introduce it earlier. The plugin is optional; a copied skill folder must always be enough.
+  introduce it earlier. Users never hear "plugin" or "marketplace" either: an AI that needs the
+  converter takes it from the one self-contained `skills/rapp-skills/SKILL.md`; tools that fetch
+  abilities on their own do so silently. A copied skill folder must always be enough.

@@ -9,8 +9,7 @@ Skills you can use, share as one file, and take anywhere.
   one Python file, make it one. Nothing is lost, and it turns back into a skill any time.
 
 Works in Claude Code and GitHub Copilot CLI today, and in anything else that reads
-[Agent Skills](https://agentskills.io). The plugin below is optional; a copied skill folder is
-enough.
+[Agent Skills](https://agentskills.io). There is nothing to install.
 
 ## Use a skill
 
@@ -23,14 +22,17 @@ enough.
 Try it with [`skills/hello-world`](skills/hello-world): copy the folder, then ask your tool to
 "use the hello-world skill to greet me".
 
-## Optional: the plugin
+## Let your AI make and move skills
 
-Adds a skill and a helper that do the conversions for you, in either tool, with the same two lines:
+Give your AI this one file and it can do the conversions for you:
 
 ```
-/plugin marketplace add kody-w/rapp-skills
-/plugin install rapp-skills@rapp-skills
+https://raw.githubusercontent.com/kody-w/rapp-skills/main/skills/rapp-skills/SKILL.md
 ```
+
+Tell it, for example, "get that file and turn my_agent.py into a skill I can send to a colleague".
+The file carries its own code. Tools that fetch abilities on their own can also pick this
+repository up directly; that just happens, and you never need to know how.
 
 ## Make and move skills yourself
 
@@ -54,10 +56,11 @@ the file names this project or any other platform. Open
 
 ## For builders
 
-`hosts/<tool>.json` describes each AI tool this works in: where it reads skills, how it installs
-a plugin, and the version it was verified on with evidence. Supporting a new tool is adding a file;
-`python3 rapp_skills.py sync` rewrites every tool-specific file from it, and CI fails if they drift.
-See [HOSTS.md](HOSTS.md).
+`hosts/<tool>.json` describes each AI tool this works in: where it reads skills, how it fetches
+abilities on its own, and the version it was verified on with evidence. Supporting a new tool is
+adding a file; `python3 rapp_skills.py sync` rewrites every tool-specific file from it, including the
+converter skill's embedded copy of its own code, and CI fails if anything drifts. See
+[HOSTS.md](HOSTS.md).
 
 Deeper capabilities (verifiable packaging, a server runtime) exist in the wider
 [RAPP](https://github.com/kody-w/RAPP) project and are reached from the one Python file
