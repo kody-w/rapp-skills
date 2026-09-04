@@ -78,6 +78,12 @@ anything of ours the person can see.
 The story is what matters to a person: what they can do now that they could not do before, in
 their own words, on their own AI. Technical details are ours to carry and theirs to never see.
 
+## When to stop
+
+If the native platforms ever make this unnecessary, that is a completely good thing. We are not
+here to be needed. We are here so people are not gated. The day RAPP stops being useful is the
+day the mission succeeded.
+
 ## How we know it is working
 
 A person who has never heard of any of this hands their AI one file, or one link, and gets what
