@@ -14,3 +14,8 @@ scale, never a prerequisite.
 - Any change to the converter must keep `python3 -m unittest` green, including the round-trip
   tests. A conversion that is not byte-lossless is a bug, not a feature.
 - Adding a host is adding one file in `hosts/`, then `manifests`, then a verified-on entry.
+- **No jargon to users, only capabilities.** Anything a user reads (README, skill text, command
+  names, plugin and agent descriptions, replies) says what they can do, never what a concept is
+  called. No "toast", "compile", "frontmatter", "round-trip", "playbook", "egg", "organism".
+  Reserve deeper packaging (jackets, eggs) for the moment nothing else would serve; do not
+  introduce it earlier. The plugin is optional; a copied skill folder must always be enough.

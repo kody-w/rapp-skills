@@ -17,7 +17,7 @@ metadata:
 
 Says hello to the user.
 
-## Parameters
+## What it needs
 
 ```json
 {
@@ -32,9 +32,9 @@ Says hello to the user.
 }
 ```
 
-## Run
+## How to run it
 
-Pass the arguments as one JSON object. This file is self-contained: everything
+Pass what it needs as one JSON object. This file is complete on its own: everything
 needed to run it is below.
 
 1. If `scripts/run.py` exists beside this file, run from this skill's directory:
@@ -43,16 +43,16 @@ needed to run it is below.
    python3 scripts/run.py --json '{"name": "<string>"}'
    ```
 
-2. Otherwise save the **Agent** block below as `agent.py` and the **Runner** block as
+2. Otherwise save the **code** block below as `agent.py` and the **launcher** block as
    `run.py` in one directory, then run `python3 run.py --json '...'` there.
-3. If Python is unavailable, read the Agent block and carry out its `perform`
-   method yourself; it is the exact specification of this skill.
+3. If Python is unavailable, read the code block and do what its `perform`
+   method does yourself; it is the exact description of this skill.
 
 Return the printed output to the user as the result.
 
-## Agent
+## The code
 
-The agent, unmodified from its source. Its sha256 is in the marker.
+The code that does the work, unmodified from its source. Its sha256 is in the marker.
 
 <!-- agent sha256=d2695f70a412909546a49586487a471e6bca9c2d215d0367d440a80473b75bd1 -->
 ```python
@@ -97,9 +97,9 @@ class HelloWorldAgent(BasicAgent):
 ```
 <!-- /agent -->
 
-## Runner
+## The launcher
 
-Loads the agent above and calls `perform` with your JSON arguments.
+Loads the code above and calls `perform` with your JSON input.
 
 <!-- runner -->
 ```python

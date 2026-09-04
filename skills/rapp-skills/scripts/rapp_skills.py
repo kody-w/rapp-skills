@@ -7,13 +7,13 @@ They are the same capability seen from two sides. This file converts between
 them losslessly and never asks a host to learn anything beyond the open
 Agent Skills standard (https://agentskills.io/specification).
 
-Commands
-  toast     agent.py  -> <skills-dir>/<name>/SKILL.md + scripts/agent.py + scripts/run.py
-  compile   <skill>   -> <name>_agent.py   (script-backed: byte-identical; hand-written: playbook agent)
-  verify    <skill>   -> exit 1 with the list of problems
-  roundtrip <path>    -> proves compile(toast(x)) == x  or  toast(compile(skill)) == skill
-  run       <skill> --json '{...}'  -> executes the skill's agent locally
-  manifests [--check] -> writes every host-specific manifest from plugin.json, hosts/*.json, agents/*.md
+Commands (plain verbs; no concepts to learn)
+  to-skill  agent.py  -> <skills-dir>/<name>/SKILL.md (+ scripts/): a skill anyone can use
+  to-agent  <skill>   -> <name>_agent.py: the same capability as one Python file for a server
+  check     <skill>   -> exit 1 with the list of problems
+  prove     <path>    -> shows nothing is lost going there and back
+  run       <skill> --json '{...}'  -> runs the skill's code here
+  sync      [--check] -> rewrites every host-specific file from plugin.json, hosts/*.json, agents/*.md
 
 Standard library only. Python 3.11+.
 """
@@ -423,15 +423,15 @@ def toast(agent_path: Path, skills_dir: Path, origin: str | None = None,
         "",
         description,
         "",
-        "## Parameters",
+        "## What it needs",
         "",
         "```json",
         json.dumps(parameters, indent=2, ensure_ascii=False),
         "```",
         "",
-        "## Run",
+        "## How to run it",
         "",
-        "Pass the arguments as one JSON object. This file is self-contained: everything",
+        "Pass what it needs as one JSON object. This file is complete on its own: everything",
         "needed to run it is below.",
         "",
         "1. If `scripts/run.py` exists beside this file, run from this skill's directory:",
@@ -440,22 +440,22 @@ def toast(agent_path: Path, skills_dir: Path, origin: str | None = None,
         f"   python3 scripts/run.py --json '{json.dumps(example, ensure_ascii=False)}'",
         "   ```",
         "",
-        "2. Otherwise save the **Agent** block below as `agent.py` and the **Runner** block as",
+        "2. Otherwise save the **code** block below as `agent.py` and the **launcher** block as",
         "   `run.py` in one directory, then run `python3 run.py --json '...'` there.",
-        "3. If Python is unavailable, read the Agent block and carry out its `perform`",
-        "   method yourself; it is the exact specification of this skill.",
+        "3. If Python is unavailable, read the code block and do what its `perform`",
+        "   method does yourself; it is the exact description of this skill.",
         "",
         "Return the printed output to the user as the result.",
         "",
-        "## Agent",
+        "## The code",
         "",
-        "The agent, unmodified from its source. Its sha256 is in the marker.",
+        "The code that does the work, unmodified from its source. Its sha256 is in the marker.",
         "",
         embed_block(agent_text, AGENT_OPEN.format(sha=sha256(agent_bytes)), AGENT_CLOSE),
         "",
-        "## Runner",
+        "## The launcher",
         "",
-        "Loads the agent above and calls `perform` with your JSON arguments.",
+        "Loads the code above and calls `perform` with your JSON input.",
         "",
         embed_block(runner_text, RUNNER_OPEN, RUNNER_CLOSE),
         "",
@@ -472,7 +472,7 @@ def toast(agent_path: Path, skills_dir: Path, origin: str | None = None,
 
 
 def _parameters_block(body: str) -> dict | None:
-    m = re.search(r"## Parameters\s*\n+```json\n(.*?)\n```", body, re.S)
+    m = re.search(r"## (?:What it needs|Parameters)\s*\n+```json\n(.*?)\n```", body, re.S)
     if not m:
         return None
     return json.loads(m.group(1))
@@ -592,9 +592,9 @@ def verify(skill_dir: Path) -> list[str]:
     try:
         params = _parameters_block(body)
     except json.JSONDecodeError as exc:
-        problems.append(f"{md}: Parameters block is not valid JSON ({exc})")
+        problems.append(f"{md}: the 'What it needs' JSON block is not valid JSON ({exc})")
     if params is not None and params.get("type") != "object":
-        problems.append(f"{md}: Parameters schema must have type object")
+        problems.append(f"{md}: the 'What it needs' schema must have type object")
 
     try:
         embedded = extract_agent(text)
@@ -627,9 +627,9 @@ def verify(skill_dir: Path) -> list[str]:
             if tool and str(agent.metadata.get("name") or agent.name) != tool:
                 problems.append(f"{md}: agent metadata.name {agent.metadata.get('name')!r} != frontmatter tool-name {tool!r}")
             if params is not None and agent.metadata.get("parameters") != params:
-                problems.append(f"{md}: agent parameters differ from the Parameters block")
+                problems.append(f"{md}: the code's parameters differ from the 'What it needs' block")
         if script.is_file() and not (skill_dir / "scripts" / "run.py").is_file():
-            problems.append(f"{skill_dir}: scripts/run.py missing (re-toast to regenerate)")
+            problems.append(f"{skill_dir}: scripts/run.py missing (run to-skill again to regenerate)")
     return problems
 
 
@@ -649,12 +649,12 @@ def roundtrip(path: Path, tmp: Path) -> tuple[bool, str]:
         script = path / "scripts" / "agent.py"
         if script.is_file():
             same = script.read_bytes() == (toasted / "scripts" / "agent.py").read_bytes()
-            return same, "scripts/agent.py survived compile->toast" if same else "scripts/agent.py changed"
-        return a == b, "SKILL.md byte-identical after compile->toast" if a == b else "SKILL.md changed after compile->toast"
+            return same, "the code came back unchanged" if same else "the code changed on the way back"
+        return a == b, "SKILL.md came back byte-identical" if a == b else "SKILL.md changed on the way back"
     toasted = toast(path, tmp / "skills")
     compiled = compile_skill(toasted, tmp / "agents")
     same = path.read_bytes() == compiled.read_bytes()
-    return same, f"{path.name} byte-identical after toast->compile" if same else f"{path.name} changed after toast->compile"
+    return same, f"{path.name} came back byte-identical" if same else f"{path.name} changed on the way back"
 
 
 # ------------------------------------------------------------------------ manifests
@@ -703,7 +703,7 @@ def render_manifests(root: Path) -> dict[str, str]:
             projected = {k: fields[k] for k in spec["frontmatter"] if k in fields}
             files[f"{spec['dir']}/{src.stem}{spec['suffix']}"] = dump_frontmatter(projected) + body
 
-    hosts_md = ["# Hosts", "", "Each host is one JSON adapter in `hosts/`. Adding an ecosystem is adding a file.", "",
+    hosts_md = ["# Hosts", "", "Each AI tool this works in is one JSON file in `hosts/`. Supporting a new tool is adding a file.", "",
                 "| Host | Verified version | Verified on | Skills read from | Plugin manifest | Marketplace | Agents |", "|---|---|---|---|---|---|---|"]
     for key, host in hosts.items():
         v = host.get("verified", {})
@@ -750,38 +750,38 @@ def manifests(root: Path, check: bool = False) -> list[str]:
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="rapp-skills", description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
-    p = sub.add_parser("toast", help="agent.py -> skill directory")
+    p = sub.add_parser("to-skill", help="agent.py -> a skill anyone can use")
     p.add_argument("agent")
     p.add_argument("--out", default="skills", help="skills directory (default: skills)")
     p.add_argument("--origin", default=None, help="URL of the agent's source, recorded in metadata")
     p.add_argument("--license", default=None)
-    p = sub.add_parser("compile", help="skill directory -> <name>_agent.py")
+    p = sub.add_parser("to-agent", help="skill -> one Python file that runs on a server")
     p.add_argument("skill")
     p.add_argument("--out", default="agents")
-    p = sub.add_parser("verify", help="validate one or more skill directories")
+    p = sub.add_parser("check", help="find problems in one or more skills")
     p.add_argument("skills", nargs="+")
-    p = sub.add_parser("roundtrip", help="prove the conversion is lossless for a path")
+    p = sub.add_parser("prove", help="show nothing is lost going there and back")
     p.add_argument("path")
     p = sub.add_parser("run", help="run a skill's agent locally")
     p.add_argument("skill")
     p.add_argument("--json", default="{}")
-    p = sub.add_parser("manifests", help="write (or --check) every host manifest from the sources of truth")
+    p = sub.add_parser("sync", help="rewrite (or --check) every host-specific file from the sources of truth")
     p.add_argument("--root", default=".")
     p.add_argument("--check", action="store_true")
     args = ap.parse_args(argv)
 
-    if args.cmd == "toast":
+    if args.cmd == "to-skill":
         out = toast(Path(args.agent), Path(args.out), origin=args.origin, license_name=args.license)
         problems = verify(out)
-        print(f"toasted {args.agent} -> {out}")
+        print(f"skill written: {out}")
         if problems:
             print("\n".join(problems))
             return 1
         return 0
-    if args.cmd == "compile":
+    if args.cmd == "to-agent":
         print(compile_skill(Path(args.skill), Path(args.out)))
         return 0
-    if args.cmd == "verify":
+    if args.cmd == "check":
         rc = 0
         for s in args.skills:
             problems = verify(Path(s))
@@ -790,7 +790,7 @@ def main(argv: list[str] | None = None) -> int:
                 print("     " + line)
             rc |= 1 if problems else 0
         return rc
-    if args.cmd == "roundtrip":
+    if args.cmd == "prove":
         import tempfile
         with tempfile.TemporaryDirectory() as tmp:
             ok, msg = roundtrip(Path(args.path), Path(tmp))
@@ -799,18 +799,18 @@ def main(argv: list[str] | None = None) -> int:
     if args.cmd == "run":
         runner = Path(args.skill) / "scripts" / "run.py"
         if not runner.is_file():
-            print("this skill has no scripts/run.py; it is a playbook for the host model", file=sys.stderr)
+            print("this skill has no code to run; the AI hosting it carries out its steps", file=sys.stderr)
             return 2
         return subprocess.call([sys.executable, str(runner), "--json", args.json])
-    if args.cmd == "manifests":
+    if args.cmd == "sync":
         drift = manifests(Path(args.root), check=args.check)
         if args.check:
             if drift:
-                print("manifest drift (run `rapp_skills.py manifests`):\n  " + "\n  ".join(drift))
+                print("generated files are out of date (run `rapp_skills.py sync`):\n  " + "\n  ".join(drift))
                 return 1
-            print("manifests current")
+            print("generated files are current")
         else:
-            print("manifests written")
+            print("generated files written")
         return 0
     return 2
 

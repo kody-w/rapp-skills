@@ -5,20 +5,19 @@
     "url": "https://github.com/kody-w"
   },
   "metadata": {
-    "description": "Portable Agent Skills that convert losslessly to and from RAPP single-file agents. One SKILL.md is all a user needs; agent.py and the Brainstem are there when a skill has to scale.",
+    "description": "Skills you can use, share as one file, and move anywhere. Turn a Python agent into a skill anyone can use, or a skill into one Python file that runs on a server, with nothing lost either way.",
     "version": "1.0.0"
   },
   "plugins": [
     {
       "name": "rapp-skills",
-      "description": "Portable Agent Skills that convert losslessly to and from RAPP single-file agents. One SKILL.md is all a user needs; agent.py and the Brainstem are there when a skill has to scale.",
+      "description": "Skills you can use, share as one file, and move anywhere. Turn a Python agent into a skill anyone can use, or a skill into one Python file that runs on a server, with nothing lost either way.",
       "version": "1.0.0",
       "source": "./",
       "category": "productivity",
       "tags": [
         "skills",
         "agent-skills",
-        "rapp",
         "portable",
         "copilot-cli",
         "claude-code"

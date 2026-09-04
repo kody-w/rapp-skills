@@ -1,86 +1,66 @@
 # rapp-skills
 
-**One `SKILL.md` is all a user needs.** Every skill here is a plain
-[Agent Skill](https://agentskills.io) that works in Claude Code, GitHub Copilot CLI, and any other
-host that reads `SKILL.md`, with or without a plugin. When a skill has to scale beyond one host,
-it converts losslessly into a RAPP single-file `agent.py` and back.
+Skills you can use, share as one file, and take anywhere.
 
-```
-agent.py  ──toast───▶  SKILL.md          runs in any skill host, no server, no install
-SKILL.md  ──compile─▶  agent.py          runs in a Brainstem, a registry, Azure, Copilot Studio
-```
+- **Use one.** Put a skill's folder, or just its `SKILL.md`, where your AI tool reads skills, then
+  ask for it in plain words. It carries its own code and a small launcher, so it just runs.
+- **Share one.** The `SKILL.md` file is the whole thing. Send it. Nothing to install.
+- **Take one somewhere else.** When a skill needs to run on a server or be shared with a team as
+  one Python file, make it one. Nothing is lost, and it turns back into a skill any time.
 
-`compile(toast(agent.py))` is byte-identical to the original. `toast(compile(SKILL.md))` gives the
-same skill back. The tests prove both on every commit.
+Works in Claude Code and GitHub Copilot CLI today, and in anything else that reads
+[Agent Skills](https://agentskills.io). The plugin below is optional; a copied skill folder is
+enough.
 
 ## Use a skill
 
-Copy one skill folder, or just its `SKILL.md`, into wherever your host reads skills:
-
-| Host | Put it in |
+| Your tool | Put the skill here |
 |---|---|
-| Claude Code | `~/.claude/skills/<name>/SKILL.md` or `<project>/.claude/skills/<name>/SKILL.md` |
-| GitHub Copilot CLI | `~/.copilot/skills/<name>/SKILL.md` or `<project>/.github/skills/<name>/SKILL.md` |
-| Anything else that reads Agent Skills | its skills directory |
+| Claude Code | `~/.claude/skills/<name>/` or `<project>/.claude/skills/<name>/` |
+| GitHub Copilot CLI | `~/.copilot/skills/<name>/` or `<project>/.github/skills/<name>/` |
+| Anything else that reads skills | its skills folder |
 
-Then ask for it in plain words. The skill carries its own agent and a small runner, so the host
-runs the exact same code a RAPP Brainstem would. No Brainstem, no plugin, no account.
+Try it with [`skills/hello-world`](skills/hello-world): copy the folder, then ask your tool to
+"use the hello-world skill to greet me".
 
-Or install the plugin, which adds the converter skill and a subagent:
+## Optional: the plugin
+
+Adds a skill and a helper that do the conversions for you, in either tool, with the same two lines:
 
 ```
 /plugin marketplace add kody-w/rapp-skills
 /plugin install rapp-skills@rapp-skills
 ```
 
-The same two lines work in Claude Code and in Copilot CLI. See [HOSTS.md](HOSTS.md) for every host,
-the version it was verified on, and the paths it reads.
-
-## Convert
-
-```bash
-python3 rapp_skills.py toast path/to/my_agent.py            # -> skills/my-agent/SKILL.md (+ scripts/)
-python3 rapp_skills.py compile skills/my-agent               # -> agents/my_agent_agent.py, byte-identical
-python3 rapp_skills.py compile path/to/handwritten-skill     # -> a playbook agent: perform() returns the skill, rendered
-python3 rapp_skills.py verify skills/*                       # standard fields, name, schema, embedded agent sha256
-python3 rapp_skills.py roundtrip path/to/my_agent.py         # PASS or FAIL
-python3 rapp_skills.py run skills/hello-world --json '{"name": "Ada"}'
-```
+## Make and move skills yourself
 
 Python 3.11 or newer, nothing else.
 
-## What a toasted skill looks like
-
-Frontmatter with only the six standard fields. The parameters as a JSON block. How to run it.
-Then the agent itself, byte-exact between `<!-- agent -->` markers with its sha256, and the runner
-between `<!-- runner -->` markers. Nothing in the file names this project or any other platform:
-a host is fed one ordinary skill, and the agent inside it is simply how the skill runs. See
-[`skills/hello-world/SKILL.md`](skills/hello-world/SKILL.md).
-
-A hand-written skill with no agent compiles to a playbook agent: `perform` returns the skill text
-rendered with the inputs, for whichever model is hosting it to carry out.
-
-## Where RAPP comes in
-
-Nowhere, until it is needed. The skill format never carries a RAPP-only field. When a user wants
-a skill on a server, shared with a team, versioned and verified, or running in a Brainstem, `compile`
-produces the `agent.py` and the [RAPP](https://github.com/kody-w/RAPP) side takes over. Wrapping a
-skill in a verifiable jacket or packing an agent as a RAPP/1 egg are later, opt-in steps that reuse
-[rapp-1](https://github.com/kody-w/rapp-1) rather than re-implementing it.
-
-## Layout
-
-```
-skills/rapp-skills/          the converter skill (SKILL.md + scripts/rapp_skills.py)
-skills/<name>/               shipped skills, each self-contained
-agents/rapp-skills.md        the subagent; projected to .github/agents/ for Copilot CLI
-hosts/<host>.json            one adapter per host: paths, manifest, install, verified version
-plugin.json                  plugin manifest; projected to .claude-plugin/ and .github/plugin/
-tests/                       round-trip, standard-conformance, drift
+```bash
+python3 rapp_skills.py to-skill path/to/my_agent.py     # a skill anyone can use, from a Python agent file
+python3 rapp_skills.py to-agent skills/my-agent          # one Python file for a server; the original comes back unchanged
+python3 rapp_skills.py to-agent path/to/steps-skill      # a skill written as steps becomes a Python file that hands those steps to the AI running it
+python3 rapp_skills.py check skills/*                    # find problems before sharing
+python3 rapp_skills.py prove path/to/my_agent.py         # shows nothing is lost there and back: PASS or FAIL
+python3 rapp_skills.py run skills/hello-world --json '{"name": "Ada"}'
 ```
 
-Generated files are rebuilt by `python3 rapp_skills.py manifests`; CI fails if they drift.
+## What is inside a skill file
 
-## License
+A short header your tool reads (name, description, what it needs). How to run it. Then the code
+that does the work, unchanged, with its checksum, and the small launcher that runs it. Nothing in
+the file names this project or any other platform. Open
+[`skills/hello-world/SKILL.md`](skills/hello-world/SKILL.md) to see one.
+
+## For builders
+
+`hosts/<tool>.json` describes each AI tool this works in: where it reads skills, how it installs
+a plugin, and the version it was verified on with evidence. Supporting a new tool is adding a file;
+`python3 rapp_skills.py sync` rewrites every tool-specific file from it, and CI fails if they drift.
+See [HOSTS.md](HOSTS.md).
+
+Deeper capabilities (verifiable packaging, a server runtime) exist in the wider
+[RAPP](https://github.com/kody-w/RAPP) project and are reached from the one Python file
+`to-agent` makes. They are never required, and nothing here mentions them to a user.
 
 MIT.

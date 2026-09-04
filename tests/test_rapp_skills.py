@@ -103,7 +103,7 @@ class ToastAndCompile(unittest.TestCase):
             out = rs.toast(HELLO, Path(tmp) / "skills")
             text = rs.read_text(out / "SKILL.md")
             head = text.split("<!-- agent sha256=")[0].lower()
-            for word in ("rapp", "brainstem", "scale this skill"):
+            for word in ("rapp", "brainstem", "scale this skill", "toast", "compile", "frontmatter", "round-trip", "playbook"):
                 self.assertNotIn(word, head)
 
 

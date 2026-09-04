@@ -27,12 +27,12 @@ jobs:
           python-version: ${{ matrix.python }}
       - name: Unit tests (round-trip, standard conformance, drift)
         run: python -m unittest -v tests/test_rapp_skills.py
-      - name: Generated manifests are current
-        run: python rapp_skills.py manifests --check
-      - name: Shipped skills verify
+      - name: Generated files are current
+        run: python rapp_skills.py sync --check
+      - name: Shipped skills check clean
         shell: bash
-        run: python rapp_skills.py verify skills/*
-      - name: Round trip the fixtures
+        run: python rapp_skills.py check skills/*
+      - name: Nothing is lost there and back
         run: |
-          python rapp_skills.py roundtrip tests/fixtures/hello_world_agent.py
-          python rapp_skills.py roundtrip tests/fixtures/writing-brief
+          python rapp_skills.py prove tests/fixtures/hello_world_agent.py
+          python rapp_skills.py prove tests/fixtures/writing-brief

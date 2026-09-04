@@ -1,6 +1,6 @@
 # Hosts
 
-Each host is one JSON adapter in `hosts/`. Adding an ecosystem is adding a file.
+Each AI tool this works in is one JSON file in `hosts/`. Supporting a new tool is adding a file.
 
 | Host | Verified version | Verified on | Skills read from | Plugin manifest | Marketplace | Agents |
 |---|---|---|---|---|---|---|

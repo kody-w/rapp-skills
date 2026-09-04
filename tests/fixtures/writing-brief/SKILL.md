@@ -11,7 +11,7 @@ metadata:
 
 Turn a rough idea into a one-page brief the writer can start from.
 
-## Parameters
+## What it needs
 
 ```json
 {
