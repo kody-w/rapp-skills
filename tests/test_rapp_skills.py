@@ -13,6 +13,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
 # RAPP_SKILLS_UNDER_TEST points these tests at another copy of the converter (for
@@ -263,6 +264,169 @@ class ReviewDefects(unittest.TestCase):
             short_fields, _ = rs.parse_frontmatter(rs.read_text(short_locked / "SKILL.md"))
             self.assertIn("Locked by its owner", short_fields["description"])
             self.assertEqual(rs.verify(short_locked), [])
+
+
+AGENT_TEMPLATE = '''from agents.basic_agent import BasicAgent
+
+
+class {cls}(BasicAgent):
+    def __init__(self):
+        self.name = "{cls}"
+        self.metadata = {metadata}
+        super().__init__(self.name, self.metadata)
+
+    def perform(self, **kwargs):
+        return "ok " + str(kwargs.get("name", ""))
+'''
+
+
+def sealed_copy(text: str, name: str) -> str:
+    """Wrap a plain skill the way a sealed one arrives: outer header, RAW-SKILL markers, sha256."""
+    digest = rs.sha256(text.encode("utf-8"))
+    return ("---\nname: " + name + "\ndescription: sealed\nschema: rapp/1-skill\nskill_hash: " + digest + "\n---\n"
+            "<!-- RAW-SKILL-BEGIN sha256=" + digest + " -->\n" + text.rstrip("\n") + "\n<!-- RAW-SKILL-END -->\n")
+
+
+class ConverterReview2(unittest.TestCase):
+    """Second review round: one test per confirmed defect. Each fails on the converter before its fix."""
+
+    def test_defectA_agent_without_usable_parameters_converts_checks_and_restores(self):
+        """An agent whose metadata has no usable parameters is still a valid skill.
+
+        to-skill wrote a default empty schema into the 'What it needs' block, but
+        check compared that block against the raw metadata (missing, {}, or with
+        tuples in it), so every such skill failed check and to-agent refused to
+        restore it. Now one normalisation serves both sides.
+        """
+        empty = {"type": "object", "properties": {}, "required": []}
+        variants = {
+            "missing": ('{"name": self.name, "description": "No parameters at all."}', empty),
+            "empty": ('{"name": self.name, "description": "Empty parameters.", "parameters": {}}', empty),
+            "tuple": ('{"name": self.name, "description": "A tuple where JSON has a list.", '
+                      '"parameters": {"type": "object", "properties": {"name": {"type": "string"}}, "required": ("name",)}}',
+                      {"type": "object", "properties": {"name": {"type": "string"}}, "required": ["name"]}),
+        }
+        for variant, (metadata, expected) in variants.items():
+            with self.subTest(variant=variant), tempfile.TemporaryDirectory() as tmp:
+                tmp = Path(tmp)
+                cls = variant.capitalize() + "ParamsAgent"
+                agent = tmp / f"{variant}_params_agent.py"
+                rs.write_text(agent, AGENT_TEMPLATE.format(cls=cls, metadata=metadata))
+                skill = rs.toast(agent, tmp / "skills")
+                self.assertEqual(skill.name, f"{variant}-params")
+                _, body = rs.parse_frontmatter(rs.read_text(skill / "SKILL.md"))
+                self.assertEqual(rs._parameters_block(body), expected, "the block shows what the agent means")
+                self.assertEqual(rs.verify(skill), [], "check must accept what to-skill wrote")
+                restored = rs.compile_skill(skill, tmp / "agents")
+                self.assertEqual(restored.read_bytes(), agent.read_bytes(), "to-agent gives the file back unchanged")
+                ok, msg = rs.roundtrip(agent, tmp / "rt-agent")
+                self.assertTrue(ok, msg)
+                ok, msg = rs.roundtrip(skill, tmp / "rt-skill")
+                self.assertTrue(ok, msg)
+
+    def test_defectB_prove_passes_for_origin_license_and_sealed_skills(self):
+        """prove judges a skill by what it carries: its origin and license, and the plain skill inside a seal.
+
+        roundtrip re-made the skill without the --origin and --license it was made
+        with, and compared a sealed file's wrapper instead of the skill inside it,
+        so every such valid skill was reported as FAIL. Now the way back carries
+        origin, license and tool name from the skill itself and the comparison is
+        against the unwrapped source.
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp = Path(tmp)
+            made = rs.toast(HELLO, tmp / "made", origin="https://example.invalid/hello", license_name="MIT")
+            fields, _ = rs.parse_frontmatter(rs.read_text(made / "SKILL.md"))
+            self.assertEqual(fields["license"], "MIT")
+            self.assertEqual(fields["metadata"]["origin"], "https://example.invalid/hello")
+            # A lone SKILL.md made with --origin and --license.
+            lone = tmp / "lone" / "hello-world"
+            lone.mkdir(parents=True)
+            (lone / "SKILL.md").write_bytes((made / "SKILL.md").read_bytes())
+            self.assertEqual(rs.verify(lone), [])
+            ok, msg = rs.roundtrip(lone, tmp / "rt-lone")
+            self.assertTrue(ok, msg)
+            # The same skill sealed; the text inside the seal is the valid skill.
+            sealed = tmp / "sealed" / "hello-world"
+            sealed.mkdir(parents=True)
+            rs.write_text(sealed / "SKILL.md", sealed_copy(rs.read_text(made / "SKILL.md"), "hello-world"))
+            self.assertEqual(rs.verify(sealed), [])
+            ok, msg = rs.roundtrip(sealed, tmp / "rt-sealed")
+            self.assertTrue(ok, msg)
+            # A sealed step-by-step skill, the other kind of skill there is.
+            brief = tmp / "brief" / "writing-brief"
+            brief.mkdir(parents=True)
+            rs.write_text(brief / "SKILL.md", sealed_copy(rs.read_text(BRIEF / "SKILL.md"), "writing-brief"))
+            self.assertEqual(rs.verify(brief), [])
+            ok, msg = rs.roundtrip(brief, tmp / "rt-brief")
+            self.assertTrue(ok, msg)
+            # The shipped skill, through the command itself.
+            with contextlib.redirect_stdout(io.StringIO()) as out:
+                rc = rs.main(["prove", str(ROOT / "skills" / "hello-world")])
+            self.assertEqual(rc, 0, out.getvalue())
+            self.assertTrue(out.getvalue().startswith("PASS"), out.getvalue())
+
+    def test_defectC_launcher_storage_stays_inside_its_folder(self):
+        """The launcher's storage stand-in must keep every file under $AGENT_STORAGE.
+
+        A file path with ".." or an absolute path was written wherever it pointed,
+        and set_memory_context took anything, so "delete one folder to erase all of
+        it" was not true and an agent behaved differently here than on a server,
+        which refuses such paths. Now anything that would leave the folder raises
+        ValueError, and a memory context must be a single folder name.
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp = Path(tmp)
+            skill = rs.toast(HELLO, tmp / "skills")
+            spec = importlib.util.spec_from_file_location("hello_world_launcher", skill / "scripts" / "run.py")
+            launcher = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(launcher)
+            storage = tmp / "storage"
+            with mock.patch.dict(os.environ, {"AGENT_STORAGE": str(storage)}):
+                store = launcher.AzureFileStorageManager("share")
+            root = storage / "share"
+            self.assertTrue(root.is_dir())
+            # Paths that would leave the folder are refused, and nothing is written.
+            with self.assertRaises(ValueError) as caught:
+                store.write_file("../escaped.txt", "x")
+            self.assertIn("path escapes data directory", str(caught.exception))
+            self.assertFalse((storage / "escaped.txt").exists())
+            outside = tmp / "outside.json"
+            with self.assertRaises(ValueError):
+                store.write_json({"a": 1}, str(outside))
+            self.assertFalse(outside.exists())
+            with self.assertRaises(ValueError):
+                store.read_file("sub/../../../etc")
+            with self.assertRaises(ValueError):
+                store.file_exists(str(HELLO))
+            with self.assertRaises(ValueError):
+                store.delete_file(str(HELLO))
+            self.assertTrue(HELLO.is_file())
+            with self.assertRaises(ValueError):
+                store.list_files("..")
+            elsewhere = tmp / "elsewhere"
+            elsewhere.mkdir()
+            try:
+                (root / "link").symlink_to(elsewhere, target_is_directory=True)
+            except OSError:
+                pass  # symlinks unavailable here; the checks above still hold
+            else:
+                with self.assertRaises(ValueError):
+                    store.write_file("link/x.txt", "x")
+                self.assertEqual(list(elsewhere.iterdir()), [])
+            # A memory context is one folder name, nothing that could be a path.
+            for bad in ("", ".", "..", "a/b", "a\\b", "a\nb", "../other", 5):
+                with self.subTest(context=bad), self.assertRaises(ValueError):
+                    store.set_memory_context(bad)
+            store.set_memory_context("user-1")
+            store.write_json({"k": 1})
+            self.assertEqual(store.read_json(), {"k": 1})
+            self.assertTrue((root / "user-1" / "memory.json").is_file())
+            store.set_memory_context(None)
+            self.assertIn("user-1", store.list_files())
+            # Everything the store touched lives under its one folder.
+            for path in storage.rglob("*"):
+                self.assertIn(root, [path] + list(path.parents), path)
 
 
 class FolderConversion(unittest.TestCase):

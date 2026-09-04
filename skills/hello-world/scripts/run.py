@@ -41,6 +41,8 @@ class AzureFileStorageManager:
 
     Used only if the agent itself saves something. Everything goes under one
     folder, $AGENT_STORAGE (default ~/.agent-storage); delete it to erase all of it.
+    Nothing can be read or written outside that folder: a path that would leave it
+    (".." or an absolute path) is refused, the same as on a real server.
     """
 
     def __init__(self, share_name=None, **kwargs):
@@ -50,10 +52,26 @@ class AzureFileStorageManager:
         self._context = ""
 
     def set_memory_context(self, user_guid=None):
-        self._context = user_guid or ""
+        """One sub-folder per user. None means the folder itself (shared)."""
+        if user_guid is None:
+            self._context = ""
+            return
+        bad = (not isinstance(user_guid, str) or user_guid in ("", ".", "..")
+               or any(ch in "/\\" or ord(ch) < 32 or ord(ch) == 127 for ch in user_guid))
+        if bad:
+            raise ValueError(f"memory context must be a single folder name (no separators, not empty, not . or ..): {user_guid!r}")
+        self._context = user_guid
+
+    def _inside(self, *parts):
+        """The resolved path of root/parts; refuses anything that leaves the root."""
+        base = self.root.resolve()
+        p = self.root.joinpath(*parts).resolve()
+        if p != base and base not in p.parents:
+            raise ValueError("path escapes data directory: " + "/".join(str(x) for x in parts if str(x)))
+        return p
 
     def _path(self, file_path):
-        p = self.root / self._context / (file_path or "memory.json")
+        p = self._inside(self._context, file_path or "memory.json")
         p.parent.mkdir(parents=True, exist_ok=True)
         return p
 
@@ -79,7 +97,7 @@ class AzureFileStorageManager:
         return True
 
     def list_files(self, directory=""):
-        d = self.root / self._context / directory
+        d = self._inside(self._context, directory)
         return [x.name for x in d.iterdir()] if d.exists() else []
 
     def delete_file(self, file_path):

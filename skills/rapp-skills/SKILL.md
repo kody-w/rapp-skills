@@ -39,7 +39,7 @@ the block below.
 
 ## The code
 
-<!-- code sha256=e9d5fe4ca5bda8d43506fb438a94b2b3fac0de349c91e4703e7d46d7b1bd7352 -->
+<!-- code sha256=e9cfd85f624936e991677013e03cc360bc099a0e6cb45bf9b537497e31cb046d -->
 ````python
 #!/usr/bin/env python3
 """rapp-skills: the seam between Agent Skills and RAPP single-file agents.
@@ -87,6 +87,8 @@ DEFAULT_PARAMETERS = {
     },
     "required": ["request"],
 }
+# What an agent means when its metadata has no usable "parameters" (key missing, or empty).
+EMPTY_PARAMETERS = {"type": "object", "properties": {}, "required": []}
 
 # --------------------------------------------------------------------------- shim
 # Everything a RAPP agent may import when it runs outside a Brainstem. This exact
@@ -137,6 +139,8 @@ class AzureFileStorageManager:
 
     Used only if the agent itself saves something. Everything goes under one
     folder, $AGENT_STORAGE (default ~/.agent-storage); delete it to erase all of it.
+    Nothing can be read or written outside that folder: a path that would leave it
+    (".." or an absolute path) is refused, the same as on a real server.
     """
 
     def __init__(self, share_name=None, **kwargs):
@@ -146,10 +150,26 @@ class AzureFileStorageManager:
         self._context = ""
 
     def set_memory_context(self, user_guid=None):
-        self._context = user_guid or ""
+        """One sub-folder per user. None means the folder itself (shared)."""
+        if user_guid is None:
+            self._context = ""
+            return
+        bad = (not isinstance(user_guid, str) or user_guid in ("", ".", "..")
+               or any(ch in "/\\" or ord(ch) < 32 or ord(ch) == 127 for ch in user_guid))
+        if bad:
+            raise ValueError(f"memory context must be a single folder name (no separators, not empty, not . or ..): {user_guid!r}")
+        self._context = user_guid
+
+    def _inside(self, *parts):
+        """The resolved path of root/parts; refuses anything that leaves the root."""
+        base = self.root.resolve()
+        p = self.root.joinpath(*parts).resolve()
+        if p != base and base not in p.parents:
+            raise ValueError("path escapes data directory: " + "/".join(str(x) for x in parts if str(x)))
+        return p
 
     def _path(self, file_path):
-        p = self.root / self._context / (file_path or "memory.json")
+        p = self._inside(self._context, file_path or "memory.json")
         p.parent.mkdir(parents=True, exist_ok=True)
         return p
 
@@ -175,7 +195,7 @@ class AzureFileStorageManager:
         return True
 
     def list_files(self, directory=""):
-        d = self.root / self._context / directory
+        d = self._inside(self._context, directory)
         return [x.name for x in d.iterdir()] if d.exists() else []
 
     def delete_file(self, file_path):
@@ -341,6 +361,15 @@ def _load_module_and_agents(path: Path):
 
 def _agent_name(agent) -> str:
     return str(agent.metadata.get("name") or agent.name)
+
+
+def _agent_parameters(agent) -> dict:
+    """The agent's parameters exactly as the 'What it needs' block will show them.
+
+    Missing or empty parameters become the empty object schema; a pass through
+    JSON turns tuples into lists, so to-skill and check see the same thing.
+    """
+    return json.loads(json.dumps(agent.metadata.get("parameters") or EMPTY_PARAMETERS, ensure_ascii=False))
 
 
 # --------------------------------------------------------------------- frontmatter
@@ -548,7 +577,7 @@ def _toast_one(module, agent, agent_path: Path, skills_dir: Path, origin: str | 
     tool_name = _agent_name(agent)
     name = kebab(tool_name)
     description = str(meta.get("description") or "").strip() or f"{display(name)} agent."
-    parameters = meta.get("parameters") or {"type": "object", "properties": {}, "required": []}
+    parameters = _agent_parameters(agent)
     manifest = getattr(module, "__manifest__", {}) or {}
     agent_bytes = agent_path.read_bytes()
 
@@ -829,8 +858,14 @@ def verify(skill_dir: Path) -> list[str]:
                 problems.append(f"{md}: agent has no perform()")
             if tool and _agent_name(agent) != tool:
                 problems.append(f"{md}: agent metadata.name {agent.metadata.get('name')!r} != frontmatter tool-name {tool!r}")
-            if params is not None and agent.metadata.get("parameters") != params:
-                problems.append(f"{md}: the code's parameters differ from the 'What it needs' block")
+            if params is not None:
+                try:
+                    code_params = _agent_parameters(agent)
+                except (TypeError, ValueError) as exc:
+                    problems.append(f"{md}: the code's parameters cannot be written as JSON ({exc})")
+                else:
+                    if code_params != params:
+                        problems.append(f"{md}: the code's parameters differ from the 'What it needs' block")
         if script.is_file() and not (skill_dir / "scripts" / "run.py").is_file():
             problems.append(f"{skill_dir}: scripts/run.py missing (run to-skill again to regenerate)")
     return problems
@@ -925,11 +960,16 @@ def roundtrip(path: Path, tmp: Path) -> tuple[bool, str]:
     if path.is_dir() or path.name == "SKILL.md":
         if path.is_file():
             path = path.parent
-        fields, _ = parse_frontmatter(unwrap_sealed(read_text(path / "SKILL.md")))
-        tool = (fields.get("metadata") or {}).get("tool-name") if isinstance(fields.get("metadata"), dict) else None
+        # A sealed skill is judged by the plain skill inside its seal, and the way back
+        # must carry what to-skill was told the first time: origin, license, tool name.
+        source = unwrap_sealed(read_text(path / "SKILL.md"))
+        fields, _ = parse_frontmatter(source)
+        meta = fields.get("metadata") if isinstance(fields.get("metadata"), dict) else {}
+        license_name = fields.get("license") if isinstance(fields.get("license"), str) else None
         compiled = compile_skill(path, tmp / "agents")
-        toasted = toast(compiled, tmp / "skills", tool_name=tool)
-        a = (path / "SKILL.md").read_bytes()
+        toasted = toast(compiled, tmp / "skills", origin=meta.get("origin") or None,
+                        license_name=license_name, tool_name=meta.get("tool-name"))
+        a = source.encode("utf-8")
         b = (toasted / "SKILL.md").read_bytes()
         script = path / "scripts" / "agent.py"
         if script.is_file():
