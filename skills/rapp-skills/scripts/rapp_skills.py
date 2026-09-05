@@ -528,9 +528,28 @@ def write_text(path: Path, text: str) -> None:
     Path(path).write_bytes(text.encode("utf-8"))
 
 
+def load_skill_text(path: Path) -> str:
+    """A SKILL.md as it was written, less what a platform added on the way.
+
+    A leading UTF-8 byte-order mark and uniform CRLF line endings are the signature
+    of an editor or a checkout translating the file (Notepad, PowerShell 5,
+    core.autocrlf). Both are undone here, and this is the only way the converter
+    reads a skill, so the frontmatter, the seal, and the embedded code's sha256 all
+    read as written. A file with mixed endings is left byte-exact: that is content.
+    """
+    raw = Path(path).read_bytes()
+    if raw.startswith(b"\xef\xbb\xbf"):
+        raw = raw[3:]
+    text = raw.decode("utf-8")
+    crlf = text.count("\r\n")
+    if crlf and crlf == text.count("\n"):
+        text = text.replace("\r\n", "\n")
+    return text
+
+
 AGENT_OPEN = "<!-- agent sha256={sha} -->"
 AGENT_CLOSE = "<!-- /agent -->"
-RUNNER_OPEN = "<!-- runner -->"
+RUNNER_OPEN = "<!-- runner sha256={sha} -->"
 RUNNER_CLOSE = "<!-- /runner -->"
 
 
@@ -545,6 +564,14 @@ def embed_block(source: str, open_marker: str, close_marker: str) -> str:
     fence = _fence_for(source)
     body = source if source.endswith("\n") else source + "\n"
     return f"{open_marker}\n{fence}python\n{body}{fence}\n{close_marker}"
+
+
+def extract_runner(text: str) -> tuple[str | None, str | None]:
+    """The embedded launcher and the sha256 its marker claims (None for the older bare marker)."""
+    m = re.search(r"<!-- runner(?: sha256=([0-9a-f]{64}))? -->\n(`{3,})python\n(.*?)\n\2\n<!-- /runner -->", text, re.S)
+    if not m:
+        return None, None
+    return m.group(3) + "\n", m.group(1)
 
 
 def extract_agent(text: str) -> bytes | None:
@@ -565,14 +592,15 @@ def extract_agent(text: str) -> bytes | None:
 
 
 def toast_all(agent_path: Path, skills_dir: Path, origin: str | None = None,
-              license_name: str | None = None, tool_name: str | None = None) -> list[Path]:
+              license_name: str | None = None, tool_name: str | None = None,
+              seen: dict[str, Path] | None = None) -> list[Path]:
     """agent.py -> skills_dir/<name>/ (SKILL.md, scripts/agent.py, scripts/run.py) per agent.
 
     A file usually defines one agent and yields one skill. A file that defines
     several yields one skill per agent, each naming its own tool and carrying the
     same code; tool_name limits that to one of them.
     """
-    return _toast(Path(agent_path), Path(skills_dir), origin, license_name, tool_name, require_one=False)
+    return _toast(Path(agent_path), Path(skills_dir), origin, license_name, tool_name, require_one=False, seen=seen)
 
 
 def toast(agent_path: Path, skills_dir: Path, origin: str | None = None,
@@ -582,7 +610,9 @@ def toast(agent_path: Path, skills_dir: Path, origin: str | None = None,
 
 
 def _toast(agent_path: Path, skills_dir: Path, origin: str | None, license_name: str | None,
-           tool_name: str | None, require_one: bool) -> list[Path]:
+           tool_name: str | None, require_one: bool, seen: dict[str, Path] | None = None) -> list[Path]:
+    """seen maps skill name -> source file across one whole run, so two files whose tools
+    would become the same skill are refused instead of the second silently replacing the first."""
     module, agents = _load_module_and_agents(agent_path)
     skill_md = getattr(module, "SKILL_MD", None)
     if isinstance(skill_md, str) and getattr(module, "__rapp_skills__", {}).get("kind") == "playbook":
@@ -606,7 +636,12 @@ def _toast(agent_path: Path, skills_dir: Path, origin: str | None, license_name:
         skill = kebab(_agent_name(agent))
         if skill in by_skill:
             raise RuntimeError(f"{agent_path.name}: agents {_agent_name(by_skill[skill])!r} and {_agent_name(agent)!r} would both become the skill {skill!r}")
+        if seen is not None and skill in seen and seen[skill] != agent_path:
+            raise RuntimeError(f"{agent_path.name} and {seen[skill].name} would both become the skill {skill!r}; rename one tool")
         by_skill[skill] = agent
+    if seen is not None:
+        for skill in by_skill:
+            seen[skill] = agent_path
     return [_toast_one(module, agent, agent_path, skills_dir, origin, license_name, several) for agent in by_skill.values()]
 
 
@@ -627,6 +662,7 @@ def _toast_one(module, agent, agent_path: Path, skills_dir: Path, origin: str | 
         compat += " Environment: " + ", ".join(env_keys) + "."
     metadata = {
         "source": "agent.py",
+        "file": agent_path.name,
         "tool-name": tool_name,
         "agent-sha256": sha256(agent_bytes),
     }
@@ -697,15 +733,44 @@ def _toast_one(module, agent, agent_path: Path, skills_dir: Path, origin: str | 
         "",
         "Loads the code above and calls `perform` with your JSON input.",
         "",
-        embed_block(runner_text, RUNNER_OPEN, RUNNER_CLOSE),
+        embed_block(runner_text, RUNNER_OPEN.format(sha=sha256(runner_text.encode("utf-8"))), RUNNER_CLOSE),
         "",
     ]
     out = skills_dir / name
+    _refuse_to_replace_another_source(out, agent_path)
     (out / "scripts").mkdir(parents=True, exist_ok=True)
     write_text(out / "SKILL.md", dump_frontmatter(fields) + "\n" + "\n".join(body))
     (out / "scripts" / "agent.py").write_bytes(agent_bytes)
     write_text(out / "scripts" / "run.py", runner_text)
     return out
+
+
+def _refuse_to_replace_another_source(out: Path, agent_path: Path) -> None:
+    """A skill folder written from one source file is never overwritten from another."""
+    existing = out / "SKILL.md"
+    if not existing.is_file():
+        return
+    try:
+        fields, _ = parse_frontmatter(unwrap_sealed(load_skill_text(existing)))
+    except ValueError:
+        return
+    meta = fields.get("metadata") if isinstance(fields.get("metadata"), dict) else {}
+    previous = meta.get("file")
+    if previous and previous != agent_path.name:
+        raise RuntimeError(f"{out} already holds the skill made from {previous}; {agent_path.name} would replace it. Rename one tool")
+
+
+SOURCE_FILE_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]*_agent\.py")
+
+
+def restored_file_name(fields: dict) -> str:
+    """The file a compiled skill is written to: the file it came from, when the skill
+    says and it is a plain *_agent.py name a server would load; else one from its name."""
+    meta = fields.get("metadata") if isinstance(fields.get("metadata"), dict) else {}
+    recorded = meta.get("file")
+    if isinstance(recorded, str) and SOURCE_FILE_RE.fullmatch(recorded):
+        return recorded
+    return f"{snake(fields['name'])}_agent.py"
 
 
 # ------------------------------------------------------------------------- compile
@@ -779,18 +844,18 @@ def _skill_md(path: Path) -> tuple[Path, Path]:
 def compile_skill(skill_dir: Path, out_dir: Path) -> Path:
     """<skill>/ or SKILL.md -> out_dir/<snake>_agent.py."""
     skill_dir, md = _skill_md(skill_dir)
-    text = unwrap_sealed(read_text(md))
+    text = unwrap_sealed(load_skill_text(md))
     fields, body = parse_frontmatter(text)
     name = fields["name"]
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
-    problems = verify(md)
+    problems = verify(md, launcher=False)
     if problems:
         raise RuntimeError("refusing to compile a skill that does not verify:\n  " + "\n  ".join(problems))
     script = skill_dir / "scripts" / "agent.py"
     agent_bytes = script.read_bytes() if script.is_file() else extract_agent(text)
     if agent_bytes is not None:
-        target = out_dir / f"{snake(name)}_agent.py"
+        target = out_dir / restored_file_name(fields)
         target.write_bytes(agent_bytes)
         return target
 
@@ -865,14 +930,18 @@ class {class_name}(BasicAgent):
 # -------------------------------------------------------------------------- verify
 
 
-def verify(skill_dir: Path) -> list[str]:
-    """Return problems (empty list = the skill is valid and self-consistent)."""
+def verify(skill_dir: Path, launcher: bool = True) -> list[str]:
+    """Return problems (empty list = the skill is valid and self-consistent).
+
+    launcher=False skips the check that the launcher is the current one: restoring
+    the code a skill carries never depends on how old its launcher is.
+    """
     skill_dir, md = _skill_md(skill_dir)
     problems: list[str] = []
     if not md.is_file():
         return [f"{skill_dir}: no SKILL.md"]
     try:
-        text = unwrap_sealed(read_text(md))
+        text = unwrap_sealed(load_skill_text(md))
         fields, body = parse_frontmatter(text)
     except ValueError as exc:
         return [f"{md}: {exc}"]
@@ -961,6 +1030,32 @@ def verify(skill_dir: Path) -> list[str]:
                         problems.append(f"{md}: the code's parameters differ from the 'What it needs' block")
         if script.is_file() and not (skill_dir / "scripts" / "run.py").is_file():
             problems.append(f"{skill_dir}: scripts/run.py missing (run to-skill again to regenerate)")
+        if launcher:
+            problems.extend(_launcher_problems(skill_dir, md, text))
+    return problems
+
+
+def _launcher_problems(skill_dir: Path, md: Path, text: str) -> list[str]:
+    """The launcher a skill carries must be the one this converter would write today.
+
+    Every fix to the launcher reaches only skills converted since, so a skill keeps
+    running whatever launcher it was born with unless something compares. This does:
+    the block in SKILL.md against its own marker, and both the block and
+    scripts/run.py against the current launcher.
+    """
+    problems: list[str] = []
+    current = RUN_PY.lstrip("\n")
+    block, claimed = extract_runner(text)
+    if block is not None and claimed and sha256(block.encode("utf-8")) != claimed:
+        problems.append(f"{md}: the launcher block does not match its sha256 {claimed[:12]}")
+    stale = []
+    if block is not None and block != current:
+        stale.append("the launcher block in SKILL.md")
+    run_py = skill_dir / "scripts" / "run.py"
+    if run_py.is_file() and read_text(run_py) != current:
+        stale.append("scripts/run.py")
+    if stale:
+        problems.append(f"{md}: {' and '.join(stale)} come from an older converter; run to-skill again to refresh them")
     return problems
 
 
@@ -984,7 +1079,7 @@ def lock_skill(skill_dir: Path, out_dir: Path, passphrase: str) -> Path:
     """Lock a skill: header stays readable, body is encrypted. Needs the openssl command."""
     import base64
     skill_dir, md = _skill_md(skill_dir)
-    fields, body = parse_frontmatter(read_text(md))
+    fields, body = parse_frontmatter(load_skill_text(md))
     if isinstance(fields.get("metadata"), dict) and fields["metadata"].get("locked"):
         raise RuntimeError(f"{md} is already locked")
     plain = body.encode("utf-8")
@@ -1021,7 +1116,7 @@ def lock_skill(skill_dir: Path, out_dir: Path, passphrase: str) -> Path:
 def unlock_skill(skill_dir: Path, out_dir: Path, passphrase: str) -> Path:
     import base64
     skill_dir, md = _skill_md(skill_dir)
-    fields, body = parse_frontmatter(read_text(md))
+    fields, body = parse_frontmatter(load_skill_text(md))
     meta = fields.get("metadata") or {}
     if not meta.get("locked"):
         raise RuntimeError(f"{md} is not locked")
@@ -1055,7 +1150,7 @@ def roundtrip(path: Path, tmp: Path) -> tuple[bool, str]:
             path = path.parent
         # A sealed skill is judged by the plain skill inside its seal, and the way back
         # must carry what to-skill was told the first time: origin, license, tool name.
-        source = unwrap_sealed(read_text(path / "SKILL.md"))
+        source = unwrap_sealed(load_skill_text(path / "SKILL.md"))
         fields, _ = parse_frontmatter(source)
         meta = fields.get("metadata") if isinstance(fields.get("metadata"), dict) else {}
         license_name = fields.get("license") if isinstance(fields.get("license"), str) else None
@@ -1211,9 +1306,10 @@ def main(argv: list[str] | None = None) -> int:
         if source.is_dir():
             agents = [a for a in agents if a.name != "basic_agent.py"]
         rc = 0
+        seen: dict[str, Path] = {}
         for agent in agents:
             try:
-                outs = toast_all(agent, Path(args.out), origin=args.origin, license_name=args.license)
+                outs = toast_all(agent, Path(args.out), origin=args.origin, license_name=args.license, seen=seen)
             except Exception as exc:  # noqa: BLE001 - keep going, report at the end
                 print(f"skipped {agent.name}: {exc.__class__.__name__}: {exc}")
                 rc = 1
@@ -1238,10 +1334,11 @@ def main(argv: list[str] | None = None) -> int:
                 rc = 1
                 continue
             digest = sha256(target.read_bytes())
-            if digest in written and written[digest] != target:
+            if digest in written:
                 # Several skills came from one file of several tools; a server loading the
                 # folder would register every tool once per copy. Keep the first copy only.
-                target.unlink()
+                if written[digest] != target:
+                    target.unlink()
                 print(f"{skill.name}: same code as {written[digest].name}; not written again")
                 continue
             written[digest] = target

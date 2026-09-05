@@ -73,9 +73,10 @@ class ToastAndCompile(unittest.TestCase):
             compiled = rs.compile_skill(drop / "SKILL.md", Path(tmp) / "agents")
             self.assertEqual(compiled.read_bytes(), HELLO.read_bytes())
             text = rs.read_text(drop / "SKILL.md")
-            runner = re.search(r"<!-- runner -->\n```python\n(.*?)\n```\n<!-- /runner -->", text, re.S).group(1)
+            runner, claimed = rs.extract_runner(text)
+            self.assertEqual(rs.sha256(runner.encode("utf-8")), claimed)
             (drop / "agent.py").write_bytes(rs.extract_agent(text))
-            rs.write_text(drop / "run.py", runner + "\n")
+            rs.write_text(drop / "run.py", runner)
             result = run_py("run.py", "--json", '{"name": "Grace"}', cwd=drop)
             self.assertEqual(result.stdout.strip(), "Hello, Grace! Welcome to the RAPP Agent ecosystem.", result.stderr)
 
@@ -809,3 +810,123 @@ class RepositoryIsConsistent(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ConverterReview4(unittest.TestCase):
+    """Round four: a folder backup keeps every agent, files read as written, launchers do not go stale."""
+
+    def _agent(self, tool: str, cls: str) -> str:
+        return (
+            "from agents.basic_agent import BasicAgent\n\n\n"
+            f"class {cls}(BasicAgent):\n"
+            "    def __init__(self):\n"
+            f"        self.name = {tool!r}\n"
+            "        self.metadata = {'name': self.name, 'description': 'd', 'parameters': {'type': 'object', 'properties': {}, 'required': []}}\n"
+            "        super().__init__(self.name, self.metadata)\n\n"
+            "    def perform(self, **kwargs):\n"
+            f"        return {cls!r}\n"
+        )
+
+    def test_defect11_folder_backup_refuses_colliding_skills_and_restores_file_names(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            agents = Path(tmp) / "agents"
+            agents.mkdir()
+            rs.write_text(agents / "summarize_agent.py", self._agent("Summarize", "SummarizeAgent"))
+            rs.write_text(agents / "summarize_docs_agent.py", self._agent("SummarizeAgent", "SummarizeDocsAgent"))
+            out = io.StringIO()
+            with contextlib.redirect_stdout(out):
+                rc = rs.main(["to-skill", str(agents), "--out", str(Path(tmp) / "skills")])
+            self.assertNotEqual(rc, 0, "two files that become one skill must not be a silent success")
+            printed = out.getvalue()
+            self.assertIn("summarize_agent.py", printed)
+            self.assertIn("summarize_docs_agent.py", printed)
+            self.assertIn("'summarize'", printed)
+            # the first file's backup is intact, not replaced by the second
+            written = rs.load_skill_text(Path(tmp) / "skills" / "summarize" / "SKILL.md")
+            self.assertIn("SummarizeAgent(BasicAgent)", written)
+            self.assertNotIn("SummarizeDocsAgent", written)
+
+        with tempfile.TemporaryDirectory() as tmp:
+            agents = Path(tmp) / "agents"
+            agents.mkdir()
+            # a tool whose name does not spell its file name: the backup must still give the file back
+            rs.write_text(agents / "weather_agent.py", self._agent("GetWeather", "WeatherAgent"))
+            rs.write_text(agents / "news_agent.py", self._agent("LatestNews", "NewsAgent"))
+            skills, restored = Path(tmp) / "skills", Path(tmp) / "restored"
+            self.assertEqual(rs.main(["to-skill", str(agents), "--out", str(skills)]), 0)
+            with contextlib.redirect_stdout(io.StringIO()):
+                self.assertEqual(rs.main(["to-agent", str(skills), "--out", str(restored)]), 0)
+            self.assertEqual(sorted(p.name for p in restored.iterdir()), ["news_agent.py", "weather_agent.py"])
+            for name in ("weather_agent.py", "news_agent.py"):
+                self.assertEqual((restored / name).read_bytes(), (agents / name).read_bytes())
+            # a recorded file name is only ever a plain *_agent.py name: never a path
+            fields = {"name": "weather", "metadata": {"file": "../evil_agent.py"}}
+            self.assertEqual(rs.restored_file_name(fields), "weather_agent.py")
+
+    def test_defect12_crlf_and_bom_skills_read_as_written(self):
+        source = rs.read_text(BRIEF / "SKILL.md")
+        toasted_src = None
+        with tempfile.TemporaryDirectory() as tmp:
+            hello = rs.toast(HELLO, Path(tmp) / "skills")
+            toasted_src = rs.read_text(hello / "SKILL.md")
+            agent_bytes = (hello / "scripts" / "agent.py").read_bytes()
+        variants = {
+            "lf": source.encode("utf-8"),
+            "crlf": source.replace("\n", "\r\n").encode("utf-8"),
+            "bom": b"\xef\xbb\xbf" + source.encode("utf-8"),
+        }
+        compiled: dict[str, bytes] = {}
+        for label, data in variants.items():
+            with tempfile.TemporaryDirectory() as tmp:
+                skill = Path(tmp) / "writing-brief"
+                skill.mkdir()
+                (skill / "SKILL.md").write_bytes(data)
+                self.assertEqual(rs.verify(skill), [], label)
+                ok, msg = rs.roundtrip(skill, Path(tmp) / "rt")
+                self.assertTrue(ok, f"{label}: {msg}")
+                compiled[label] = rs.compile_skill(skill, Path(tmp) / "agents").read_bytes()
+                self.assertIsNotNone(rs._parameters_block(rs.parse_frontmatter(rs.load_skill_text(skill / "SKILL.md"))[1]), label)
+        self.assertEqual(compiled["lf"], compiled["crlf"])
+        self.assertEqual(compiled["lf"], compiled["bom"])
+        # a converted skill (embedded code with its sha) translated to CRLF still restores its code
+        with tempfile.TemporaryDirectory() as tmp:
+            skill = Path(tmp) / "hello-world"
+            skill.mkdir()
+            (skill / "SKILL.md").write_bytes(b"\xef\xbb\xbf" + toasted_src.replace("\n", "\r\n").encode("utf-8"))
+            self.assertEqual(rs.verify(skill), [])
+            self.assertEqual(rs.compile_skill(skill, Path(tmp) / "agents").read_bytes(), agent_bytes)
+        # mixed endings are content and stay byte-exact
+        mixed = "---\nname: \"x\"\n---\n\nline one\r\nline two\n"
+        with tempfile.TemporaryDirectory() as tmp:
+            p = Path(tmp) / "SKILL.md"
+            p.write_bytes(mixed.encode("utf-8"))
+            self.assertEqual(rs.load_skill_text(p), mixed)
+
+    def test_defect13_stale_launcher_is_reported_and_refreshed(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            skill = rs.toast(HELLO, Path(tmp) / "skills")
+            self.assertEqual(rs.verify(skill), [])
+            text = rs.read_text(skill / "SKILL.md")
+            block, claimed = rs.extract_runner(text)
+            self.assertIsNotNone(claimed, "the launcher block must carry its sha256")
+            self.assertEqual(rs.sha256(block.encode("utf-8")), claimed)
+            # the launcher an older converter wrote: same shape, different code, bare marker
+            stale = block.replace("def main(", "def main(  # older launcher\n", 1)
+            old_block = "<!-- runner -->\n" + rs.embed_block(stale, "", rs.RUNNER_CLOSE).split("\n", 1)[1]
+            start = text.index("<!-- runner sha256=")
+            end = text.index(rs.RUNNER_CLOSE, start) + len(rs.RUNNER_CLOSE)
+            rs.write_text(skill / "SKILL.md", text[:start] + old_block + text[end:])
+            rs.write_text(skill / "scripts" / "run.py", stale)
+            problems = rs.verify(skill)
+            self.assertTrue(any("older converter" in p for p in problems), problems)
+            self.assertTrue(any("scripts/run.py" in p and "launcher block" in p for p in problems), problems)
+            # the code is still restorable: staleness never blocks getting the agent back
+            restored = rs.compile_skill(skill, Path(tmp) / "agents")
+            self.assertEqual(restored.read_bytes(), HELLO.read_bytes())
+            # converting again refreshes both copies
+            rs.toast(restored, Path(tmp) / "skills")
+            self.assertEqual(rs.verify(skill), [])
+            # a launcher block whose sha does not match its own marker is reported too
+            text = rs.read_text(skill / "SKILL.md")
+            rs.write_text(skill / "SKILL.md", text.replace("def main(", "def main(  # edited\n", 1))
+            self.assertTrue(any("does not match its sha256" in p for p in rs.verify(skill)), rs.verify(skill))

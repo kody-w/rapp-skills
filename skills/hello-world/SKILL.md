@@ -5,6 +5,7 @@ license: "MIT"
 compatibility: "Requires python3 (3.11+)."
 metadata:
   source: "agent.py"
+  file: "hello_world_agent.py"
   tool-name: "HelloWorldAgent"
   agent-sha256: "d2695f70a412909546a49586487a471e6bca9c2d215d0367d440a80473b75bd1"
   version: "1.0.3"
@@ -101,7 +102,7 @@ class HelloWorldAgent(BasicAgent):
 
 Loads the code above and calls `perform` with your JSON input.
 
-<!-- runner -->
+<!-- runner sha256=8d6cc7c145c772a5f9ac580f38cf28d5ca2b2a76c57813b5409a606115a6cff5 -->
 ```python
 import hashlib as _hashlib, json as _json, os as _os, sys as _sys, types as _types
 from pathlib import Path as _Path
