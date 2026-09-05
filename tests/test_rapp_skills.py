@@ -930,3 +930,18 @@ class ConverterReview4(unittest.TestCase):
             text = rs.read_text(skill / "SKILL.md")
             rs.write_text(skill / "SKILL.md", text.replace("def main(", "def main(  # edited\n", 1))
             self.assertTrue(any("does not match its sha256" in p for p in rs.verify(skill)), rs.verify(skill))
+
+
+    def test_defect14_sealed_skill_whose_text_contains_an_end_marker_line(self):
+        inner = rs.read_text(BRIEF / "SKILL.md").rstrip("\n") + "\n\n## Notes\n\nA seal ends with this line on its own:\n\n<!-- RAW-SKILL-END -->\n\nand nothing after it counts.\n"
+        digest = rs.sha256(inner.encode("utf-8"))
+        sealed = f"---\nname: writing-brief\nschema: rapp/1-skill\nskill_hash: {digest}\n---\n<!-- RAW-SKILL-BEGIN sha256={digest} -->\n{inner}<!-- RAW-SKILL-END -->\n"
+        self.assertEqual(rs.unwrap_sealed(sealed), inner)
+        with tempfile.TemporaryDirectory() as tmp:
+            skill = Path(tmp) / "writing-brief"
+            skill.mkdir()
+            rs.write_text(skill / "SKILL.md", sealed)
+            self.assertEqual(rs.verify(skill), [])
+        # a seal that matches no END marker is still refused
+        with self.assertRaises(ValueError):
+            rs.unwrap_sealed(sealed.replace("nothing after it", "something after it"))

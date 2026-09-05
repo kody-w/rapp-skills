@@ -420,12 +420,22 @@ def unwrap_sealed(text: str) -> str:
     Returns the plain skill inside after checking the seal; returns text unchanged
     when it is not sealed. Raises when the seal does not match.
     """
-    m = re.search(r"<!-- RAW-SKILL-BEGIN sha256=([0-9a-f]{64}) -->\n(.*?)\n<!-- RAW-SKILL-END -->", text, re.S)
-    if not m:
+    begin = re.search(r"<!-- RAW-SKILL-BEGIN sha256=([0-9a-f]{64}) -->\n", text)
+    if not begin:
         return text
-    for candidate in (m.group(2) + "\n", m.group(2)):
-        if sha256(candidate.encode("utf-8")) == m.group(1):
-            return candidate
+    expected = begin.group(1)
+    # The inner text may itself contain an END marker line (a skill that documents
+    # sealing, or a sealed skill sealed again), so the seal, not the first marker,
+    # decides where the inner text ends: every END marker is tried against the sha.
+    rest = text[begin.end():]
+    ends = [m.start() for m in re.finditer(r"\n<!-- RAW-SKILL-END -->", rest)]
+    if not ends:
+        return text
+    for end in ends:
+        inner = rest[:end]
+        for candidate in (inner + "\n", inner):
+            if sha256(candidate.encode("utf-8")) == expected:
+                return candidate
     raise ValueError("sealed skill: the seal does not match the contents")
 
 
