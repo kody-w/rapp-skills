@@ -1,0 +1,82 @@
+{
+  "schema": "rapp-skill-source/1",
+  "name": "hive-hub",
+  "repository": "https://github.com/kody-w/hive-hub",
+  "ref": "refs/heads/main",
+  "commit": "93c8979caf5a51017898996aadaa42dddcfb75b2",
+  "path": "skills/hive-hub",
+  "git_tree": "e9e8dba608aa47adafa2156b28d7bacc1d00ac04",
+  "folder_sha256": "021c56f939a900e7c3c57aab9d6e6fa79b13a539a7dae6737c57a7485ebe573f",
+  "files": [
+    {
+      "path": "SKILL.md",
+      "mode": "100644",
+      "bytes": 5291,
+      "sha256": "548a374480ead1ee8227caffa8fde708e9d521f15de271995550c6f93bc57feb",
+      "git_blob": "2696b9dfca0ca05b51f878e6f68c4cb8068b9392"
+    },
+    {
+      "path": "agent.lock",
+      "mode": "100644",
+      "bytes": 3307,
+      "sha256": "628c1f03a637aca12b5d09028705bed918e5f072979de6cbd9d9c26663d16ce2",
+      "git_blob": "da26ed09b040d12208f24aec7b9d7a3580e4b72b"
+    },
+    {
+      "path": "instructions/AI.md",
+      "mode": "100644",
+      "bytes": 1816,
+      "sha256": "5acebd927da3530c6b41d8a3a7d0f142ad2d4fd7478427284bfcaca8d8aa3232",
+      "git_blob": "bcedc703ac3e248560209c8988511433ce93e71c"
+    },
+    {
+      "path": "instructions/HUMAN.md",
+      "mode": "100644",
+      "bytes": 1621,
+      "sha256": "96958e494170b46a0395da135e5c6ed8ed16f8ca29a9536cb5b08d3cab641f5f",
+      "git_blob": "726c1f12b99823f9ecd55616f46cce3b6d401d0e"
+    },
+    {
+      "path": "registry/integrated-adapters.json",
+      "mode": "100644",
+      "bytes": 3691,
+      "sha256": "7d6d20af067f607e885a7096507cdfc3fbb52b2067681fa1a20a804040ad85eb",
+      "git_blob": "79ed070f37f4428fd0f769daf957400380d8ba7b"
+    },
+    {
+      "path": "registry/public-dialbook.json",
+      "mode": "100644",
+      "bytes": 482,
+      "sha256": "3f002c8f57ecf89529cd31f14f49b7febbc24eeca90e804cf6d5bb6cad605b4c",
+      "git_blob": "91e11fea9376a5277be87e17929b679abdbb5c38"
+    },
+    {
+      "path": "schemas/core-ai-join-card.schema.json",
+      "mode": "100644",
+      "bytes": 1945,
+      "sha256": "fd35f0677d913940cc0327c9501db94e3e11a0eb43eb01c924d75cdb7d081f24",
+      "git_blob": "4163ec242dabbbd07372417d3752df610acb4a1a"
+    },
+    {
+      "path": "schemas/hive-declaration.schema.json",
+      "mode": "100644",
+      "bytes": 948,
+      "sha256": "1f0a83e90d922f0d2a78e3355792b6cbec9e32a1a6cf9e444c5d36ed9a738019",
+      "git_blob": "2908532570c83955371423ec2a7154063fd50a8d"
+    },
+    {
+      "path": "schemas/join-card.schema.json",
+      "mode": "100644",
+      "bytes": 835,
+      "sha256": "4a4245af8fbc27cb320f71f368d98d4e21ca2f37950c3c65ed906950c32731c7",
+      "git_blob": "b590f9b62e8b725034657175d170f67e7cc824e7"
+    },
+    {
+      "path": "scripts/run.py",
+      "mode": "100644",
+      "bytes": 93584,
+      "sha256": "de22289116f1a883bef9a30a535ad274c0812efeb83e4f2c7eac98ec4380abaf",
+      "git_blob": "09a4ba68bc38c1bfbf2adb3014d69ed889fce518"
+    }
+  ]
+}

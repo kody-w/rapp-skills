@@ -36,3 +36,4 @@ jobs:
         run: |
           python rapp_skills.py prove tests/fixtures/hello_world_agent.py
           python rapp_skills.py prove tests/fixtures/writing-brief
+          python rapp_skills.py prove skills/hive-hub

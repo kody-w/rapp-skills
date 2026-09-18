@@ -23,6 +23,22 @@ delete a skill's folder and your AI is back to exactly how it was.
 Try it with [`skills/hello-world`](skills/hello-world): copy the folder, then ask your tool to
 "use the hello-world skill to greet me".
 
+For safe Hive dialing and joining, copy [`skills/hive-hub`](skills/hive-hub). Give it a GitHub
+address, local path, seven-word chant, full Dial Record ID, or camera/QR/AI card. It decodes
+locators without effects, shows an exact plan before any network read or local write, keeps
+downloaded material inert, and uses only access already configured on the device:
+
+```bash
+cd skills/hive-hub
+python3 -I -B scripts/run.py verify
+python3 -I -B scripts/run.py decode --locator 'owner/repository at main'
+python3 -I -B scripts/run.py join --locator 'owner/repository at main'
+```
+
+The folder is copied byte-for-byte from `kody-w/hive-hub` main commit
+`93c8979caf5a51017898996aadaa42dddcfb75b2`. [`sources/hive-hub.json`](sources/hive-hub.json)
+records its exact Git tree, every file size, Git blob, and SHA-256 value.
+
 For safe RAPP Work setup and maintenance, copy [`skills/rapp-work`](skills/rapp-work). It verifies
 exact local SDK and RAPP/1 checkouts, performs offline discovery, and makes scaffold, update, and
 migration plans. Nothing is cloned or installed, and a change runs only after the exact printed
@@ -105,6 +121,10 @@ abilities on its own, and the version it was verified on with evidence. Supporti
 adding a file; `python3 rapp_skills.py sync` rewrites every tool-specific file from it, including the
 converter skill's embedded copy of its own code, and CI fails if anything drifts. See
 [HOSTS.md](HOSTS.md).
+
+`sources/*.json` records byte-exact imported skills. `sync --check` verifies their pinned commit,
+Git tree and blobs, complete file inventory, byte counts, and SHA-256 values without rewriting the
+imported folder.
 
 Deeper capabilities (verifiable packaging, a server runtime) exist in the wider
 [RAPP](https://github.com/kody-w/RAPP) project and are reached from the one Python file
