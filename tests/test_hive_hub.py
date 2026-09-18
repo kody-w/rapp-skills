@@ -21,10 +21,10 @@ ROOT = Path(__file__).resolve().parents[1]
 SKILL = ROOT / "skills" / "hive-hub"
 RUNNER = SKILL / "scripts" / "run.py"
 SOURCE = ROOT / "sources" / "hive-hub.json"
-EXPECTED_COMMIT = "668f990e45a3c1a0ae9f25ca96d1fcc3cc20c8d5"
-EXPECTED_GIT_TREE = "e1fbe00b50be043af9410f35a1417324f975976f"
+EXPECTED_COMMIT = "136369ce4e264d2da8faf8355bc9de244e47ee52"
+EXPECTED_GIT_TREE = "54c9ffa6a04b8e7af7114811d9c806bbec46382f"
 EXPECTED_FOLDER_SHA256 = (
-    "933721f71959e774f76bfdd59e8be93fa50c3a54c0c41f9203d8f1ea8c7f389c"
+    "f25c60650584be7085604c91b475155b82bb82aac7ed25ea8f5b43b6442e7ff7"
 )
 DENIED_PRIVATE_IDENTIFIER_SHA256 = frozenset(
     {
@@ -161,7 +161,7 @@ class HiveHubIntegrationTests(unittest.TestCase):
         lock = json.loads((SKILL / "agent.lock").read_text(encoding="utf-8"))
         self.assertEqual(lock["schema"], "hive-hub-agent-lock/1")
         self.assertEqual(lock["name"], "hive-hub")
-        self.assertEqual(lock["version"], "0.1.0")
+        self.assertEqual(lock["version"], "0.1.1")
         source_files = {
             entry["path"]: (entry["bytes"], entry["sha256"])
             for entry in source["files"]
