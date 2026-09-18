@@ -13,13 +13,15 @@ Commands (plain verbs; no concepts to learn)
   check     <skill>   -> exit 1 with the list of problems
   prove     <path>    -> shows nothing is lost going there and back
   run       <skill> --json '{...}'  -> runs the skill's code here
-  sync      [--check] -> rewrites every host-specific file from plugin.json, hosts/*.json, agents/*.md
+  sync      [--check] -> rewrites host files and verifies pinned sources from the repository records
 
 Standard library only. Python 3.11+.
 """
 from __future__ import annotations
 
 import argparse
+import ctypes
+import errno
 import hashlib
 import json
 import os
@@ -27,7 +29,9 @@ import re
 import stat
 import subprocess
 import sys
+from ctypes import wintypes
 from pathlib import Path, PurePosixPath
+from typing import Any
 
 VERSION = "1.0.0"
 NAME_RE = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
@@ -1063,6 +1067,114 @@ LOCK_ACTIVE_SUFFIXES = frozenset({
     ".whl", ".zip", ".zsh",
 })
 MAX_LOCK_TREE_ENTRIES = 10_000
+RAPP_SKILL_LOCK_SCHEMA = "rapp-skill-lock/1"
+HIVE_HUB_SKILL_LOCK_SCHEMA = "hive-hub-agent-lock/1"
+HIVE_HUB_LOCK_MAX_FILE_BYTES = 8 * 1024 * 1024
+FILE_ATTRIBUTE_REPARSE_POINT = 0x00000400
+FILE_FLAG_BACKUP_SEMANTICS = 0x02000000
+FILE_FLAG_OPEN_REPARSE_POINT = 0x00200000
+FILE_SHARE_READ = 0x00000001
+FILE_SHARE_WRITE = 0x00000002
+FILE_SHARE_DELETE = 0x00000004
+OPEN_EXISTING = 3
+_INVALID_HANDLE_VALUE = ctypes.c_void_p(-1).value
+_WINDOWS_FILE_API: Any | None = None
+
+
+class _ByHandleFileInformation(ctypes.Structure):
+    _fields_ = [
+        ("dwFileAttributes", wintypes.DWORD),
+        ("ftCreationTime", wintypes.FILETIME),
+        ("ftLastAccessTime", wintypes.FILETIME),
+        ("ftLastWriteTime", wintypes.FILETIME),
+        ("dwVolumeSerialNumber", wintypes.DWORD),
+        ("nFileSizeHigh", wintypes.DWORD),
+        ("nFileSizeLow", wintypes.DWORD),
+        ("nNumberOfLinks", wintypes.DWORD),
+        ("nFileIndexHigh", wintypes.DWORD),
+        ("nFileIndexLow", wintypes.DWORD),
+    ]
+
+
+def _is_windows() -> bool:
+    return os.name == "nt"
+
+
+def _windows_error(operation: str, path: str | None = None) -> OSError:
+    get_last_error: Any = getattr(ctypes, "get_last_error", None)
+    code = int(get_last_error()) if callable(get_last_error) else 0
+    message = f"{operation} failed"
+    if path is None:
+        return OSError(code or errno.EIO, message)
+    return OSError(code or errno.EIO, message, path)
+
+
+def _windows_file_api() -> Any:
+    global _WINDOWS_FILE_API
+    if _WINDOWS_FILE_API is not None:
+        return _WINDOWS_FILE_API
+    loader: Any = getattr(ctypes, "WinDLL", None)
+    if loader is None:
+        raise OSError(errno.ENOSYS, "Windows file metadata is unavailable")
+    api = loader("kernel32", use_last_error=True)
+    api.CreateFileW.argtypes = [
+        wintypes.LPCWSTR,
+        wintypes.DWORD,
+        wintypes.DWORD,
+        wintypes.LPVOID,
+        wintypes.DWORD,
+        wintypes.DWORD,
+        wintypes.HANDLE,
+    ]
+    api.CreateFileW.restype = wintypes.HANDLE
+    api.GetFileInformationByHandle.argtypes = [
+        wintypes.HANDLE,
+        ctypes.POINTER(_ByHandleFileInformation),
+    ]
+    api.GetFileInformationByHandle.restype = wintypes.BOOL
+    api.CloseHandle.argtypes = [wintypes.HANDLE]
+    api.CloseHandle.restype = wintypes.BOOL
+    _WINDOWS_FILE_API = api
+    return api
+
+
+def _windows_file_metadata(path: Path) -> tuple[int, int]:
+    absolute = os.path.abspath(os.fspath(path))
+    api = _windows_file_api()
+    handle = api.CreateFileW(
+        absolute,
+        0,
+        FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+        None,
+        OPEN_EXISTING,
+        FILE_FLAG_OPEN_REPARSE_POINT | FILE_FLAG_BACKUP_SEMANTICS,
+        None,
+    )
+    if handle is None or handle == _INVALID_HANDLE_VALUE:
+        raise _windows_error("CreateFileW", absolute)
+    information = _ByHandleFileInformation()
+    try:
+        if not api.GetFileInformationByHandle(handle, ctypes.byref(information)):
+            raise _windows_error("GetFileInformationByHandle", absolute)
+    except Exception:
+        api.CloseHandle(handle)
+        raise
+    if not api.CloseHandle(handle):
+        raise _windows_error("CloseHandle", absolute)
+    return int(information.nNumberOfLinks), int(information.dwFileAttributes)
+
+
+def _has_single_file_link(path: Path, information: os.stat_result) -> bool:
+    if not _is_windows():
+        return information.st_nlink == 1
+    try:
+        number_of_links, attributes = _windows_file_metadata(path)
+    except OSError:
+        return False
+    return (
+        number_of_links == 1
+        and not attributes & FILE_ATTRIBUTE_REPARSE_POINT
+    )
 
 
 def _skill_lock_active(path: Path, mode: int) -> bool:
@@ -1118,6 +1230,10 @@ def _skill_lock_inventory_problems(
                 problems.append(
                     f"agent.lock does not allow unlisted special file {name!r}"
                 )
+            elif not _has_single_file_link(skill_dir / relative, info):
+                problems.append(
+                    f"agent.lock requires {name!r} to have exactly one filesystem link"
+                )
             elif _skill_lock_active(relative, info.st_mode):
                 problems.append(
                     "agent.lock does not list executable or importable file "
@@ -1128,6 +1244,34 @@ def _skill_lock_inventory_problems(
     return problems
 
 
+def _skill_lock_complete_inventory_problems(
+    skill_dir: Path, listed: set[str]
+) -> list[str]:
+    problems: list[str] = []
+    actual: set[str] = set()
+    try:
+        for relative, info, kind in _skill_lock_tree(skill_dir):
+            name = relative.as_posix()
+            if name == "agent.lock":
+                continue
+            if kind == "symlink":
+                problems.append(f"agent.lock does not allow symlink {name!r}")
+            elif kind != "file":
+                problems.append(f"agent.lock does not allow special file {name!r}")
+            else:
+                actual.add(name)
+                if not _has_single_file_link(skill_dir / relative, info):
+                    problems.append(
+                        f"agent.lock requires {name!r} to have exactly one filesystem link"
+                    )
+    except ValueError as exc:
+        problems.append(str(exc))
+        return problems
+    for name in sorted(actual - listed):
+        problems.append(f"agent.lock does not list file {name!r}")
+    return problems
+
+
 def _skill_lock_problems(skill_dir: Path) -> list[str]:
     lock_path = skill_dir / "agent.lock"
     if not lock_path.exists() and not lock_path.is_symlink():
@@ -1135,7 +1279,7 @@ def _skill_lock_problems(skill_dir: Path) -> list[str]:
     problems: list[str] = []
     if lock_path.is_symlink() or not lock_path.is_file():
         return [f"{lock_path}: must be a regular non-symlink file"]
-    if os.lstat(lock_path).st_nlink != 1:
+    if not _has_single_file_link(lock_path, os.lstat(lock_path)):
         return [f"{lock_path}: must have exactly one filesystem link"]
     try:
         lock = json.loads(read_text(lock_path))
@@ -1143,8 +1287,18 @@ def _skill_lock_problems(skill_dir: Path) -> list[str]:
         return [f"{lock_path}: invalid JSON ({exc})"]
     if not isinstance(lock, dict):
         return [f"{lock_path}: must contain a JSON object"]
-    if lock.get("schema") != "rapp-skill-lock/1":
-        problems.append(f"{lock_path}: schema must be rapp-skill-lock/1")
+    schema = lock.get("schema")
+    if schema not in {RAPP_SKILL_LOCK_SCHEMA, HIVE_HUB_SKILL_LOCK_SCHEMA}:
+        problems.append(
+            f"{lock_path}: schema must be {RAPP_SKILL_LOCK_SCHEMA} "
+            f"or {HIVE_HUB_SKILL_LOCK_SCHEMA}"
+        )
+    source_owned = schema == HIVE_HUB_SKILL_LOCK_SCHEMA
+    entry_fields = (
+        {"path", "bytes", "sha256"}
+        if source_owned
+        else {"path", "sha256"}
+    )
     if lock.get("name") != skill_dir.name:
         problems.append(f"{lock_path}: name must equal the skill directory name {skill_dir.name!r}")
     if not isinstance(lock.get("version"), str) or not lock["version"]:
@@ -1155,8 +1309,11 @@ def _skill_lock_problems(skill_dir: Path) -> list[str]:
         return problems
     seen: set[str] = set()
     for index, entry in enumerate(entries):
-        if not isinstance(entry, dict) or set(entry) != {"path", "sha256"}:
-            problems.append(f"{lock_path}: files[{index}] must contain only path and sha256")
+        if not isinstance(entry, dict) or set(entry) != entry_fields:
+            names = ", ".join(sorted(entry_fields))
+            problems.append(
+                f"{lock_path}: files[{index}] must contain only {names}"
+            )
             continue
         try:
             relative = _skill_lock_relative(entry["path"])
@@ -1175,6 +1332,16 @@ def _skill_lock_problems(skill_dir: Path) -> list[str]:
         if not isinstance(expected, str) or not re.fullmatch(r"[0-9a-f]{64}", expected):
             problems.append(f"{lock_path}: files[{index}].sha256 must be a full lowercase SHA-256")
             continue
+        expected_bytes = entry.get("bytes")
+        if source_owned and (
+            type(expected_bytes) is not int
+            or not 0 <= expected_bytes <= HIVE_HUB_LOCK_MAX_FILE_BYTES
+        ):
+            problems.append(
+                f"{lock_path}: files[{index}].bytes must be an integer from 0 "
+                f"through {HIVE_HUB_LOCK_MAX_FILE_BYTES}"
+            )
+            continue
         target = skill_dir / relative
         current = skill_dir
         unsafe = skill_dir.is_symlink()
@@ -1186,18 +1353,26 @@ def _skill_lock_problems(skill_dir: Path) -> list[str]:
         if unsafe or not target.is_file():
             problems.append(f"{lock_path}: locked path {rel!r} must be a regular non-symlink file")
             continue
-        if os.lstat(target).st_nlink != 1:
+        if not _has_single_file_link(target, os.lstat(target)):
             problems.append(
                 f"{lock_path}: locked path {rel!r} must have exactly one filesystem link"
             )
             continue
-        actual = sha256(target.read_bytes())
+        data = target.read_bytes()
+        if source_owned and len(data) != expected_bytes:
+            problems.append(
+                f"{lock_path}: locked path {rel!r} has {len(data)} bytes, "
+                f"expected {expected_bytes}"
+            )
+        actual = sha256(data)
         if actual != expected:
             problems.append(f"{lock_path}: locked path {rel!r} has sha256 {actual}, expected {expected}")
-    problems.extend(
-        f"{lock_path}: {problem}"
-        for problem in _skill_lock_inventory_problems(skill_dir, seen)
+    inventory = (
+        _skill_lock_complete_inventory_problems(skill_dir, seen)
+        if source_owned
+        else _skill_lock_inventory_problems(skill_dir, seen)
     )
+    problems.extend(f"{lock_path}: {problem}" for problem in inventory)
     return problems
 
 
@@ -1349,12 +1524,343 @@ def _dump_json(data: dict) -> str:
     return json.dumps(data, indent=2, ensure_ascii=False) + "\n"
 
 
+SOURCE_MANIFEST_SCHEMA = "rapp-skill-source/1"
+SOURCE_MANIFEST_FIELDS = {
+    "schema",
+    "name",
+    "repository",
+    "ref",
+    "commit",
+    "path",
+    "git_tree",
+    "folder_sha256",
+    "files",
+}
+SOURCE_FILE_FIELDS = {
+    "path",
+    "mode",
+    "bytes",
+    "sha256",
+    "git_blob",
+}
+GIT_SHA1_RE = re.compile(r"^[0-9a-f]{40}$")
+SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
+
+
+def _git_object_sha1(kind: str, data: bytes) -> str:
+    payload = f"{kind} {len(data)}\0".encode("ascii") + data
+    return hashlib.sha1(payload, usedforsecurity=False).hexdigest()
+
+
+def _source_folder_sha256(entries: list[dict]) -> str:
+    inventory = [
+        {
+            "path": entry["path"],
+            "bytes": entry["bytes"],
+            "sha256": entry["sha256"],
+        }
+        for entry in entries
+    ]
+    encoded = json.dumps(
+        inventory,
+        ensure_ascii=False,
+        allow_nan=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    return sha256(encoded)
+
+
+def _source_git_tree(entries: list[dict]) -> str:
+    root: dict[str, object] = {}
+    for entry in entries:
+        relative = _skill_lock_relative(entry["path"])
+        node = root
+        for part in relative.parts[:-1]:
+            child = node.get(part)
+            if child is None:
+                child = {}
+                node[part] = child
+            if not isinstance(child, dict):
+                raise TypeError(f"source path collision at {relative.as_posix()!r}")
+            node = child
+        leaf = relative.parts[-1]
+        if leaf in node:
+            raise ValueError(f"duplicate source path {relative.as_posix()!r}")
+        node[leaf] = ("file", entry)
+
+    def tree_digest(node: dict[str, object]) -> str:
+        records: list[tuple[bytes, bytes]] = []
+        for name, value in node.items():
+            name_bytes = name.encode("utf-8")
+            if isinstance(value, dict):
+                mode = b"40000"
+                object_id = tree_digest(value)
+                sort_name = name_bytes + b"/"
+            else:
+                _, entry = value
+                mode = str(entry["mode"]).encode("ascii")
+                object_id = str(entry["git_blob"])
+                sort_name = name_bytes
+            record = (
+                mode
+                + b" "
+                + name_bytes
+                + b"\0"
+                + bytes.fromhex(object_id)
+            )
+            records.append((sort_name, record))
+        return _git_object_sha1(
+            "tree",
+            b"".join(record for _, record in sorted(records)),
+        )
+
+    return tree_digest(root)
+
+
+def _source_manifest_problems(root: Path, manifest_path: Path) -> list[str]:
+    root = Path(root)
+    manifest_path = Path(manifest_path)
+    problems: list[str] = []
+    if manifest_path.is_symlink() or not manifest_path.is_file():
+        return [f"{manifest_path}: must be a regular non-symlink file"]
+    if not _has_single_file_link(manifest_path, os.lstat(manifest_path)):
+        return [f"{manifest_path}: must have exactly one filesystem link"]
+    try:
+        source = _load_json(manifest_path)
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        return [f"{manifest_path}: invalid JSON ({exc})"]
+    if not isinstance(source, dict):
+        return [f"{manifest_path}: must contain a JSON object"]
+    if set(source) != SOURCE_MANIFEST_FIELDS:
+        problems.append(
+            f"{manifest_path}: fields must be exactly "
+            + ", ".join(sorted(SOURCE_MANIFEST_FIELDS))
+        )
+        return problems
+    if source["schema"] != SOURCE_MANIFEST_SCHEMA:
+        problems.append(
+            f"{manifest_path}: schema must be {SOURCE_MANIFEST_SCHEMA}"
+        )
+    name = source["name"]
+    if (
+        not isinstance(name, str)
+        or NAME_RE.fullmatch(name) is None
+        or name != manifest_path.stem
+    ):
+        problems.append(
+            f"{manifest_path}: name must match its lowercase hyphenated file name"
+        )
+    repository = source["repository"]
+    if (
+        not isinstance(repository, str)
+        or re.fullmatch(
+            r"https://github\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+",
+            repository,
+        )
+        is None
+    ):
+        problems.append(
+            f"{manifest_path}: repository must be a canonical GitHub HTTPS URL"
+        )
+    ref = source["ref"]
+    if not isinstance(ref, str) or not ref.startswith("refs/") or any(
+        character.isspace() for character in ref
+    ):
+        problems.append(f"{manifest_path}: ref must be a full Git ref")
+    for field in ("commit", "git_tree"):
+        if not isinstance(source[field], str) or GIT_SHA1_RE.fullmatch(source[field]) is None:
+            problems.append(
+                f"{manifest_path}: {field} must be a full lowercase Git SHA-1"
+            )
+    if (
+        not isinstance(source["folder_sha256"], str)
+        or SHA256_RE.fullmatch(source["folder_sha256"]) is None
+    ):
+        problems.append(
+            f"{manifest_path}: folder_sha256 must be a full lowercase SHA-256"
+        )
+    try:
+        relative_root = _skill_lock_relative(source["path"])
+    except ValueError as exc:
+        problems.append(f"{manifest_path}: path {exc}")
+        return problems
+    expected_root = f"skills/{name}" if isinstance(name, str) else None
+    if relative_root.as_posix() != expected_root:
+        problems.append(
+            f"{manifest_path}: path must be {expected_root!r}"
+        )
+    skill_dir = root / relative_root
+    if skill_dir.is_symlink() or not skill_dir.is_dir():
+        problems.append(
+            f"{manifest_path}: pinned skill path must be a regular directory"
+        )
+        return problems
+
+    files = source["files"]
+    if not isinstance(files, list) or not files:
+        problems.append(f"{manifest_path}: files must be a non-empty array")
+        return problems
+    valid_entries: list[dict] = []
+    listed: set[str] = set()
+    listed_order: list[str] = []
+    for index, entry in enumerate(files):
+        if not isinstance(entry, dict) or set(entry) != SOURCE_FILE_FIELDS:
+            problems.append(
+                f"{manifest_path}: files[{index}] fields must be exactly "
+                + ", ".join(sorted(SOURCE_FILE_FIELDS))
+            )
+            continue
+        try:
+            relative = _skill_lock_relative(entry["path"])
+        except ValueError as exc:
+            problems.append(f"{manifest_path}: files[{index}].path {exc}")
+            continue
+        rel = relative.as_posix()
+        listed_order.append(rel)
+        if rel in listed:
+            problems.append(
+                f"{manifest_path}: duplicate source path {rel!r}"
+            )
+            continue
+        listed.add(rel)
+        mode = entry["mode"]
+        size = entry["bytes"]
+        checksum = entry["sha256"]
+        blob = entry["git_blob"]
+        shape_valid = True
+        if mode not in {"100644", "100755"}:
+            problems.append(
+                f"{manifest_path}: files[{index}].mode must be 100644 or 100755"
+            )
+            shape_valid = False
+        if type(size) is not int or size < 0:
+            problems.append(
+                f"{manifest_path}: files[{index}].bytes must be a non-negative integer"
+            )
+            shape_valid = False
+        if not isinstance(checksum, str) or SHA256_RE.fullmatch(checksum) is None:
+            problems.append(
+                f"{manifest_path}: files[{index}].sha256 must be a full lowercase SHA-256"
+            )
+            shape_valid = False
+        if not isinstance(blob, str) or GIT_SHA1_RE.fullmatch(blob) is None:
+            problems.append(
+                f"{manifest_path}: files[{index}].git_blob must be a full lowercase Git SHA-1"
+            )
+            shape_valid = False
+        if not shape_valid:
+            continue
+        valid_entries.append(entry)
+        target = skill_dir / relative
+        current = skill_dir
+        unsafe = False
+        for part in relative.parts:
+            current = current / part
+            if current.is_symlink():
+                unsafe = True
+                break
+        if unsafe or not target.is_file():
+            problems.append(
+                f"{manifest_path}: source path {rel!r} must be a regular non-symlink file"
+            )
+            continue
+        info = os.lstat(target)
+        if not _has_single_file_link(target, info):
+            problems.append(
+                f"{manifest_path}: source path {rel!r} must have exactly one filesystem link"
+            )
+        actual_mode = (
+            "100755"
+            if info.st_mode & (stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+            else "100644"
+        )
+        if actual_mode != mode:
+            problems.append(
+                f"{manifest_path}: source path {rel!r} has mode {actual_mode}, expected {mode}"
+            )
+        data = target.read_bytes()
+        if len(data) != size:
+            problems.append(
+                f"{manifest_path}: source path {rel!r} has {len(data)} bytes, expected {size}"
+            )
+        actual_sha256 = sha256(data)
+        if actual_sha256 != checksum:
+            problems.append(
+                f"{manifest_path}: source path {rel!r} has sha256 {actual_sha256}, expected {checksum}"
+            )
+        actual_blob = _git_object_sha1("blob", data)
+        if actual_blob != blob:
+            problems.append(
+                f"{manifest_path}: source path {rel!r} has Git blob {actual_blob}, expected {blob}"
+            )
+    if listed_order != sorted(listed_order):
+        problems.append(f"{manifest_path}: files must be sorted by path")
+    actual_files: set[str] = set()
+    try:
+        for relative, info, kind in _skill_lock_tree(skill_dir):
+            rel = relative.as_posix()
+            if kind == "symlink":
+                problems.append(
+                    f"{manifest_path}: source inventory contains symlink {rel!r}"
+                )
+            elif kind != "file":
+                problems.append(
+                    f"{manifest_path}: source inventory contains special file {rel!r}"
+                )
+            else:
+                actual_files.add(rel)
+                if not _has_single_file_link(skill_dir / relative, info):
+                    problems.append(
+                        f"{manifest_path}: source path {rel!r} must have exactly "
+                        "one filesystem link"
+                    )
+    except ValueError as exc:
+        problems.append(f"{manifest_path}: {exc}")
+    for missing in sorted(actual_files - listed):
+        problems.append(
+            f"{manifest_path}: source inventory does not list {missing!r}"
+        )
+    for absent in sorted(listed - actual_files):
+        problems.append(
+            f"{manifest_path}: source inventory lists missing or unsafe file {absent!r}"
+        )
+    if len(valid_entries) == len(files):
+        folder_sha256 = _source_folder_sha256(valid_entries)
+        if folder_sha256 != source["folder_sha256"]:
+            problems.append(
+                f"{manifest_path}: folder_sha256 is {folder_sha256}, "
+                f"expected {source['folder_sha256']}"
+            )
+        try:
+            git_tree = _source_git_tree(valid_entries)
+        except (TypeError, ValueError) as exc:
+            problems.append(f"{manifest_path}: {exc}")
+        else:
+            if git_tree != source["git_tree"]:
+                problems.append(
+                    f"{manifest_path}: Git tree is {git_tree}, expected {source['git_tree']}"
+                )
+    return problems
+
+
 def _render_skill_lock(lock_path: Path) -> str:
     if lock_path.is_symlink() or not lock_path.is_file():
         raise ValueError(f"{lock_path}: must be a regular non-symlink file")
-    if os.lstat(lock_path).st_nlink != 1:
+    if not _has_single_file_link(lock_path, os.lstat(lock_path)):
         raise ValueError(f"{lock_path}: must have exactly one filesystem link")
     lock = _load_json(lock_path)
+    schema = lock.get("schema")
+    if schema == HIVE_HUB_SKILL_LOCK_SCHEMA:
+        problems = _skill_lock_problems(lock_path.parent)
+        if problems:
+            raise ValueError(problems[0])
+        return read_text(lock_path)
+    if schema != RAPP_SKILL_LOCK_SCHEMA:
+        raise ValueError(
+            f"{lock_path}: schema must be {RAPP_SKILL_LOCK_SCHEMA} "
+            f"or {HIVE_HUB_SKILL_LOCK_SCHEMA}"
+        )
     entries = lock.get("files")
     if not isinstance(entries, list) or not entries:
         raise ValueError(f"{lock_path}: files must be a non-empty array")
@@ -1376,7 +1882,7 @@ def _render_skill_lock(lock_path: Path) -> str:
                 raise ValueError(f"{lock_path}: locked path {rel!r} contains a symlink")
         if not target.is_file():
             raise ValueError(f"{lock_path}: locked path {rel!r} is not a regular file")
-        if os.lstat(target).st_nlink != 1:
+        if not _has_single_file_link(target, os.lstat(target)):
             raise ValueError(
                 f"{lock_path}: locked path {rel!r} must have exactly one filesystem link"
             )
@@ -1390,6 +1896,10 @@ def _render_skill_lock(lock_path: Path) -> str:
 def render_manifests(root: Path) -> dict[str, str]:
     """Every generated file as {relative path: content}, from the sources of truth."""
     root = Path(root)
+    for source_path in sorted((root / "sources").glob("*.json")):
+        problems = _source_manifest_problems(root, source_path)
+        if problems:
+            raise ValueError(problems[0])
     plugin = _load_json(root / "plugin.json")
     hosts = {p.stem: _load_json(p) for p in sorted((root / "hosts").glob("*.json"))}
     files: dict[str, str] = {}
@@ -1423,7 +1933,10 @@ def render_manifests(root: Path) -> dict[str, str]:
             files[f"{spec['dir']}/{src.stem}{spec['suffix']}"] = dump_frontmatter(projected) + body
 
     for lock_path in sorted((root / "skills").glob("*/agent.lock")):
-        files[lock_path.relative_to(root).as_posix()] = _render_skill_lock(lock_path)
+        rendered = _render_skill_lock(lock_path)
+        if _load_json(lock_path).get("schema") == HIVE_HUB_SKILL_LOCK_SCHEMA:
+            continue
+        files[lock_path.relative_to(root).as_posix()] = rendered
 
     hosts_md = ["# Hosts", "", "Each AI tool this works in is one JSON file in `hosts/`. Supporting a new tool is adding a file.", "",
                 "| Host | Verified version | Verified on | Skills read from | Plugin manifest | Marketplace | Agents |", "|---|---|---|---|---|---|---|"]
