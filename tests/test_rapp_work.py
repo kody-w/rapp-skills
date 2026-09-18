@@ -106,6 +106,14 @@ class AdapterFixture:
 
     def _commit(self, path: Path) -> str:
         subprocess.run(["git", "init", "-q", str(path)], check=True)
+        subprocess.run(
+            ["git", "-C", str(path), "config", "core.autocrlf", "false"],
+            check=True,
+        )
+        subprocess.run(
+            ["git", "-C", str(path), "config", "core.eol", "lf"],
+            check=True,
+        )
         subprocess.run(["git", "-C", str(path), "add", "."], check=True)
         environment = os.environ.copy()
         environment.update(
