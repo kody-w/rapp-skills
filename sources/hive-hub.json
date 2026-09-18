@@ -3,10 +3,10 @@
   "name": "hive-hub",
   "repository": "https://github.com/kody-w/hive-hub",
   "ref": "refs/heads/main",
-  "commit": "136369ce4e264d2da8faf8355bc9de244e47ee52",
+  "commit": "da2fddccbb079cb857a64180db4877a9da22d433",
   "path": "skills/hive-hub",
-  "git_tree": "54c9ffa6a04b8e7af7114811d9c806bbec46382f",
-  "folder_sha256": "f25c60650584be7085604c91b475155b82bb82aac7ed25ea8f5b43b6442e7ff7",
+  "git_tree": "6c73c52013746c05fefad1560371c120b9396622",
+  "folder_sha256": "e8fbbd24563e25a0f5e8567efb5c622d03105401be0e8e1bad2f7cedd2c5f221",
   "files": [
     {
       "path": "SKILL.md",
@@ -19,8 +19,8 @@
       "path": "agent.lock",
       "mode": "100644",
       "bytes": 3308,
-      "sha256": "178d2874e61b4775b0735c47a78378192c4b1d995316061e5cd798095529db12",
-      "git_blob": "aa91d051d7d6f3f9b97547e27c14717117ad2ca9"
+      "sha256": "d3503db56eb51293b3c64d6f0ae826fe656d21cefbf5efa350e1c97f8f1a33d3",
+      "git_blob": "a5f2337f45e2ad9ba1e586c4b7f069e55e5af139"
     },
     {
       "path": "instructions/AI.md",
@@ -46,9 +46,9 @@
     {
       "path": "registry/public-dialbook.json",
       "mode": "100644",
-      "bytes": 967,
-      "sha256": "eeaf3a17b31b93d8cbf879991502c9c95132fa5c2d9cf39205e62b4b1a79b4f6",
-      "git_blob": "b896d3ed82ba3d8ed5fbd360de6ca8ab94855851"
+      "bytes": 960,
+      "sha256": "52dfa0b8e8b864789b44ffea54dfc6ca5d062308e266aa2eba367a63e62698b3",
+      "git_blob": "2cf5bc8568c49d833ea7f1f7aa1d602b8f4ef2c4"
     },
     {
       "path": "schemas/core-ai-join-card.schema.json",
