@@ -15,7 +15,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        python: ["3.11", "3.13"]
+        python: ["3.11", "3.14"]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
     steps:
@@ -26,7 +26,7 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
       - name: Unit tests (round-trip, standard conformance, drift)
-        run: python -m unittest -v tests/test_rapp_skills.py
+        run: python -m unittest discover -s tests -p "test*.py" -v
       - name: Generated files are current
         run: python rapp_skills.py sync --check
       - name: Shipped skills check clean

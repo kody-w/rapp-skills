@@ -39,7 +39,7 @@ the block below.
 
 ## The code
 
-<!-- code sha256=5e3b22804ea51ad5c4035d8c7251146ed13a5ce5a81e7b42f86bd5aae557b76b -->
+<!-- code sha256=5a070db1df723dcc8f6084b3d20520ec0c1856ba2d1cf6257c54d71cb51e06c7 -->
 ````python
 #!/usr/bin/env python3
 """rapp-skills: the seam between Agent Skills and RAPP single-file agents.
@@ -64,16 +64,13 @@ from __future__ import annotations
 
 import argparse
 import hashlib
-import importlib.util
-import io
 import json
 import os
 import re
-import shutil
+import stat
 import subprocess
 import sys
-import types
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 VERSION = "1.0.0"
 NAME_RE = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
@@ -418,7 +415,10 @@ _shim_ns: dict = {}
 
 def _shim():
     if not _shim_ns:
-        exec(compile(SHIM_SOURCE, "<rapp-skills-shim>", "exec"), _shim_ns)
+        exec(  # noqa: S102 - execute the converter's fixed bundled shim
+            compile(SHIM_SOURCE, "<rapp-skills-shim>", "exec"),
+            _shim_ns,
+        )
         _shim_ns["install_shims"]()
     return _shim_ns
 
@@ -548,8 +548,7 @@ def kebab(name: str) -> str:
     s = re.sub(r"([a-z0-9])([A-Z])", r"\1-\2", name)
     s = re.sub(r"[^A-Za-z0-9]+", "-", s).strip("-").lower()
     s = re.sub(r"-+", "-", s)
-    if s.endswith("-agent"):
-        s = s[: -len("-agent")]
+    s = s.removesuffix("-agent")
     return s[:64].strip("-") or "skill"
 
 
@@ -621,7 +620,7 @@ def embed_block(source: str, open_marker: str, close_marker: str) -> str:
 
 def extract_runner(text: str) -> tuple[str | None, str | None]:
     """The embedded launcher and the sha256 its marker claims (None for the older bare marker)."""
-    m = re.search(r"<!-- runner(?: sha256=([0-9a-f]{64}))? -->\n(`{3,})python\n(.*?)\n\2\n<!-- /runner -->", text, re.S)
+    m = re.search(r"<!-- runner(?: sha256=([0-9a-f]{64}))? -->\n(`{3,})python\n(.*?)\n\2\n<!-- /runner -->", text, re.DOTALL)
     if not m:
         return None, None
     return m.group(3) + "\n", m.group(1)
@@ -629,7 +628,7 @@ def extract_runner(text: str) -> tuple[str | None, str | None]:
 
 def extract_agent(text: str) -> bytes | None:
     """The embedded agent, byte-exact, verified against the sha in its marker."""
-    m = re.search(r"<!-- agent sha256=([0-9a-f]{64}) -->\n(`{3,})python\n(.*?)\n\2\n<!-- /agent -->", text, re.S)
+    m = re.search(r"<!-- agent sha256=([0-9a-f]{64}) -->\n(`{3,})python\n(.*?)\n\2\n<!-- /agent -->", text, re.DOTALL)
     if not m:
         return None
     expected, inner = m.group(1), m.group(3)
@@ -829,9 +828,9 @@ def restored_file_name(fields: dict) -> str:
 # ------------------------------------------------------------------------- compile
 
 
-PARAMETERS_HEADING_RE = re.compile(r"^##[ \t]+(?:What it needs|Parameters)[ \t]*:?[ \t]*\r?$", re.M | re.I)
-NEXT_HEADING_RE = re.compile(r"^#{1,2}[ \t]", re.M)
-FENCE_OPEN_RE = re.compile(r"^[ \t]{0,3}(`{3,}|~{3,})[ \t]*[^`\r\n]*\r?$", re.M)
+PARAMETERS_HEADING_RE = re.compile(r"^##[ \t]+(?:What it needs|Parameters)[ \t]*:?[ \t]*\r?$", re.MULTILINE | re.IGNORECASE)
+NEXT_HEADING_RE = re.compile(r"^#{1,2}[ \t]", re.MULTILINE)
+FENCE_OPEN_RE = re.compile(r"^[ \t]{0,3}(`{3,}|~{3,})[ \t]*[^`\r\n]*\r?$", re.MULTILINE)
 
 
 def _parameters_section(body: str) -> str | None:
@@ -853,7 +852,7 @@ def _first_fenced_block(section: str) -> str | None:
     if not m:
         return None
     marker = m.group(1)
-    close = re.compile(r"^[ \t]{0,3}" + re.escape(marker[0]) + "{" + str(len(marker)) + r",}[ \t]*\r?$", re.M)
+    close = re.compile(r"^[ \t]{0,3}" + re.escape(marker[0]) + "{" + str(len(marker)) + r",}[ \t]*\r?$", re.MULTILINE)
     c = close.search(section, m.end())
     return section[m.end():c.start() if c else len(section)]
 
@@ -876,7 +875,7 @@ def _parameters_block(body: str) -> dict | None:
         except json.JSONDecodeError as exc:
             raise ValueError(f"the 'What it needs' JSON block is not valid JSON ({exc})") from exc
     else:
-        m = re.search(r"^[ \t]*\{", section, re.M)
+        m = re.search(r"^[ \t]*\{", section, re.MULTILINE)
         if not m:
             raise ValueError("the 'What it needs' section has no JSON object in it (put the schema in a ```json block)")
         try:
@@ -884,7 +883,9 @@ def _parameters_block(body: str) -> dict | None:
         except json.JSONDecodeError as exc:
             raise ValueError(f"the 'What it needs' JSON object is not valid JSON ({exc})") from exc
     if not isinstance(schema, dict):
-        raise ValueError(f"the 'What it needs' block must be a JSON object, not {type(schema).__name__}")
+        raise ValueError(  # noqa: TRY004 - malformed document content
+            f"the 'What it needs' block must be a JSON object, not {type(schema).__name__}"
+        )
     return schema
 
 
@@ -974,7 +975,7 @@ class {class_name}(BasicAgent):
         write_text(probe, source)
         try:
             load_agent(probe)
-        except Exception as exc:  # noqa: BLE001 - whatever went wrong, say so
+        except Exception as exc:
             raise RuntimeError(f"{md}: the generated agent does not load ({exc.__class__.__name__}: {exc}); {target.name} not written") from exc
     write_text(target, source)
     return target
@@ -998,6 +999,7 @@ def verify(skill_dir: Path, launcher: bool = True) -> list[str]:
         fields, body = parse_frontmatter(text)
     except ValueError as exc:
         return [f"{md}: {exc}"]
+    problems.extend(_skill_lock_problems(skill_dir))
     name = fields.get("name")
     if not isinstance(name, str) or not NAME_RE.fullmatch(name) or len(name) > 64:
         problems.append(f"{md}: name must be 1-64 chars, lowercase letters, digits and single hyphens (got {name!r})")
@@ -1014,7 +1016,7 @@ def verify(skill_dir: Path, launcher: bool = True) -> list[str]:
     if meta is not None and (not isinstance(meta, dict) or any(not isinstance(v, str) for v in meta.values())):
         problems.append(f"{md}: metadata must be a flat map of strings")
     if isinstance(meta, dict) and meta.get("locked"):
-        if not re.search(r"<!-- locked -->\n```text\n.*?\n```\n<!-- /locked -->", body, re.S):
+        if not re.search(r"<!-- locked -->\n```text\n.*?\n```\n<!-- /locked -->", body, re.DOTALL):
             problems.append(f"{md}: metadata says locked but no locked block is present")
         return problems
     params = None
@@ -1025,7 +1027,7 @@ def verify(skill_dir: Path, launcher: bool = True) -> list[str]:
     if params is not None and params.get("type") != "object":
         problems.append(f"{md}: the 'What it needs' schema must have type object")
 
-    code_match = re.search(r"<!-- code sha256=([0-9a-f]{64}) -->\n(`{3,})python\n(.*?)\n\2\n<!-- /code -->", text, re.S)
+    code_match = re.search(r"<!-- code sha256=([0-9a-f]{64}) -->\n(`{3,})python\n(.*?)\n\2\n<!-- /code -->", text, re.DOTALL)
     if code_match:
         expected, inner = code_match.group(1), code_match.group(3)
         if not any(sha256(c.encode("utf-8")) == expected for c in (inner + "\n", inner)):
@@ -1054,7 +1056,7 @@ def verify(skill_dir: Path, launcher: bool = True) -> list[str]:
             probe.write_bytes(data)
             try:
                 agents = load_agents(probe)
-            except Exception as exc:  # noqa: BLE001 - report, never crash
+            except Exception as exc:  # noqa: BLE001 - report any load failure
                 problems.append(f"{md}: agent does not load ({exc.__class__.__name__}: {exc})")
                 agents = []
         tool = (meta or {}).get("tool-name")
@@ -1085,6 +1087,160 @@ def verify(skill_dir: Path, launcher: bool = True) -> list[str]:
             problems.append(f"{skill_dir}: scripts/run.py missing (run to-skill again to regenerate)")
         if launcher:
             problems.extend(_launcher_problems(skill_dir, md, text))
+    return problems
+
+
+def _skill_lock_relative(raw: object) -> Path:
+    if not isinstance(raw, str) or not raw or "\x00" in raw or "\\" in raw or ":" in raw:
+        raise ValueError("path must be a non-empty relative POSIX path")
+    pure = PurePosixPath(raw)
+    if pure.is_absolute() or any(part in ("", ".", "..") for part in pure.parts):
+        raise ValueError("path must not be absolute or traverse")
+    return Path(*pure.parts)
+
+
+LOCK_ACTIVE_SUFFIXES = frozenset({
+    ".bat", ".cmd", ".com", ".dll", ".dylib", ".egg", ".exe", ".fish",
+    ".jar", ".node", ".php", ".phtml", ".pl", ".ps1", ".pth", ".py",
+    ".pyc", ".pyd", ".pyo", ".pyw", ".rb", ".sh", ".so", ".wasm",
+    ".whl", ".zip", ".zsh",
+})
+MAX_LOCK_TREE_ENTRIES = 10_000
+
+
+def _skill_lock_active(path: Path, mode: int) -> bool:
+    return path.suffix.casefold() in LOCK_ACTIVE_SUFFIXES or bool(
+        mode & (stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+    )
+
+
+def _skill_lock_tree(skill_dir: Path):
+    stack: list[tuple[Path, Path]] = [(skill_dir, Path())]
+    count = 0
+    while stack:
+        directory, relative_directory = stack.pop()
+        try:
+            entries = sorted(os.scandir(directory), key=lambda item: item.name)
+        except OSError as exc:
+            raise ValueError(f"cannot inspect locked skill folder {directory}") from exc
+        for entry in entries:
+            count += 1
+            if count > MAX_LOCK_TREE_ENTRIES:
+                raise ValueError("locked skill folder contains too many entries")
+            relative = relative_directory / entry.name
+            try:
+                info = entry.stat(follow_symlinks=False)
+            except OSError as exc:
+                raise ValueError(
+                    f"cannot inspect locked skill path {relative.as_posix()}"
+                ) from exc
+            if stat.S_ISLNK(info.st_mode):
+                yield relative, info, "symlink"
+            elif stat.S_ISDIR(info.st_mode):
+                stack.append((Path(entry.path), relative))
+            elif stat.S_ISREG(info.st_mode):
+                yield relative, info, "file"
+            else:
+                yield relative, info, "special"
+
+
+def _skill_lock_inventory_problems(
+    skill_dir: Path, listed: set[str]
+) -> list[str]:
+    problems: list[str] = []
+    allowed = listed | {"agent.lock"}
+    try:
+        entries = _skill_lock_tree(skill_dir)
+        for relative, info, kind in entries:
+            name = relative.as_posix()
+            if name in allowed:
+                continue
+            if kind == "symlink":
+                problems.append(f"agent.lock does not allow unlisted symlink {name!r}")
+            elif kind != "file":
+                problems.append(
+                    f"agent.lock does not allow unlisted special file {name!r}"
+                )
+            elif _skill_lock_active(relative, info.st_mode):
+                problems.append(
+                    "agent.lock does not list executable or importable file "
+                    + repr(name)
+                )
+    except ValueError as exc:
+        problems.append(str(exc))
+    return problems
+
+
+def _skill_lock_problems(skill_dir: Path) -> list[str]:
+    lock_path = skill_dir / "agent.lock"
+    if not lock_path.exists() and not lock_path.is_symlink():
+        return []
+    problems: list[str] = []
+    if lock_path.is_symlink() or not lock_path.is_file():
+        return [f"{lock_path}: must be a regular non-symlink file"]
+    if os.lstat(lock_path).st_nlink != 1:
+        return [f"{lock_path}: must have exactly one filesystem link"]
+    try:
+        lock = json.loads(read_text(lock_path))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        return [f"{lock_path}: invalid JSON ({exc})"]
+    if not isinstance(lock, dict):
+        return [f"{lock_path}: must contain a JSON object"]
+    if lock.get("schema") != "rapp-skill-lock/1":
+        problems.append(f"{lock_path}: schema must be rapp-skill-lock/1")
+    if lock.get("name") != skill_dir.name:
+        problems.append(f"{lock_path}: name must equal the skill directory name {skill_dir.name!r}")
+    if not isinstance(lock.get("version"), str) or not lock["version"]:
+        problems.append(f"{lock_path}: version must be a non-empty string")
+    entries = lock.get("files")
+    if not isinstance(entries, list) or not entries:
+        problems.append(f"{lock_path}: files must be a non-empty array")
+        return problems
+    seen: set[str] = set()
+    for index, entry in enumerate(entries):
+        if not isinstance(entry, dict) or set(entry) != {"path", "sha256"}:
+            problems.append(f"{lock_path}: files[{index}] must contain only path and sha256")
+            continue
+        try:
+            relative = _skill_lock_relative(entry["path"])
+        except ValueError as exc:
+            problems.append(f"{lock_path}: files[{index}].path {exc}")
+            continue
+        rel = relative.as_posix()
+        if rel == "agent.lock":
+            problems.append(f"{lock_path}: cannot hash itself")
+            continue
+        if rel in seen:
+            problems.append(f"{lock_path}: duplicate locked path {rel!r}")
+            continue
+        seen.add(rel)
+        expected = entry["sha256"]
+        if not isinstance(expected, str) or not re.fullmatch(r"[0-9a-f]{64}", expected):
+            problems.append(f"{lock_path}: files[{index}].sha256 must be a full lowercase SHA-256")
+            continue
+        target = skill_dir / relative
+        current = skill_dir
+        unsafe = skill_dir.is_symlink()
+        for part in relative.parts:
+            current = current / part
+            if current.is_symlink():
+                unsafe = True
+                break
+        if unsafe or not target.is_file():
+            problems.append(f"{lock_path}: locked path {rel!r} must be a regular non-symlink file")
+            continue
+        if os.lstat(target).st_nlink != 1:
+            problems.append(
+                f"{lock_path}: locked path {rel!r} must have exactly one filesystem link"
+            )
+            continue
+        actual = sha256(target.read_bytes())
+        if actual != expected:
+            problems.append(f"{lock_path}: locked path {rel!r} has sha256 {actual}, expected {expected}")
+    problems.extend(
+        f"{lock_path}: {problem}"
+        for problem in _skill_lock_inventory_problems(skill_dir, seen)
+    )
     return problems
 
 
@@ -1122,7 +1278,7 @@ LOCK_HINT = " (Locked by its owner: ask them for the passphrase.)"
 def _openssl(args: list[str], data: bytes, passphrase: str) -> bytes:
     env = dict(os.environ, SKILL_PASSPHRASE=passphrase)
     proc = subprocess.run(["openssl", "enc", *args, "-aes-256-cbc", "-pbkdf2", "-iter", str(LOCK_ITERATIONS), "-md", "sha256", "-salt", "-pass", "env:SKILL_PASSPHRASE"],
-                          input=data, capture_output=True, env=env)
+                          input=data, capture_output=True, env=env, check=False)
     if proc.returncode != 0:
         raise RuntimeError("openssl failed: " + proc.stderr.decode("utf-8", "replace").strip()[:200])
     return proc.stdout
@@ -1173,7 +1329,7 @@ def unlock_skill(skill_dir: Path, out_dir: Path, passphrase: str) -> Path:
     meta = fields.get("metadata") or {}
     if not meta.get("locked"):
         raise RuntimeError(f"{md} is not locked")
-    m = re.search(r"<!-- locked -->\n```text\n(.*?)\n```\n<!-- /locked -->", body, re.S)
+    m = re.search(r"<!-- locked -->\n```text\n(.*?)\n```\n<!-- /locked -->", body, re.DOTALL)
     if not m:
         raise RuntimeError(f"{md}: locked block not found")
     try:
@@ -1184,7 +1340,9 @@ def unlock_skill(skill_dir: Path, out_dir: Path, passphrase: str) -> Path:
         raise RuntimeError("wrong passphrase, or the file was altered")
     fields = dict(fields)
     fields["description"] = str(fields.get("description", "")).replace(LOCK_HINT, "")
-    meta = dict(meta); meta.pop("locked", None); meta.pop("locked-sha256", None)
+    meta = dict(meta)
+    meta.pop("locked", None)
+    meta.pop("locked-sha256", None)
     fields["metadata"] = meta
     out = Path(out_dir) / skill_dir.name
     out.mkdir(parents=True, exist_ok=True)
@@ -1234,6 +1392,44 @@ def _dump_json(data: dict) -> str:
     return json.dumps(data, indent=2, ensure_ascii=False) + "\n"
 
 
+def _render_skill_lock(lock_path: Path) -> str:
+    if lock_path.is_symlink() or not lock_path.is_file():
+        raise ValueError(f"{lock_path}: must be a regular non-symlink file")
+    if os.lstat(lock_path).st_nlink != 1:
+        raise ValueError(f"{lock_path}: must have exactly one filesystem link")
+    lock = _load_json(lock_path)
+    entries = lock.get("files")
+    if not isinstance(entries, list) or not entries:
+        raise ValueError(f"{lock_path}: files must be a non-empty array")
+    skill_dir = lock_path.parent
+    seen: set[str] = set()
+    for index, entry in enumerate(entries):
+        if not isinstance(entry, dict) or set(entry) != {"path", "sha256"}:
+            raise ValueError(f"{lock_path}: files[{index}] must contain only path and sha256")
+        relative = _skill_lock_relative(entry["path"])
+        rel = relative.as_posix()
+        if rel == "agent.lock" or rel in seen:
+            raise ValueError(f"{lock_path}: unsafe or duplicate locked path {rel!r}")
+        seen.add(rel)
+        target = skill_dir / relative
+        current = skill_dir
+        for part in relative.parts:
+            current = current / part
+            if current.is_symlink():
+                raise ValueError(f"{lock_path}: locked path {rel!r} contains a symlink")
+        if not target.is_file():
+            raise ValueError(f"{lock_path}: locked path {rel!r} is not a regular file")
+        if os.lstat(target).st_nlink != 1:
+            raise ValueError(
+                f"{lock_path}: locked path {rel!r} must have exactly one filesystem link"
+            )
+        entry["sha256"] = sha256(target.read_bytes())
+    inventory_problems = _skill_lock_inventory_problems(skill_dir, seen)
+    if inventory_problems:
+        raise ValueError(f"{lock_path}: {inventory_problems[0]}")
+    return _dump_json(lock)
+
+
 def render_manifests(root: Path) -> dict[str, str]:
     """Every generated file as {relative path: content}, from the sources of truth."""
     root = Path(root)
@@ -1269,9 +1465,12 @@ def render_manifests(root: Path) -> dict[str, str]:
             projected = {k: fields[k] for k in spec["frontmatter"] if k in fields}
             files[f"{spec['dir']}/{src.stem}{spec['suffix']}"] = dump_frontmatter(projected) + body
 
+    for lock_path in sorted((root / "skills").glob("*/agent.lock")):
+        files[lock_path.relative_to(root).as_posix()] = _render_skill_lock(lock_path)
+
     hosts_md = ["# Hosts", "", "Each AI tool this works in is one JSON file in `hosts/`. Supporting a new tool is adding a file.", "",
                 "| Host | Verified version | Verified on | Skills read from | Plugin manifest | Marketplace | Agents |", "|---|---|---|---|---|---|---|"]
-    for key, host in hosts.items():
+    for host in hosts.values():
         v = host.get("verified", {})
         hosts_md.append(
             f"| {host['display']} | {v.get('version', '-')} | {v.get('date', '-')} | "
@@ -1279,7 +1478,7 @@ def render_manifests(root: Path) -> dict[str, str]:
             + f"`{host['agents']['dir']}/*{host['agents']['suffix']}` |"
         )
     hosts_md += ["", "## Install", ""]
-    for key, host in hosts.items():
+    for host in hosts.values():
         hosts_md.append(f"**{host['display']}**")
         hosts_md.append("")
         hosts_md.append("```")
@@ -1363,7 +1562,7 @@ def main(argv: list[str] | None = None) -> int:
         for agent in agents:
             try:
                 outs = toast_all(agent, Path(args.out), origin=args.origin, license_name=args.license, seen=seen)
-            except Exception as exc:  # noqa: BLE001 - keep going, report at the end
+            except Exception as exc:  # noqa: BLE001 - keep processing other agents
                 print(f"skipped {agent.name}: {exc.__class__.__name__}: {exc}")
                 rc = 1
                 continue
@@ -1382,7 +1581,7 @@ def main(argv: list[str] | None = None) -> int:
         for skill in skills:
             try:
                 target = compile_skill(skill, Path(args.out))
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:  # noqa: BLE001 - keep processing other skills
                 print(f"skipped {skill}: {exc.__class__.__name__}: {exc}")
                 rc = 1
                 continue
