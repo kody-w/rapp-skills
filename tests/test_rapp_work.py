@@ -729,6 +729,10 @@ class PlanAndApplyTests(unittest.TestCase):
             self.assertEqual(target.read_text(encoding="utf-8"), "owner change\n")
 
     def test_replace_is_atomic_and_preserves_the_previous_inode_bytes(self):
+        if os.name == "nt":
+            self.skipTest(
+                "Windows does not guarantee replacement while another handle keeps the old inode open"
+            )
         with tempfile.TemporaryDirectory() as temporary:
             fixture = AdapterFixture(Path(temporary))
             scaffold = json.loads(fixture.run("scaffold").stdout)
