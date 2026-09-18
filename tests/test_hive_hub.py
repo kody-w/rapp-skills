@@ -6,6 +6,7 @@ import ast
 import hashlib
 import importlib.util
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -13,15 +14,16 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
 SKILL = ROOT / "skills" / "hive-hub"
 RUNNER = SKILL / "scripts" / "run.py"
 SOURCE = ROOT / "sources" / "hive-hub.json"
-EXPECTED_COMMIT = "93c8979caf5a51017898996aadaa42dddcfb75b2"
-EXPECTED_GIT_TREE = "e9e8dba608aa47adafa2156b28d7bacc1d00ac04"
+EXPECTED_COMMIT = "f1b81bbe1f756c0c8092dc4af1f6b927afa48c87"
+EXPECTED_GIT_TREE = "585eb858b1de0caea7e2442a0175fe4609af4cc1"
 EXPECTED_FOLDER_SHA256 = (
-    "021c56f939a900e7c3c57aab9d6e6fa79b13a539a7dae6737c57a7485ebe573f"
+    "a3c90cd2f7a45ccd825619df4e4d42581257c4e50d5758ed751e4037a9e5f300"
 )
 DENIED_PRIVATE_IDENTIFIER_SHA256 = frozenset(
     {
@@ -70,6 +72,12 @@ def result_of(process: subprocess.CompletedProcess[str]) -> dict:
     if process.stderr:
         raise AssertionError(f"unexpected stderr: {process.stderr}")
     return json.loads(process.stdout)
+
+
+def with_link_count(information: os.stat_result, link_count: int) -> os.stat_result:
+    values = list(information)
+    values[3] = link_count
+    return os.stat_result(values)
 
 
 class HiveHubIntegrationTests(unittest.TestCase):
@@ -157,6 +165,123 @@ class HiveHubIntegrationTests(unittest.TestCase):
             )
             self.assertEqual(lock_path.read_bytes(), before)
 
+    def test_converter_accepts_mocked_windows_zero_link_count_everywhere(self):
+        with mock.patch.object(converter, "_is_windows", return_value=True):
+            self.assertTrue(converter._safe_file_link_count(0))
+            self.assertTrue(converter._safe_file_link_count(1))
+            self.assertFalse(converter._safe_file_link_count(2))
+        with mock.patch.object(converter, "_is_windows", return_value=False):
+            self.assertFalse(converter._safe_file_link_count(0))
+            self.assertTrue(converter._safe_file_link_count(1))
+            self.assertFalse(converter._safe_file_link_count(2))
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            copied = root / "skills" / "hive-hub"
+            copied.parent.mkdir(parents=True)
+            shutil.copytree(SKILL, copied)
+            sources = root / "sources"
+            sources.mkdir()
+            copied_source = sources / "hive-hub.json"
+            shutil.copy2(SOURCE, copied_source)
+            original_lstat = converter.os.lstat
+            original_tree = converter._skill_lock_tree
+
+            def zero_lstat(path):
+                return with_link_count(original_lstat(path), 0)
+
+            def zero_tree(skill_dir):
+                for relative, information, kind in original_tree(skill_dir):
+                    if kind == "file":
+                        information = with_link_count(information, 0)
+                    yield relative, information, kind
+
+            with (
+                mock.patch.object(converter, "_is_windows", return_value=True),
+                mock.patch.object(converter.os, "lstat", side_effect=zero_lstat),
+                mock.patch.object(
+                    converter,
+                    "_skill_lock_tree",
+                    side_effect=zero_tree,
+                ),
+            ):
+                self.assertEqual(converter.verify(copied), [])
+                self.assertEqual(
+                    converter._source_manifest_problems(root, copied_source),
+                    [],
+                )
+                self.assertEqual(
+                    converter._render_skill_lock(copied / "agent.lock"),
+                    (copied / "agent.lock").read_text(encoding="utf-8"),
+                )
+
+    def test_converter_and_skill_reject_real_hardlinks_everywhere(self):
+        if not hasattr(os, "link"):
+            self.skipTest("hardlinks unavailable")
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            copied = root / "skills" / "hive-hub"
+            copied.parent.mkdir(parents=True)
+            shutil.copytree(SKILL, copied)
+            sources = root / "sources"
+            sources.mkdir()
+            copied_source = sources / "hive-hub.json"
+            shutil.copy2(SOURCE, copied_source)
+
+            target = copied / "scripts" / "run.py"
+            target_alias = root / "shared-run.py"
+            try:
+                os.link(target, target_alias)
+            except OSError as exc:
+                self.skipTest(f"hardlinks unavailable: {exc}")
+            self.assertGreaterEqual(target.stat().st_nlink, 2)
+            lock_problems = converter.verify(copied)
+            self.assertTrue(
+                any("exactly one filesystem link" in item for item in lock_problems),
+                lock_problems,
+            )
+            source_problems = converter._source_manifest_problems(
+                root,
+                copied_source,
+            )
+            self.assertTrue(
+                any("scripts/run.py" in item for item in source_problems),
+                source_problems,
+            )
+            with self.assertRaisesRegex(ValueError, "exactly one filesystem link"):
+                converter._render_skill_lock(copied / "agent.lock")
+            verified = run_skill(copied, "verify", cwd=root)
+            self.assertEqual(verified.returncode, 2)
+            self.assertEqual(result_of(verified)["status"], "blocked")
+            target_alias.unlink()
+
+            lock_path = copied / "agent.lock"
+            lock_alias = root / "shared-agent.lock"
+            os.link(lock_path, lock_alias)
+            self.assertGreaterEqual(lock_path.stat().st_nlink, 2)
+            self.assertTrue(
+                any(
+                    "must have exactly one filesystem link" in item
+                    for item in converter.verify(copied)
+                )
+            )
+            with self.assertRaisesRegex(ValueError, "exactly one filesystem link"):
+                converter._render_skill_lock(lock_path)
+            lock_alias.unlink()
+
+            source_alias = root / "shared-source.json"
+            os.link(copied_source, source_alias)
+            self.assertGreaterEqual(copied_source.stat().st_nlink, 2)
+            self.assertTrue(
+                any(
+                    "must have exactly one filesystem link" in item
+                    for item in converter._source_manifest_problems(
+                        root,
+                        copied_source,
+                    )
+                )
+            )
+
     def test_runner_verifies_decodes_and_uses_only_stdlib(self):
         verified_process = run_skill(SKILL, "verify")
         self.assertEqual(verified_process.returncode, 0)
@@ -237,6 +362,7 @@ class HiveHubIntegrationTests(unittest.TestCase):
             "one blocker",
             "`--card-stdin`",
             "Never execute repository or downloaded code",
+            "two or more links are unsafe everywhere",
             '"status": "ready"',
             '"ready": true',
             "work around a refusal",

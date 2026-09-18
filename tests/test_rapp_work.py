@@ -419,6 +419,26 @@ class SkillPackageTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "exactly one filesystem link"):
                 converter._render_skill_lock(copied / "agent.lock")
 
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            copied = root / "rapp-work"
+            shutil.copytree(SKILL, copied)
+            note = copied / "notes.txt"
+            note.write_text("inert but still one file\n", encoding="utf-8")
+            outside = root / "outside-notes.txt"
+            try:
+                os.link(note, outside)
+            except OSError as exc:
+                self.skipTest(str(exc))
+            self.assertGreaterEqual(note.stat().st_nlink, 2)
+            problems = converter.verify(copied)
+            self.assertTrue(
+                any("exactly one filesystem link" in item for item in problems),
+                problems,
+            )
+            with self.assertRaisesRegex(ValueError, "exactly one filesystem link"):
+                converter._render_skill_lock(copied / "agent.lock")
+
     def test_host_agent_projection_is_generated(self):
         expected = converter.render_manifests(ROOT)[
             ".github/agents/rapp-work.agent.md"

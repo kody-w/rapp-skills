@@ -3,24 +3,24 @@
   "name": "hive-hub",
   "repository": "https://github.com/kody-w/hive-hub",
   "ref": "refs/heads/main",
-  "commit": "93c8979caf5a51017898996aadaa42dddcfb75b2",
+  "commit": "f1b81bbe1f756c0c8092dc4af1f6b927afa48c87",
   "path": "skills/hive-hub",
-  "git_tree": "e9e8dba608aa47adafa2156b28d7bacc1d00ac04",
-  "folder_sha256": "021c56f939a900e7c3c57aab9d6e6fa79b13a539a7dae6737c57a7485ebe573f",
+  "git_tree": "585eb858b1de0caea7e2442a0175fe4609af4cc1",
+  "folder_sha256": "a3c90cd2f7a45ccd825619df4e4d42581257c4e50d5758ed751e4037a9e5f300",
   "files": [
     {
       "path": "SKILL.md",
       "mode": "100644",
-      "bytes": 5291,
-      "sha256": "548a374480ead1ee8227caffa8fde708e9d521f15de271995550c6f93bc57feb",
-      "git_blob": "2696b9dfca0ca05b51f878e6f68c4cb8068b9392"
+      "bytes": 5555,
+      "sha256": "979cf281fb88e400e13cd17d2efb1893d03908691ef6bb08dd795357b832f3bb",
+      "git_blob": "76e672bec40afb85866eb63cb1f02fd66b1c6ae8"
     },
     {
       "path": "agent.lock",
       "mode": "100644",
       "bytes": 3307,
-      "sha256": "628c1f03a637aca12b5d09028705bed918e5f072979de6cbd9d9c26663d16ce2",
-      "git_blob": "da26ed09b040d12208f24aec7b9d7a3580e4b72b"
+      "sha256": "21c2d4f97aecd43f0cd734ff598bd0247cd980c427bb3075dd992c77b9118315",
+      "git_blob": "785ce1aa7a2f01bbd37761bd302c650a93d9210d"
     },
     {
       "path": "instructions/AI.md",
@@ -74,9 +74,9 @@
     {
       "path": "scripts/run.py",
       "mode": "100644",
-      "bytes": 93584,
-      "sha256": "de22289116f1a883bef9a30a535ad274c0812efeb83e4f2c7eac98ec4380abaf",
-      "git_blob": "09a4ba68bc38c1bfbf2adb3014d69ed889fce518"
+      "bytes": 94433,
+      "sha256": "919173ae85c950ee244ddd65269ec7c9957a90ebbc80eaee5563651e9ca0b6cb",
+      "git_blob": "793d76290bd7edeebee005a567c0cf5f7e560542"
     }
   ]
 }

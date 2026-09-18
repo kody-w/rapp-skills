@@ -39,7 +39,7 @@ the block below.
 
 ## The code
 
-<!-- code sha256=6fe16ad213a4300cbbb02f75725098c5b9cec6384b4c2dc93ce7eaa302418c2e -->
+<!-- code sha256=4a26d9839037d1d7343d9520d863bd9aa586a2cfc98ea4b9085b32e88514cabb -->
 ````python
 #!/usr/bin/env python3
 """rapp-skills: the seam between Agent Skills and RAPP single-file agents.
@@ -1111,6 +1111,21 @@ HIVE_HUB_SKILL_LOCK_SCHEMA = "hive-hub-agent-lock/1"
 HIVE_HUB_LOCK_MAX_FILE_BYTES = 8 * 1024 * 1024
 
 
+def _is_windows() -> bool:
+    return os.name == "nt"
+
+
+def _safe_file_link_count(
+    link_count: int,
+    *,
+    windows: bool | None = None,
+) -> bool:
+    """Accept NTFS's zero sentinel without permitting actual hardlinks."""
+    if windows is None:
+        windows = _is_windows()
+    return link_count in (0, 1) if windows else link_count == 1
+
+
 def _skill_lock_active(path: Path, mode: int) -> bool:
     return path.suffix.casefold() in LOCK_ACTIVE_SUFFIXES or bool(
         mode & (stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
@@ -1164,6 +1179,10 @@ def _skill_lock_inventory_problems(
                 problems.append(
                     f"agent.lock does not allow unlisted special file {name!r}"
                 )
+            elif not _safe_file_link_count(info.st_nlink):
+                problems.append(
+                    f"agent.lock requires {name!r} to have exactly one filesystem link"
+                )
             elif _skill_lock_active(relative, info.st_mode):
                 problems.append(
                     "agent.lock does not list executable or importable file "
@@ -1190,7 +1209,7 @@ def _skill_lock_complete_inventory_problems(
                 problems.append(f"agent.lock does not allow special file {name!r}")
             else:
                 actual.add(name)
-                if info.st_nlink != 1:
+                if not _safe_file_link_count(info.st_nlink):
                     problems.append(
                         f"agent.lock requires {name!r} to have exactly one filesystem link"
                     )
@@ -1209,7 +1228,7 @@ def _skill_lock_problems(skill_dir: Path) -> list[str]:
     problems: list[str] = []
     if lock_path.is_symlink() or not lock_path.is_file():
         return [f"{lock_path}: must be a regular non-symlink file"]
-    if os.lstat(lock_path).st_nlink != 1:
+    if not _safe_file_link_count(os.lstat(lock_path).st_nlink):
         return [f"{lock_path}: must have exactly one filesystem link"]
     try:
         lock = json.loads(read_text(lock_path))
@@ -1283,7 +1302,7 @@ def _skill_lock_problems(skill_dir: Path) -> list[str]:
         if unsafe or not target.is_file():
             problems.append(f"{lock_path}: locked path {rel!r} must be a regular non-symlink file")
             continue
-        if os.lstat(target).st_nlink != 1:
+        if not _safe_file_link_count(os.lstat(target).st_nlink):
             problems.append(
                 f"{lock_path}: locked path {rel!r} must have exactly one filesystem link"
             )
@@ -1554,7 +1573,7 @@ def _source_manifest_problems(root: Path, manifest_path: Path) -> list[str]:
     problems: list[str] = []
     if manifest_path.is_symlink() or not manifest_path.is_file():
         return [f"{manifest_path}: must be a regular non-symlink file"]
-    if os.lstat(manifest_path).st_nlink != 1:
+    if not _safe_file_link_count(os.lstat(manifest_path).st_nlink):
         return [f"{manifest_path}: must have exactly one filesystem link"]
     try:
         source = _load_json(manifest_path)
@@ -1696,7 +1715,7 @@ def _source_manifest_problems(root: Path, manifest_path: Path) -> list[str]:
             )
             continue
         info = os.lstat(target)
-        if info.st_nlink != 1:
+        if not _safe_file_link_count(info.st_nlink):
             problems.append(
                 f"{manifest_path}: source path {rel!r} must have exactly one filesystem link"
             )
@@ -1740,7 +1759,7 @@ def _source_manifest_problems(root: Path, manifest_path: Path) -> list[str]:
                 )
             else:
                 actual_files.add(rel)
-                if info.st_nlink != 1:
+                if not _safe_file_link_count(info.st_nlink):
                     problems.append(
                         f"{manifest_path}: source path {rel!r} must have exactly "
                         "one filesystem link"
@@ -1777,7 +1796,7 @@ def _source_manifest_problems(root: Path, manifest_path: Path) -> list[str]:
 def _render_skill_lock(lock_path: Path) -> str:
     if lock_path.is_symlink() or not lock_path.is_file():
         raise ValueError(f"{lock_path}: must be a regular non-symlink file")
-    if os.lstat(lock_path).st_nlink != 1:
+    if not _safe_file_link_count(os.lstat(lock_path).st_nlink):
         raise ValueError(f"{lock_path}: must have exactly one filesystem link")
     lock = _load_json(lock_path)
     schema = lock.get("schema")
@@ -1812,7 +1831,7 @@ def _render_skill_lock(lock_path: Path) -> str:
                 raise ValueError(f"{lock_path}: locked path {rel!r} contains a symlink")
         if not target.is_file():
             raise ValueError(f"{lock_path}: locked path {rel!r} is not a regular file")
-        if os.lstat(target).st_nlink != 1:
+        if not _safe_file_link_count(os.lstat(target).st_nlink):
             raise ValueError(
                 f"{lock_path}: locked path {rel!r} must have exactly one filesystem link"
             )

@@ -36,8 +36,10 @@ python3 -I -B scripts/run.py join --locator 'owner/repository at main'
 ```
 
 The folder is copied byte-for-byte from `kody-w/hive-hub` main commit
-`93c8979caf5a51017898996aadaa42dddcfb75b2`. [`sources/hive-hub.json`](sources/hive-hub.json)
-records its exact Git tree, every file size, Git blob, and SHA-256 value.
+`f1b81bbe1f756c0c8092dc4af1f6b927afa48c87`. [`sources/hive-hub.json`](sources/hive-hub.json)
+records its exact Git tree, every file size, Git blob, and SHA-256 value. Ordinary Windows files
+may report zero or one link; every other platform requires one, and real hardlinks are refused
+everywhere.
 
 For safe RAPP Work setup and maintenance, copy [`skills/rapp-work`](skills/rapp-work). It verifies
 exact local SDK and RAPP/1 checkouts, performs offline discovery, and makes scaffold, update, and
