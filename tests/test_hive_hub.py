@@ -14,16 +14,17 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from typing import Any
 from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
 SKILL = ROOT / "skills" / "hive-hub"
 RUNNER = SKILL / "scripts" / "run.py"
 SOURCE = ROOT / "sources" / "hive-hub.json"
-EXPECTED_COMMIT = "f1b81bbe1f756c0c8092dc4af1f6b927afa48c87"
-EXPECTED_GIT_TREE = "585eb858b1de0caea7e2442a0175fe4609af4cc1"
+EXPECTED_COMMIT = "668f990e45a3c1a0ae9f25ca96d1fcc3cc20c8d5"
+EXPECTED_GIT_TREE = "e1fbe00b50be043af9410f35a1417324f975976f"
 EXPECTED_FOLDER_SHA256 = (
-    "a3c90cd2f7a45ccd825619df4e4d42581257c4e50d5758ed751e4037a9e5f300"
+    "933721f71959e774f76bfdd59e8be93fa50c3a54c0c41f9203d8f1ea8c7f389c"
 )
 DENIED_PRIVATE_IDENTIFIER_SHA256 = frozenset(
     {
@@ -78,6 +79,67 @@ def with_link_count(information: os.stat_result, link_count: int) -> os.stat_res
     values = list(information)
     values[3] = link_count
     return os.stat_result(values)
+
+
+class MockWindowsFileApi:
+    def __init__(
+        self,
+        *,
+        number_of_links: int = 1,
+        attributes: int = 0,
+        create_success: bool = True,
+        information_success: bool = True,
+        close_success: bool = True,
+    ) -> None:
+        self.number_of_links = number_of_links
+        self.attributes = attributes
+        self.create_success = create_success
+        self.information_success = information_success
+        self.close_success = close_success
+        self.handle = 1234
+        self.create_calls: list[tuple[str, int, int, int, int]] = []
+        self.closed_handles: list[int] = []
+
+    def CreateFileW(
+        self,
+        path: str,
+        desired_access: int,
+        share_mode: int,
+        _security_attributes: object,
+        creation_disposition: int,
+        flags_and_attributes: int,
+        _template_file: object,
+    ) -> int:
+        self.create_calls.append(
+            (
+                path,
+                desired_access,
+                share_mode,
+                creation_disposition,
+                flags_and_attributes,
+            )
+        )
+        if self.create_success:
+            return self.handle
+        import ctypes
+
+        return int(ctypes.c_void_p(-1).value or -1)
+
+    def GetFileInformationByHandle(
+        self,
+        _handle: int,
+        information_pointer: Any,
+    ) -> int:
+        if not self.information_success:
+            return 0
+        information = information_pointer._obj
+        information.dwFileAttributes = self.attributes
+        information.nNumberOfLinks = self.number_of_links
+        return 1
+
+    def CloseHandle(self, handle: int) -> int:
+        self.closed_handles.append(handle)
+        return int(self.close_success)
 
 
 class HiveHubIntegrationTests(unittest.TestCase):
@@ -165,16 +227,74 @@ class HiveHubIntegrationTests(unittest.TestCase):
             )
             self.assertEqual(lock_path.read_bytes(), before)
 
-    def test_converter_accepts_mocked_windows_zero_link_count_everywhere(self):
-        with mock.patch.object(converter, "_is_windows", return_value=True):
-            self.assertTrue(converter._safe_file_link_count(0))
-            self.assertTrue(converter._safe_file_link_count(1))
-            self.assertFalse(converter._safe_file_link_count(2))
-        with mock.patch.object(converter, "_is_windows", return_value=False):
-            self.assertFalse(converter._safe_file_link_count(0))
-            self.assertTrue(converter._safe_file_link_count(1))
-            self.assertFalse(converter._safe_file_link_count(2))
+    def test_converter_windows_link_policy_uses_true_native_metadata(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            ordinary = Path(temporary) / "ordinary.txt"
+            ordinary.write_bytes(b"ordinary")
+            information = os.lstat(ordinary)
+            for api, accepted in (
+                (MockWindowsFileApi(number_of_links=1), True),
+                (MockWindowsFileApi(number_of_links=2), False),
+                (
+                    MockWindowsFileApi(
+                        number_of_links=1,
+                        attributes=converter.FILE_ATTRIBUTE_REPARSE_POINT,
+                    ),
+                    False,
+                ),
+                (MockWindowsFileApi(create_success=False), False),
+                (MockWindowsFileApi(information_success=False), False),
+                (MockWindowsFileApi(close_success=False), False),
+            ):
+                with (
+                    self.subTest(api=api, accepted=accepted),
+                    mock.patch.object(converter, "_is_windows", return_value=True),
+                    mock.patch.object(converter, "_windows_file_api", return_value=api),
+                ):
+                    self.assertEqual(
+                        converter._has_single_file_link(ordinary, information),
+                        accepted,
+                    )
+                if api.create_success:
+                    self.assertEqual(api.closed_handles, [api.handle])
+                if accepted:
+                    _, desired_access, share_mode, disposition, flags = (
+                        api.create_calls[0]
+                    )
+                    self.assertEqual(desired_access, 0)
+                    self.assertEqual(
+                        share_mode,
+                        converter.FILE_SHARE_READ
+                        | converter.FILE_SHARE_WRITE
+                        | converter.FILE_SHARE_DELETE,
+                    )
+                    self.assertEqual(disposition, converter.OPEN_EXISTING)
+                    self.assertTrue(
+                        flags & converter.FILE_FLAG_OPEN_REPARSE_POINT
+                    )
 
+        with mock.patch.object(converter, "_is_windows", return_value=False):
+            information = os.lstat(SKILL / "SKILL.md")
+            self.assertFalse(
+                converter._has_single_file_link(
+                    SKILL / "SKILL.md",
+                    with_link_count(information, 0),
+                )
+            )
+            self.assertTrue(
+                converter._has_single_file_link(
+                    SKILL / "SKILL.md",
+                    with_link_count(information, 1),
+                )
+            )
+            self.assertFalse(
+                converter._has_single_file_link(
+                    SKILL / "SKILL.md",
+                    with_link_count(information, 2),
+                )
+            )
+
+    def test_converter_uses_windows_native_metadata_for_every_integrity_check(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             copied = root / "skills" / "hive-hub"
@@ -186,6 +306,7 @@ class HiveHubIntegrationTests(unittest.TestCase):
             shutil.copy2(SOURCE, copied_source)
             original_lstat = converter.os.lstat
             original_tree = converter._skill_lock_tree
+            native_paths: list[Path] = []
 
             def zero_lstat(path):
                 return with_link_count(original_lstat(path), 0)
@@ -196,8 +317,17 @@ class HiveHubIntegrationTests(unittest.TestCase):
                         information = with_link_count(information, 0)
                     yield relative, information, kind
 
+            def native_metadata(path):
+                native_paths.append(Path(path))
+                return 1, 0
+
             with (
                 mock.patch.object(converter, "_is_windows", return_value=True),
+                mock.patch.object(
+                    converter,
+                    "_windows_file_metadata",
+                    side_effect=native_metadata,
+                ),
                 mock.patch.object(converter.os, "lstat", side_effect=zero_lstat),
                 mock.patch.object(
                     converter,
@@ -206,14 +336,116 @@ class HiveHubIntegrationTests(unittest.TestCase):
                 ),
             ):
                 self.assertEqual(converter.verify(copied), [])
+                verify_paths = list(native_paths)
+                native_paths.clear()
                 self.assertEqual(
                     converter._source_manifest_problems(root, copied_source),
                     [],
                 )
+                source_paths = list(native_paths)
+                native_paths.clear()
                 self.assertEqual(
                     converter._render_skill_lock(copied / "agent.lock"),
                     (copied / "agent.lock").read_text(encoding="utf-8"),
                 )
+                render_paths = list(native_paths)
+
+            source = json.loads(copied_source.read_text(encoding="utf-8"))
+            skill_paths = {
+                copied / entry["path"] for entry in source["files"]
+            }
+            lock_path = copied / "agent.lock"
+            self.assertGreaterEqual(verify_paths.count(lock_path), 1)
+            self.assertTrue(
+                all(
+                    verify_paths.count(path) >= 2
+                    for path in skill_paths - {lock_path}
+                ),
+                sorted(path.as_posix() for path in verify_paths),
+            )
+            self.assertGreaterEqual(source_paths.count(copied_source), 1)
+            self.assertTrue(
+                all(source_paths.count(path) >= 2 for path in skill_paths),
+                sorted(path.as_posix() for path in source_paths),
+            )
+            self.assertTrue(
+                all(render_paths.count(path) >= 2 for path in skill_paths),
+                sorted(path.as_posix() for path in render_paths),
+            )
+
+            runner = copied / "scripts" / "run.py"
+
+            def unsafe_runner(path):
+                if Path(path) == runner:
+                    return 2, 0
+                return 1, 0
+
+            with (
+                mock.patch.object(converter, "_is_windows", return_value=True),
+                mock.patch.object(
+                    converter,
+                    "_windows_file_metadata",
+                    side_effect=unsafe_runner,
+                ),
+            ):
+                self.assertTrue(
+                    any(
+                        "scripts/run.py" in problem
+                        and "exactly one filesystem link" in problem
+                        for problem in converter.verify(copied)
+                    )
+                )
+                self.assertTrue(
+                    any(
+                        "scripts/run.py" in problem
+                        and "exactly one filesystem link" in problem
+                        for problem in converter._source_manifest_problems(
+                            root,
+                            copied_source,
+                        )
+                    )
+                )
+                with self.assertRaisesRegex(
+                    ValueError,
+                    "exactly one filesystem link",
+                ):
+                    converter._render_skill_lock(copied / "agent.lock")
+
+            def unavailable_runner(path):
+                if Path(path) == runner:
+                    raise OSError("GetFileInformationByHandle failed")
+                return 1, 0
+
+            with (
+                mock.patch.object(converter, "_is_windows", return_value=True),
+                mock.patch.object(
+                    converter,
+                    "_windows_file_metadata",
+                    side_effect=unavailable_runner,
+                ),
+            ):
+                self.assertTrue(
+                    any(
+                        "scripts/run.py" in problem
+                        and "exactly one filesystem link" in problem
+                        for problem in converter.verify(copied)
+                    )
+                )
+                self.assertTrue(
+                    any(
+                        "scripts/run.py" in problem
+                        and "exactly one filesystem link" in problem
+                        for problem in converter._source_manifest_problems(
+                            root,
+                            copied_source,
+                        )
+                    )
+                )
+                with self.assertRaisesRegex(
+                    ValueError,
+                    "exactly one filesystem link",
+                ):
+                    converter._render_skill_lock(copied / "agent.lock")
 
     def test_converter_and_skill_reject_real_hardlinks_everywhere(self):
         if not hasattr(os, "link"):
@@ -362,7 +594,7 @@ class HiveHubIntegrationTests(unittest.TestCase):
             "one blocker",
             "`--card-stdin`",
             "Never execute repository or downloaded code",
-            "two or more links are unsafe everywhere",
+            "exactly one filesystem link",
             '"status": "ready"',
             '"ready": true',
             "work around a refusal",

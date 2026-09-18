@@ -39,7 +39,7 @@ the block below.
 
 ## The code
 
-<!-- code sha256=4a26d9839037d1d7343d9520d863bd9aa586a2cfc98ea4b9085b32e88514cabb -->
+<!-- code sha256=bad500377311eb23e127416bff548bf1fc810b7e862c6cedbc4e616114c63759 -->
 ````python
 #!/usr/bin/env python3
 """rapp-skills: the seam between Agent Skills and RAPP single-file agents.
@@ -63,6 +63,8 @@ Standard library only. Python 3.11+.
 from __future__ import annotations
 
 import argparse
+import ctypes
+import errno
 import hashlib
 import json
 import os
@@ -70,7 +72,9 @@ import re
 import stat
 import subprocess
 import sys
+from ctypes import wintypes
 from pathlib import Path, PurePosixPath
+from typing import Any
 
 VERSION = "1.0.0"
 NAME_RE = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
@@ -1109,21 +1113,111 @@ MAX_LOCK_TREE_ENTRIES = 10_000
 RAPP_SKILL_LOCK_SCHEMA = "rapp-skill-lock/1"
 HIVE_HUB_SKILL_LOCK_SCHEMA = "hive-hub-agent-lock/1"
 HIVE_HUB_LOCK_MAX_FILE_BYTES = 8 * 1024 * 1024
+FILE_ATTRIBUTE_REPARSE_POINT = 0x00000400
+FILE_FLAG_BACKUP_SEMANTICS = 0x02000000
+FILE_FLAG_OPEN_REPARSE_POINT = 0x00200000
+FILE_SHARE_READ = 0x00000001
+FILE_SHARE_WRITE = 0x00000002
+FILE_SHARE_DELETE = 0x00000004
+OPEN_EXISTING = 3
+_INVALID_HANDLE_VALUE = ctypes.c_void_p(-1).value
+_WINDOWS_FILE_API: Any | None = None
+
+
+class _ByHandleFileInformation(ctypes.Structure):
+    _fields_ = [
+        ("dwFileAttributes", wintypes.DWORD),
+        ("ftCreationTime", wintypes.FILETIME),
+        ("ftLastAccessTime", wintypes.FILETIME),
+        ("ftLastWriteTime", wintypes.FILETIME),
+        ("dwVolumeSerialNumber", wintypes.DWORD),
+        ("nFileSizeHigh", wintypes.DWORD),
+        ("nFileSizeLow", wintypes.DWORD),
+        ("nNumberOfLinks", wintypes.DWORD),
+        ("nFileIndexHigh", wintypes.DWORD),
+        ("nFileIndexLow", wintypes.DWORD),
+    ]
 
 
 def _is_windows() -> bool:
     return os.name == "nt"
 
 
-def _safe_file_link_count(
-    link_count: int,
-    *,
-    windows: bool | None = None,
-) -> bool:
-    """Accept NTFS's zero sentinel without permitting actual hardlinks."""
-    if windows is None:
-        windows = _is_windows()
-    return link_count in (0, 1) if windows else link_count == 1
+def _windows_error(operation: str, path: str | None = None) -> OSError:
+    get_last_error: Any = getattr(ctypes, "get_last_error", None)
+    code = int(get_last_error()) if callable(get_last_error) else 0
+    message = f"{operation} failed"
+    if path is None:
+        return OSError(code or errno.EIO, message)
+    return OSError(code or errno.EIO, message, path)
+
+
+def _windows_file_api() -> Any:
+    global _WINDOWS_FILE_API
+    if _WINDOWS_FILE_API is not None:
+        return _WINDOWS_FILE_API
+    loader: Any = getattr(ctypes, "WinDLL", None)
+    if loader is None:
+        raise OSError(errno.ENOSYS, "Windows file metadata is unavailable")
+    api = loader("kernel32", use_last_error=True)
+    api.CreateFileW.argtypes = [
+        wintypes.LPCWSTR,
+        wintypes.DWORD,
+        wintypes.DWORD,
+        wintypes.LPVOID,
+        wintypes.DWORD,
+        wintypes.DWORD,
+        wintypes.HANDLE,
+    ]
+    api.CreateFileW.restype = wintypes.HANDLE
+    api.GetFileInformationByHandle.argtypes = [
+        wintypes.HANDLE,
+        ctypes.POINTER(_ByHandleFileInformation),
+    ]
+    api.GetFileInformationByHandle.restype = wintypes.BOOL
+    api.CloseHandle.argtypes = [wintypes.HANDLE]
+    api.CloseHandle.restype = wintypes.BOOL
+    _WINDOWS_FILE_API = api
+    return api
+
+
+def _windows_file_metadata(path: Path) -> tuple[int, int]:
+    absolute = os.path.abspath(os.fspath(path))
+    api = _windows_file_api()
+    handle = api.CreateFileW(
+        absolute,
+        0,
+        FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+        None,
+        OPEN_EXISTING,
+        FILE_FLAG_OPEN_REPARSE_POINT | FILE_FLAG_BACKUP_SEMANTICS,
+        None,
+    )
+    if handle is None or handle == _INVALID_HANDLE_VALUE:
+        raise _windows_error("CreateFileW", absolute)
+    information = _ByHandleFileInformation()
+    try:
+        if not api.GetFileInformationByHandle(handle, ctypes.byref(information)):
+            raise _windows_error("GetFileInformationByHandle", absolute)
+    except Exception:
+        api.CloseHandle(handle)
+        raise
+    if not api.CloseHandle(handle):
+        raise _windows_error("CloseHandle", absolute)
+    return int(information.nNumberOfLinks), int(information.dwFileAttributes)
+
+
+def _has_single_file_link(path: Path, information: os.stat_result) -> bool:
+    if not _is_windows():
+        return information.st_nlink == 1
+    try:
+        number_of_links, attributes = _windows_file_metadata(path)
+    except OSError:
+        return False
+    return (
+        number_of_links == 1
+        and not attributes & FILE_ATTRIBUTE_REPARSE_POINT
+    )
 
 
 def _skill_lock_active(path: Path, mode: int) -> bool:
@@ -1179,7 +1273,7 @@ def _skill_lock_inventory_problems(
                 problems.append(
                     f"agent.lock does not allow unlisted special file {name!r}"
                 )
-            elif not _safe_file_link_count(info.st_nlink):
+            elif not _has_single_file_link(skill_dir / relative, info):
                 problems.append(
                     f"agent.lock requires {name!r} to have exactly one filesystem link"
                 )
@@ -1209,7 +1303,7 @@ def _skill_lock_complete_inventory_problems(
                 problems.append(f"agent.lock does not allow special file {name!r}")
             else:
                 actual.add(name)
-                if not _safe_file_link_count(info.st_nlink):
+                if not _has_single_file_link(skill_dir / relative, info):
                     problems.append(
                         f"agent.lock requires {name!r} to have exactly one filesystem link"
                     )
@@ -1228,7 +1322,7 @@ def _skill_lock_problems(skill_dir: Path) -> list[str]:
     problems: list[str] = []
     if lock_path.is_symlink() or not lock_path.is_file():
         return [f"{lock_path}: must be a regular non-symlink file"]
-    if not _safe_file_link_count(os.lstat(lock_path).st_nlink):
+    if not _has_single_file_link(lock_path, os.lstat(lock_path)):
         return [f"{lock_path}: must have exactly one filesystem link"]
     try:
         lock = json.loads(read_text(lock_path))
@@ -1302,7 +1396,7 @@ def _skill_lock_problems(skill_dir: Path) -> list[str]:
         if unsafe or not target.is_file():
             problems.append(f"{lock_path}: locked path {rel!r} must be a regular non-symlink file")
             continue
-        if not _safe_file_link_count(os.lstat(target).st_nlink):
+        if not _has_single_file_link(target, os.lstat(target)):
             problems.append(
                 f"{lock_path}: locked path {rel!r} must have exactly one filesystem link"
             )
@@ -1573,7 +1667,7 @@ def _source_manifest_problems(root: Path, manifest_path: Path) -> list[str]:
     problems: list[str] = []
     if manifest_path.is_symlink() or not manifest_path.is_file():
         return [f"{manifest_path}: must be a regular non-symlink file"]
-    if not _safe_file_link_count(os.lstat(manifest_path).st_nlink):
+    if not _has_single_file_link(manifest_path, os.lstat(manifest_path)):
         return [f"{manifest_path}: must have exactly one filesystem link"]
     try:
         source = _load_json(manifest_path)
@@ -1715,7 +1809,7 @@ def _source_manifest_problems(root: Path, manifest_path: Path) -> list[str]:
             )
             continue
         info = os.lstat(target)
-        if not _safe_file_link_count(info.st_nlink):
+        if not _has_single_file_link(target, info):
             problems.append(
                 f"{manifest_path}: source path {rel!r} must have exactly one filesystem link"
             )
@@ -1759,7 +1853,7 @@ def _source_manifest_problems(root: Path, manifest_path: Path) -> list[str]:
                 )
             else:
                 actual_files.add(rel)
-                if not _safe_file_link_count(info.st_nlink):
+                if not _has_single_file_link(skill_dir / relative, info):
                     problems.append(
                         f"{manifest_path}: source path {rel!r} must have exactly "
                         "one filesystem link"
@@ -1796,7 +1890,7 @@ def _source_manifest_problems(root: Path, manifest_path: Path) -> list[str]:
 def _render_skill_lock(lock_path: Path) -> str:
     if lock_path.is_symlink() or not lock_path.is_file():
         raise ValueError(f"{lock_path}: must be a regular non-symlink file")
-    if not _safe_file_link_count(os.lstat(lock_path).st_nlink):
+    if not _has_single_file_link(lock_path, os.lstat(lock_path)):
         raise ValueError(f"{lock_path}: must have exactly one filesystem link")
     lock = _load_json(lock_path)
     schema = lock.get("schema")
@@ -1831,7 +1925,7 @@ def _render_skill_lock(lock_path: Path) -> str:
                 raise ValueError(f"{lock_path}: locked path {rel!r} contains a symlink")
         if not target.is_file():
             raise ValueError(f"{lock_path}: locked path {rel!r} is not a regular file")
-        if not _safe_file_link_count(os.lstat(target).st_nlink):
+        if not _has_single_file_link(target, os.lstat(target)):
             raise ValueError(
                 f"{lock_path}: locked path {rel!r} must have exactly one filesystem link"
             )
