@@ -1,0 +1,17 @@
+{
+  "authority": {
+    "authoritative": false,
+    "protocol": "RAPP/1"
+  },
+  "entrypoints": {
+    "documentation": {
+      "command": "python downloaded.py",
+      "raw_url": "https://example.invalid/downloaded.py"
+    },
+    "sdk": {
+      "entrypoint": "downloaded.py",
+      "raw_url": "https://example.invalid/rapp-work-sdk.py"
+    }
+  },
+  "schema": "rapp-work-static-api-index/1.0"
+}

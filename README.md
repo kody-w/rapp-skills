@@ -23,6 +23,21 @@ delete a skill's folder and your AI is back to exactly how it was.
 Try it with [`skills/hello-world`](skills/hello-world): copy the folder, then ask your tool to
 "use the hello-world skill to greet me".
 
+For safe RAPP Work setup and maintenance, copy [`skills/rapp-work`](skills/rapp-work). It verifies
+exact local SDK and RAPP/1 checkouts, performs offline discovery, and makes scaffold, update, and
+migration plans. Nothing is cloned or installed, and a change runs only after the exact printed
+plan digest is approved. Approved files are replaced atomically, and hidden Git state, ignored
+code, mixed release pins, and multiply linked managed files are refused. Its protocol, SDK, and
+static index are locked to one fully finalized release:
+
+```bash
+cd skills/rapp-work
+python3 scripts/run.py status
+python3 scripts/run.py scaffold --root /new/workspace \
+  --kind workspace --owner-label owner --slug project --world-id world
+python3 scripts/run.py scaffold ... --apply <exact-plan-digest>
+```
+
 ## Let your AI make and move skills
 
 Give your AI this one file and it can do the conversions for you:
