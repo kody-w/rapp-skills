@@ -19,10 +19,21 @@ Operate the self-contained adapter at `skills/rapp-work/scripts/run.py`.
    Discovery output is inert metadata only. A direct network read occurs only
    when the user/configuration supplies `--api-base`.
 5. `scaffold`, `update`, and `migrate` produce a plan by default. Show the user
-   the exact plan and digest. Use `--apply <digest>` only after explicit approval
-   of that same digest.
+   the exact plan and digest. For scaffold, explicitly save the complete
+   printed planned result in a trusted private file outside the absent
+   destination. After approval, repeat the same request with both
+   `--plan <file>` and `--apply <exact-lowercase-digest>`. Never replan during
+   apply or replace the reviewed identity. A changed release lock requires a
+   newly reviewed plan; its fingerprint is a compatibility check, not a
+   signature. Update and migrate retain digest-only `--apply` and reject
+   `--plan`; this adapter does not provide their native checkpoint/recovery.
 6. Do not request or inspect credentials. Do not push, publish, deploy, grant
    access, or authorize network effects through this agent.
 7. Return the runner's single JSON result exactly. Do not work around a refusal,
    pending pin, checksum mismatch, hidden Git state, unlisted code, hardlink,
-   path conflict, or symlink.
+   path conflict, or symlink. Scaffold apply requires an absent target, an
+   existing parent, and supported no-follow/no-replace operations. It preserves
+   the saved review file and reports success only after native confirmation
+   and file checks. A timeout or malformed reply is not success or permission
+   to retry, remove staging, or overwrite a destination. Inspect/verify
+   explicitly; do not promise permanent one-use approval or crash recovery.

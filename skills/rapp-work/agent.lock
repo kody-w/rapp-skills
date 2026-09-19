@@ -32,11 +32,11 @@
   "files": [
     {
       "path": "SKILL.md",
-      "sha256": "14075dcef95fc23fd89d6f25a9804fa9426f69275e52e4aef800fedd7d918b59"
+      "sha256": "6c16f0c6d69139a6eebf38f4d0c494f4dd095d0680b7594c6c621541211b6756"
     },
     {
       "path": "scripts/run.py",
-      "sha256": "6ef9d153a0a544ffa31e26294e9fba9d6a1bcf42c99c79f68a8674064b1b7c44"
+      "sha256": "e100b43573f384ca261ddd7ab343c21bc2d1d0f2679d6939a4fae8c42d9f235b"
     }
   ]
 }

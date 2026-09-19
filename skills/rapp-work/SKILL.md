@@ -2,7 +2,7 @@
 name: "rapp-work"
 description: "Safely verify, inspect, discover, scaffold, update, or migrate RAPP Work through the exact canonical SDK and RAPP/1 checkout. Use when someone wants the same plan-first RAPP Work workflow from Claude Code, GitHub Copilot CLI, or another Agent Skills host without copying protocol logic into the host."
 license: "MIT"
-compatibility: "Requires Python 3.11+, Git, and exact local checkouts pinned in agent.lock. Discovery optionally uses credential-free HTTPS. Nothing is cloned or installed automatically."
+compatibility: "Requires Python 3.11+, Git, and exact local checkouts pinned in agent.lock. Scaffold apply also requires no-follow file reads and native no-replace directory activation (Linux/macOS); unsupported platforms refuse. Discovery optionally uses credential-free HTTPS. Nothing is cloned or installed automatically."
 metadata:
   version: "1.0.0"
   lock: "agent.lock"
@@ -71,20 +71,93 @@ every operation that would depend on one refuses.
 
 `scaffold`, `update`, and `migrate` are plan-only by default. Return the printed
 plan and its `plan_digest` to the user. Do not apply it unless the user
-explicitly approves that exact plan. Apply only by repeating the command with:
+explicitly approves that exact plan. `plan_digest` and `plan_sha256` are two
+names for the same SHA-256 of the complete native plan.
+
+### Create from a saved, reviewed plan
+
+Each scaffold plan creates a fresh identity. Save the **complete printed JSON
+result**, not just its digest or selected actions. Planning does not create
+the destination or save a file automatically. Choose an existing trusted
+private review directory outside the new destination, then save explicitly:
 
 ```bash
-python3 scripts/run.py <operation> ... --apply <exact-plan-digest>
+(umask 077; set -C
+ python3 scripts/run.py scaffold --root /new/workspace \
+   --kind workspace --owner-label owner --slug project --world-id world \
+   > /trusted/private-review/scaffold.json)
 ```
 
-The runner recomputes the current plan before apply and refuses a different,
-shortened, uppercase, stale, or malformed digest. It also refuses traversal,
-symlinks, overlapping migration roots, a non-empty scaffold or migration
-destination, multiply linked or conflicting managed files, protected paths,
-unexpected file actions, and any plan that requests network effects, push,
-publication, or deployment. Approved file bytes are staged beside their target
-and published atomically; an existing inode is never opened for writing or
-truncated.
+The shell settings make a newly saved ordinary file private and refuse an
+existing ordinary output file; they do not make an unsafe output path safe.
+Inspect the whole file and the command's exit status. Interrupted or refused
+output is not an approved plan. After the user approves its exact lowercase
+`plan_digest`, repeat the **same request** with both the file and that digest:
+
+```bash
+python3 scripts/run.py scaffold --root /new/workspace \
+  --kind workspace --owner-label owner --slug project --world-id world \
+  --plan /trusted/private-review/scaffold.json \
+  --apply '<exact-lowercase-plan-digest>'
+```
+
+Use the same kind, mode, owner label, slug, world, and destination. The runner
+reads the file once and passes its original full plan to the exact pinned
+SDK's apply operation. It never replans, remints an identity, or substitutes
+locally interpreted file actions during scaffold apply. Without `--plan`,
+scaffold apply refuses. `--plan` without `--apply`, or on any other operation,
+also refuses.
+
+Saved results must be complete compatible planned results, at most one MiB,
+with strict bounded JSON and matching digest aliases. Evidence must be a
+regular, single-link file reached without traversal, symlinks, or protected
+credential paths. A file change detected during the descriptor-based read
+refuses. Unsupported safe-read platforms refuse rather than falling back.
+
+The printed `lock_sha256` fingerprints the complete validated `agent.lock`.
+Changing any locked adapter file (including these instructions), dependency
+pin, or release-lock field requires explicit new planning and review. Older
+output without this field refuses. This is a conservative compatibility
+check, not a signature or proof of the original producer: the approved digest
+covers the native plan, not the outer release metadata.
+
+The native SDK checks the full plan, canonical files and identity, current
+request, exact hash, and absence of the destination and its staging path. The
+destination must not exist, even as an empty directory, and its parent must
+already exist. Native activation does not replace an existing destination.
+Only after the SDK confirms creation and the adapter checks the created
+file bytes does the adapter report `applied`. Its `result` contains the actual
+SDK reply, with the created identity and root in `result.result`.
+
+The review file is never rewritten, removed, or marked consumed by apply;
+retain or remove it explicitly. Replaying while the destination or staging
+path exists refuses and leaves it alone. This is not eternal one-use approval
+after deliberate deletion. An interrupted apply or missing/malformed success
+reply can leave staging or a completed destination; it is not permission to
+retry, delete, or replan automatically. Reconcile with explicit read-only
+inspection/verification. Universal crash durability and continuous protection
+against concurrent owner changes are not claimed.
+
+### Update or migrate
+
+```bash
+python3 scripts/run.py update --root /path/to/work --apply '<exact-plan-digest>'
+python3 scripts/run.py migrate --source /old/work --target /new/work \
+  --apply '<exact-plan-digest>'
+```
+
+These existing operations recompute their current deterministic plan before
+comparing the approved digest; they do not accept `--plan`. Their approved
+file bytes are staged beside their target and published atomically per file;
+an existing inode is never opened for writing or truncated. This adapter does
+not use native update/migration checkpoint or recovery flows, and does not
+promise an all-or-nothing multi-file transaction.
+
+All mutation paths refuse different, shortened, uppercase, stale, or malformed
+approval digests, traversal, symlinks, overlapping migration roots, non-empty
+migration destinations, multiply linked or conflicting managed files,
+protected action paths, unexpected file actions, and plans requesting network
+effects, push, publication, or deployment.
 
 ## Safety boundary
 

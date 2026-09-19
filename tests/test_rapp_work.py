@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+import base64
+import copy
 import hashlib
 import importlib.util
 import json
 import os
 import re
 import shutil
+import stat
 import subprocess
 import sys
 import tempfile
@@ -37,9 +40,19 @@ def load_module(name: str, path: Path):
 
 
 runner = load_module("rapp_work_runner", SKILL / "scripts" / "run.py")
+fixture_sdk = load_module(
+    "rapp_work_fixture_sdk", FIXTURE / "sdk" / "src" / "rapp_work" / "api.py"
+)
 converter = load_module(
     "rapp_skills_for_rapp_work",
     ROOT / "skills" / "rapp-skills" / "scripts" / "rapp_skills.py",
+)
+PLAN_READER_SUPPORTED = (
+    os.name == "posix"
+    and all(hasattr(os, flag) for flag in ("O_NOFOLLOW", "O_DIRECTORY", "O_NONBLOCK"))
+    and os.open in os.supports_dir_fd
+    and os.stat in os.supports_dir_fd
+    and os.stat in os.supports_follow_symlinks
 )
 
 
@@ -60,6 +73,8 @@ def command(*args: str, cwd: Path, env: dict[str, str] | None = None):
 
 class AdapterFixture:
     def __init__(self, root: Path):
+        # macOS temp roots may use /var or /tmp aliases; accepted evidence must not.
+        root = root.resolve(strict=True)
         self.root = root
         self.skill = root / "rapp-work"
         self.sdk = root / "sdk"
@@ -169,8 +184,8 @@ class AdapterFixture:
         )
         return self.sdk_commit
 
-    def run(self, operation: str | None = None, *extra: str, env=None):
-        arguments = [str(self.skill / "scripts" / "run.py")]
+    def arguments(self, operation: str | None = None, *extra: str):
+        arguments = []
         if operation is not None:
             arguments.append(operation)
         if operation == "migrate":
@@ -201,7 +216,27 @@ class AdapterFixture:
                 *extra,
             ]
         )
-        return command(*arguments, cwd=self.root, env=env)
+        return arguments
+
+    def run(self, operation: str | None = None, *extra: str, env=None):
+        return command(
+            str(self.skill / "scripts" / "run.py"),
+            *self.arguments(operation, *extra),
+            cwd=self.root,
+            env=env,
+        )
+
+    def save_plan(self, envelope, name="reviewed-scaffold.json"):
+        path = self.root / name
+        path.write_bytes(runner.canonical_bytes(envelope) + b"\n")
+        path.chmod(0o600)
+        return path
+
+    def seed_legacy_workspace(self):
+        self.workspace.mkdir()
+        (self.workspace / "install.json").write_bytes(
+            b'{"fixture":"existing-workspace","version":1}\n'
+        )
 
 
 class SkillPackageTests(unittest.TestCase):
@@ -709,6 +744,8 @@ class PlanAndApplyTests(unittest.TestCase):
             self.assertEqual(refusal["error"]["code"], "resolution-error")
 
     def test_scaffold_is_plan_only_and_apply_needs_the_exact_digest(self):
+        if not PLAN_READER_SUPPORTED:
+            self.skipTest("saved-plan reads require no-follow descriptor support")
         with tempfile.TemporaryDirectory() as temporary:
             fixture = AdapterFixture(Path(temporary))
             planned = fixture.run("scaffold")
@@ -717,13 +754,14 @@ class PlanAndApplyTests(unittest.TestCase):
             self.assertEqual(result["status"], "planned")
             self.assertFalse(fixture.workspace.exists())
             plan_digest = result["plan_digest"]
+            saved = fixture.save_plan(result)
 
-            wrong = fixture.run("scaffold", "--apply", "0" * 64)
+            wrong = fixture.run("scaffold", "--plan", str(saved), "--apply", "0" * 64)
             self.assertEqual(wrong.returncode, 2)
             self.assertEqual(json.loads(wrong.stdout)["status"], "refused")
             self.assertFalse(fixture.workspace.exists())
 
-            applied = fixture.run("scaffold", "--apply", plan_digest)
+            applied = fixture.run("scaffold", "--plan", str(saved), "--apply", plan_digest)
             self.assertEqual(applied.returncode, 0, applied.stderr)
             self.assertEqual(json.loads(applied.stdout)["status"], "applied")
             self.assertTrue((fixture.workspace / "install.json").is_file())
@@ -731,13 +769,7 @@ class PlanAndApplyTests(unittest.TestCase):
     def test_update_replans_and_rejects_a_stale_digest(self):
         with tempfile.TemporaryDirectory() as temporary:
             fixture = AdapterFixture(Path(temporary))
-            first = json.loads(fixture.run("scaffold").stdout)
-            self.assertEqual(
-                fixture.run(
-                    "scaffold", "--apply", first["plan_digest"]
-                ).returncode,
-                0,
-            )
+            fixture.seed_legacy_workspace()
             update = json.loads(fixture.run("update").stdout)
             target = fixture.workspace / "install.json"
             target.write_text("owner change\n", encoding="utf-8")
@@ -755,13 +787,7 @@ class PlanAndApplyTests(unittest.TestCase):
             )
         with tempfile.TemporaryDirectory() as temporary:
             fixture = AdapterFixture(Path(temporary))
-            scaffold = json.loads(fixture.run("scaffold").stdout)
-            applied = fixture.run(
-                "scaffold",
-                "--apply",
-                scaffold["plan_digest"],
-            )
-            self.assertEqual(applied.returncode, 0, applied.stderr)
+            fixture.seed_legacy_workspace()
             target = fixture.workspace / "install.json"
             previous = target.read_bytes()
             with target.open("rb") as old_inode:
@@ -782,15 +808,7 @@ class PlanAndApplyTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             fixture = AdapterFixture(root)
-            scaffold = json.loads(fixture.run("scaffold").stdout)
-            self.assertEqual(
-                fixture.run(
-                    "scaffold",
-                    "--apply",
-                    scaffold["plan_digest"],
-                ).returncode,
-                0,
-            )
+            fixture.seed_legacy_workspace()
             target = fixture.workspace / "install.json"
             external = root / "external-install.json"
             try:
@@ -816,6 +834,34 @@ class PlanAndApplyTests(unittest.TestCase):
             self.assertEqual(result.returncode, 2)
             self.assertIn("must be absent or empty", result.stdout)
             self.assertEqual(marker.read_text(encoding="utf-8"), "keep")
+
+    def test_migrate_keeps_digest_only_apply_and_preserves_source(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            fixture = AdapterFixture(Path(temporary))
+            original = fixture.source / "owner.txt"
+            original.write_bytes(b"keep legacy source\n")
+            planned = fixture.run("migrate")
+            self.assertEqual(planned.returncode, 0, planned.stdout + planned.stderr)
+            envelope = json.loads(planned.stdout)
+            self.assertFalse(fixture.workspace.exists())
+            applied = fixture.run("migrate", "--apply", envelope["plan_digest"])
+            self.assertEqual(applied.returncode, 0, applied.stdout + applied.stderr)
+            self.assertEqual(json.loads(applied.stdout)["status"], "applied")
+            self.assertEqual(original.read_bytes(), b"keep legacy source\n")
+            self.assertEqual(
+                (fixture.workspace / "install.json").read_bytes(),
+                base64.b64decode(envelope["plan"]["actions"][0]["content_base64"]),
+            )
+
+    def test_migrate_refuses_overlapping_roots(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            fixture = AdapterFixture(Path(temporary))
+            refused = fixture.run(
+                "migrate", "--target", str(fixture.source / "nested")
+            )
+            self.assertEqual(refused.returncode, 2, refused.stderr)
+            self.assertIn("must be disjoint", refused.stdout)
+            self.assertEqual(list(fixture.source.iterdir()), [])
 
     def test_traversal_external_effects_and_conflicts_are_refused(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -1077,6 +1123,711 @@ class PlanAndApplyTests(unittest.TestCase):
         value = json.loads(result.stdout)
         self.assertEqual(value["status"], "refused")
         self.assertNotIn("do-not-echo", result.stdout + result.stderr)
+
+
+class SavedPlanArgumentTests(unittest.TestCase):
+    def test_saved_plan_flags_refuse_before_lock_or_sdk_access(self):
+        cases = [
+            ["scaffold", "--apply", "a" * 64],
+            ["scaffold", "--plan", "review.json"],
+            ["scaffold", "--plan", "review.json", "--apply", ""],
+            ["scaffold", "--plan"],
+            ["scaffold", "--saved-plan", "review.json"],
+        ]
+        for operation in ("status", "verify", "discover", "update", "migrate"):
+            cases.extend(
+                [
+                    [operation, "--plan", "review.json"],
+                    [operation, "--plan", "review.json", "--apply", "a" * 64],
+                ]
+            )
+        for arguments in cases:
+            with self.subTest(arguments=arguments), mock.patch.object(
+                runner, "load_lock"
+            ) as locked, mock.patch.object(runner, "invoke_sdk") as sdk, mock.patch.object(
+                runner, "emit"
+            ) as emitted:
+                self.assertEqual(runner.main(arguments), 2)
+                locked.assert_not_called()
+                sdk.assert_not_called()
+                emitted.assert_called_once()
+                self.assertEqual(emitted.call_args.args[0]["status"], "refused")
+
+    def test_unsupported_safe_read_platform_refuses_without_fallback(self):
+        with mock.patch.object(runner.os, "supports_dir_fd", set()):
+            with self.assertRaisesRegex(runner.SafetyError, "no-follow descriptor support"):
+                runner._read_plan_file("review.json", Path.cwd())
+
+    def test_sdk_request_bound_is_checked_before_process_execution(self):
+        with mock.patch.object(runner, "_run_local_process") as process:
+            with self.assertRaisesRegex(runner.SafetyError, "one MiB input limit"):
+                runner.invoke_sdk(
+                    Path("."), {}, {"operation": "scaffold", "plan": "x" * runner.MAX_JSON_BYTES}, 1
+                )
+            process.assert_not_called()
+
+
+@unittest.skipUnless(PLAN_READER_SUPPORTED, "saved-plan reads require no-follow descriptor support")
+class SavedScaffoldPlanTests(unittest.TestCase):
+    def setUp(self):
+        self.temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temporary.cleanup)
+        self.fixture = AdapterFixture(Path(self.temporary.name))
+        self.lock = runner.load_lock(self.fixture.skill)
+        self.planned = self.plan()
+        self.saved = self.fixture.save_plan(self.planned)
+
+    def plan(self, *extra):
+        result = self.fixture.run("scaffold", *extra)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(result.stderr, "")
+        envelope = json.loads(result.stdout)
+        self.assertEqual(envelope["status"], "planned")
+        return envelope
+
+    def evidence_signature(self):
+        info = self.saved.stat()
+        return (
+            self.saved.read_bytes(),
+            info.st_ino,
+            info.st_mode,
+            info.st_nlink,
+            info.st_mtime_ns,
+            info.st_ctime_ns,
+        )
+
+    def apply(self, *extra, approved=None, path=None):
+        before = self.evidence_signature()
+        result = self.fixture.run(
+            "scaffold",
+            "--plan",
+            str(self.saved if path is None else path),
+            "--apply",
+            self.planned["plan_digest"] if approved is None else approved,
+            *extra,
+        )
+        self.assertEqual(self.evidence_signature(), before, "apply changed its review evidence")
+        return result
+
+    def assert_refused(self, result, *, target_absent=True):
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+        self.assertEqual(result.stderr, "")
+        self.assertEqual(len(result.stdout.splitlines()), 1)
+        value = json.loads(result.stdout)
+        self.assertEqual(value["status"], "refused")
+        self.assertNotIn("Traceback", result.stdout)
+        if target_absent:
+            self.assertFalse(os.path.lexists(self.fixture.workspace))
+        return value
+
+    def save_changed(self, change, *, reapprove=False):
+        value = copy.deepcopy(self.planned)
+        change(value)
+        if reapprove:
+            value["plan_digest"] = value["plan_sha256"] = runner.digest(value["plan"])
+        self.fixture.save_plan(value)
+        return value.get("plan_digest")
+
+    def run_in_process(self, sdk_call):
+        with mock.patch.object(
+            runner, "load_lock", return_value=self.lock
+        ), mock.patch.object(
+            runner, "invoke_sdk", side_effect=sdk_call
+        ) as invoked, mock.patch.object(
+            runner, "_plan_from_response", side_effect=AssertionError("must not replan")
+        ), mock.patch.object(
+            runner, "_apply_actions_atomically", side_effect=AssertionError("must use native apply")
+        ), mock.patch.object(runner, "emit") as emitted:
+            code = runner.main(
+                self.fixture.arguments(
+                    "scaffold", "--plan", str(self.saved), "--apply", self.planned["plan_digest"]
+                )
+            )
+        invoked.assert_called_once()
+        emitted.assert_called_once()
+        return code, emitted.call_args.args[0]
+
+    def test_fixture_canonicalizes_temp_alias_without_weakening_plan_reads(self):
+        canonical = self.fixture.root / "canonical-fixture"
+        canonical.mkdir()
+        alias = self.fixture.root / "temp-root-alias"
+        alias.symlink_to(canonical, target_is_directory=True)
+        fixture = AdapterFixture(alias)
+        self.assertEqual(fixture.root, canonical)
+        planned_result = fixture.run("scaffold")
+        self.assertEqual(planned_result.returncode, 0, planned_result.stdout)
+        planned = json.loads(planned_result.stdout)
+        saved = fixture.save_plan(planned)
+        refused = fixture.run(
+            "scaffold", "--plan", str(alias / saved.name),
+            "--apply", planned["plan_digest"],
+        )
+        self.assertEqual(refused.returncode, 2, refused.stdout)
+        self.assertFalse(fixture.workspace.exists())
+        applied = fixture.run(
+            "scaffold", "--plan", str(saved), "--apply", planned["plan_digest"],
+        )
+        self.assertEqual(applied.returncode, 0, applied.stdout)
+
+    def test_separate_processes_preserve_reviewed_identity_and_every_file_byte(self):
+        for kind, mode in (("workspace", "solo"), ("organization", "hive")):
+            with self.subTest(kind=kind, mode=mode):
+                self.fixture.workspace = self.fixture.root / kind
+                first = self.plan("--kind", kind, "--mode", mode)
+                second = self.plan("--kind", kind, "--mode", mode)
+                self.assertNotEqual(first["plan_digest"], second["plan_digest"])
+                self.assertNotEqual(
+                    first["plan"]["subject"]["rappid"], second["plan"]["subject"]["rappid"]
+                )
+                self.assertFalse(self.fixture.workspace.exists())
+                self.assertFalse(list(self.fixture.root.glob(f".{kind}.rapp-work-*")))
+                self.assertEqual(first["lock_sha256"], runner.digest(self.lock))
+                self.planned = first
+                self.fixture.save_plan(first)
+                result = self.apply(
+                    "--kind", kind, "--mode", mode,
+                    "--workspace", str(self.fixture.workspace), path="./reviewed-scaffold.json",
+                )
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                applied = json.loads(result.stdout)
+                self.assertEqual(applied["status"], "applied")
+                self.assertEqual(applied["plan_digest"], first["plan_digest"])
+                native = applied["result"]
+                self.assertEqual(native["status"], "applied")
+                self.assertEqual(native["result"]["rappid"], first["plan"]["subject"]["rappid"])
+                expected_files = set()
+                for action in first["plan"]["actions"]:
+                    target = self.fixture.workspace / action["path"]
+                    expected_files.add(action["path"])
+                    self.assertEqual(
+                        target.read_bytes(), base64.b64decode(action["content_base64"], validate=True)
+                    )
+                    self.assertEqual(sha(target), action["sha256"])
+                    self.assertEqual(stat.S_IMODE(target.stat().st_mode), action["mode"])
+                self.assertEqual(
+                    {
+                        path.relative_to(self.fixture.workspace).as_posix()
+                        for path in self.fixture.workspace.rglob("*") if path.is_file()
+                    },
+                    expected_files,
+                )
+
+    def test_read_parse_once_and_forward_original_object_without_planner_or_local_writer(self):
+        observed = []
+        original_parse = runner.parse_json_object
+
+        def parse(raw, label, *args, **kwargs):
+            result = original_parse(raw, label, *args, **kwargs)
+            if label == "saved scaffold plan":
+                observed.append(result["plan"])
+            return result
+
+        def native(sdk, pin, request, timeout):
+            self.assertEqual(sdk, self.fixture.sdk)
+            self.assertEqual(pin, self.lock["sdk"])
+            self.assertIs(request["plan"], observed[0])
+            self.assertEqual(request["plan"], self.planned["plan"])
+            self.assertIs(request["apply"], True)
+            self.assertEqual(request["plan_sha256"], self.planned["plan_digest"])
+            self.assertEqual(request["root"], str(self.fixture.workspace))
+            return fixture_sdk.execute("scaffold", request)
+
+        before = self.evidence_signature()
+        with mock.patch.object(
+            runner, "_read_plan_file", wraps=runner._read_plan_file
+        ) as read, mock.patch.object(
+            runner, "parse_json_object", side_effect=parse
+        ), mock.patch.object(
+            fixture_sdk, "plan_for", side_effect=AssertionError("must not plan")
+        ), mock.patch.object(
+            fixture_sdk.uuid, "uuid4", side_effect=AssertionError("must not mint")
+        ):
+            code, result = self.run_in_process(native)
+        self.assertEqual((code, result["status"]), (0, "applied"))
+        self.assertEqual(len(observed), 1)
+        read.assert_called_once()
+        self.assertEqual(self.evidence_signature(), before)
+
+    def test_replacing_evidence_after_read_cannot_substitute_the_forwarded_plan(self):
+        def native(sdk, pin, request, timeout):
+            self.saved.unlink()
+            self.saved.write_bytes(b'{"not":"the approved plan"}')
+            self.assertEqual(request["plan"], self.planned["plan"])
+            return fixture_sdk.execute("scaffold", request)
+
+        code, result = self.run_in_process(native)
+        self.assertEqual((code, result["status"]), (0, "applied"))
+        self.assertEqual(
+            json.loads((self.fixture.workspace / "install.json").read_bytes())["subject"],
+            self.planned["plan"]["subject"],
+        )
+
+    def test_approval_and_digest_aliases_must_be_exact_lowercase_hashes(self):
+        for approved in (
+            "0" * 64, self.planned["plan_digest"].upper(), "a" * 63, "g" * 64,
+            " " + self.planned["plan_digest"], self.planned["plan_digest"] + "\n",
+        ):
+            with self.subTest(approved=approved):
+                self.assert_refused(self.apply(approved=approved))
+        for key in ("plan_digest", "plan_sha256", "lock_sha256"):
+            for value in (None, True, [], 17, "A" * 64, "0" * 64):
+                with self.subTest(key=key, value=value):
+                    self.save_changed(lambda envelope: envelope.update({key: value}))
+                    self.assert_refused(self.apply())
+        for key in ("plan_digest", "plan_sha256"):
+            with self.subTest(missing=key):
+                self.save_changed(lambda envelope: envelope.pop(key))
+                self.assert_refused(self.apply())
+
+    def test_complete_planned_envelope_is_required(self):
+        for key, value in (
+            ("schema", "unknown/1"), ("operation", "update"), ("status", "applied"),
+            ("status", "refused"), ("status", []), ("plan", []), ("extra", "untrusted"),
+        ):
+            with self.subTest(key=key, value=value):
+                self.save_changed(lambda envelope: envelope.update({key: value}))
+                self.assert_refused(self.apply())
+        self.save_changed(lambda envelope: envelope.pop("lock_sha256"))
+        self.assert_refused(self.apply())
+        for raw in (self.planned["plan"], {"result": self.planned}):
+            self.fixture.save_plan(raw)
+            self.assert_refused(self.apply())
+
+    def test_changed_plan_fields_fail_with_the_original_approval(self):
+        changes = [
+            lambda plan: plan["subject"].update(rappid="fixture-" + "0" * 32),
+            lambda plan: plan["actions"][0].update(content_base64="eA=="),
+            lambda plan: plan["actions"][0].update(sha256="0" * 64),
+            lambda plan: plan["actions"][0].update(bytes=1),
+            lambda plan: plan["actions"][0].update(mode=0o644),
+            lambda plan: plan["preconditions"][0].update(state="present"),
+            lambda plan: plan.update(operation="update"),
+            lambda plan: plan.update(target=str(self.fixture.root / "other")),
+        ]
+        for index, change in enumerate(changes):
+            with self.subTest(change=index):
+                self.save_changed(lambda envelope: change(envelope["plan"]))
+                self.assert_refused(self.apply())
+
+    def test_reapproved_noncanonical_actions_still_need_native_qualification(self):
+        def different_content(plan):
+            after = b"different but internally consistent"
+            plan["actions"][0].update(
+                content_base64=base64.b64encode(after).decode("ascii"),
+                bytes=len(after), sha256=hashlib.sha256(after).hexdigest(),
+            )
+
+        def extra_action(plan):
+            action = copy.deepcopy(plan["actions"][0])
+            action["path"] = "arbitrary.txt"
+            plan["actions"].insert(0, action)
+
+        changes = [
+            lambda plan: plan["subject"].update(rappid="fixture-" + "1" * 32),
+            different_content,
+            extra_action,
+            lambda plan: plan["actions"][0].update(mode=0o644),
+            lambda plan: plan["actions"][0].update(extra="unqualified"),
+            lambda plan: plan["preconditions"][0].update(state="present"),
+            lambda plan: plan.update(preconditions=[]),
+            lambda plan: plan.update(schema="unknown-plan/1"),
+            lambda plan: plan.update(extra="unqualified"),
+        ]
+        for index, change in enumerate(changes):
+            with self.subTest(change=index):
+                approved = self.save_changed(lambda envelope: change(envelope["plan"]), reapprove=True)
+                value = self.assert_refused(self.apply(approved=approved))
+                self.assertEqual(value["error"]["code"], "sdk-error")
+                self.assertIn("REFUSE_PLAN", value["error"]["message"])
+
+    def test_current_cli_subject_and_root_are_not_replaced_by_saved_values(self):
+        for flag, value in (
+            ("--kind", "organization"), ("--mode", "hive"), ("--owner-label", "other-owner"),
+            ("--slug", "other-slug"), ("--world-id", "other-world"),
+            ("--root", str(self.fixture.root / "other-root")),
+        ):
+            with self.subTest(flag=flag):
+                self.assert_refused(self.apply(flag, value))
+                self.assertFalse((self.fixture.root / "other-root").exists())
+        for key, value in (
+            ("operation", "update"), ("target", str(self.fixture.root / "other-target")),
+        ):
+            with self.subTest(plan=key):
+                approved = self.save_changed(
+                    lambda envelope: envelope["plan"].update({key: value}), reapprove=True
+                )
+                self.assert_refused(self.apply(approved=approved))
+
+    def test_hostile_json_is_bounded_and_never_echoes_evidence(self):
+        sentinel = b"private-evidence-do-not-echo"
+        cases = [
+            b"", b"[]", b"null", b'"' + sentinel + b'"', b"\xff",
+            b'{"x":1,"x":2}', b'{"' + sentinel + b'":', self.saved.read_bytes()[:-8],
+            b'{"x":1.0}', b'{"x":1e0}', b'{"x":NaN}', b'{"x":Infinity}', b'{"x":-Infinity}',
+            b'{"x":"\\ud800"}', b'{"x":' + b"9" * 5000 + b"}",
+            b'{"x":[' + b"0," * runner.MAX_JSON_NODES + b"0]}",
+            b'{"x":' + b"[" * 40 + b"0" + b"]" * 40 + b"}",
+            b'{"x":' + b"[" * 1200 + b"0" + b"]" * 1200 + b"}",
+            b'{"x":"' + b"x" * runner.MAX_JSON_BYTES + b'"}',
+        ]
+        for index, raw in enumerate(cases):
+            with self.subTest(case=index):
+                self.saved.write_bytes(raw)
+                result = self.apply()
+                self.assert_refused(result)
+                self.assertNotIn(sentinel.decode(), result.stdout + result.stderr)
+
+    def test_network_external_and_unsafe_file_actions_are_refused_even_if_reapproved(self):
+        changes = [
+            lambda plan: plan.update(network=True),
+            lambda plan: plan.update(network=0),
+            lambda plan: plan.update(network_effects=["download"]),
+            lambda plan: plan.update(external_effects=["publish"]),
+            lambda plan: plan.update(push=True),
+            lambda plan: plan.update(publish=True),
+            lambda plan: plan.update(deploy=True),
+            lambda plan: plan["actions"][0].update(operation="execute"),
+            lambda plan: plan["actions"][0].update(operation=[]),
+            lambda plan: plan["actions"][0].update(path="../escape"),
+            lambda plan: plan["actions"][0].update(path="/absolute"),
+            lambda plan: plan["actions"][0].update(path=".ssh/key"),
+            lambda plan: plan["actions"][0].update(path=".git/config"),
+            lambda plan: plan["actions"][0].update(mode=True),
+            lambda plan: plan["actions"][0].update(bytes=True),
+            lambda plan: plan["actions"][0].update(content_base64="%%%="),
+            lambda plan: plan["actions"][0].update(sha256="0" * 64),
+            lambda plan: plan["actions"][0].update(expected_sha256="0" * 64),
+            lambda plan: plan["actions"].append(copy.deepcopy(plan["actions"][0])),
+            lambda plan: plan["actions"][1].update(path="install.json/child"),
+        ]
+        for index, change in enumerate(changes):
+            with self.subTest(change=index):
+                approved = self.save_changed(lambda envelope: change(envelope["plan"]), reapprove=True)
+                self.assert_refused(self.apply(approved=approved))
+                self.assertFalse((self.fixture.root / "escape").exists())
+
+    def test_unsafe_evidence_paths_are_refused_without_target_writes(self):
+        directory = self.fixture.root / "evidence-directory"
+        directory.mkdir()
+        paths = [self.fixture.root / "missing.json", directory,
+                 str(self.fixture.root / "unused" / ".." / self.saved.name)]
+        protected = self.fixture.root / ".ssh"
+        protected.mkdir()
+        protected_file = protected / "review.json"
+        protected_file.write_bytes(self.saved.read_bytes())
+        paths.append(protected_file)
+        if hasattr(os, "mkfifo"):
+            fifo = self.fixture.root / "evidence-fifo"
+            os.mkfifo(fifo)
+            paths.append(fifo)
+        for path in paths:
+            with self.subTest(path=path):
+                self.assert_refused(self.apply(path=path))
+        for raw in ("", "bad\x00name", "a\\..\\review.json", "file:stream"):
+            with self.subTest(raw=raw):
+                with self.assertRaises(runner.SafetyError):
+                    runner._read_plan_file(raw, self.fixture.root)
+        oversized = self.fixture.root / "large.json"
+        oversized.write_bytes(b"x" * (runner.MAX_JSON_BYTES + 1))
+        with mock.patch.object(runner.os, "read") as read:
+            with self.assertRaises(runner.SafetyError):
+                runner._read_plan_file(str(oversized), self.fixture.root)
+            read.assert_not_called()
+
+    def test_symlinked_and_multiply_linked_evidence_is_refused(self):
+        leaf = self.fixture.root / "linked.json"
+        ancestor = self.fixture.root / "linked-directory"
+        try:
+            leaf.symlink_to(self.saved)
+            ancestor.symlink_to(self.fixture.root, target_is_directory=True)
+        except OSError as exc:
+            self.skipTest(str(exc))
+        self.assert_refused(self.apply(path=leaf))
+        self.assert_refused(self.apply(path=ancestor / self.saved.name))
+        alias = self.fixture.root / "hardlinked.json"
+        os.link(self.saved, alias)
+        self.assert_refused(self.apply())
+        self.assert_refused(self.apply(path=alias))
+
+    def test_file_change_during_descriptor_read_is_refused(self):
+        original_read = os.read
+        for change in ("rewrite", "replace", "link", "ancestor"):
+            with self.subTest(change=change):
+                directory = self.fixture.root / f"read-{change}"
+                directory.mkdir()
+                path = directory / "plan.json"
+                raw = runner.canonical_bytes(self.planned)
+                path.write_bytes(raw)
+                changed = False
+
+                def read(descriptor, size):
+                    nonlocal changed
+                    data = original_read(descriptor, size)
+                    if not changed:
+                        changed = True
+                        if change == "rewrite":
+                            path.write_bytes(b"x" * len(raw))
+                        elif change == "replace":
+                            replacement = directory / "replacement.json"
+                            replacement.write_bytes(raw)
+                            os.replace(replacement, path)
+                        elif change == "link":
+                            os.link(path, directory / "alias.json")
+                        else:
+                            directory.rename(self.fixture.root / "moved-evidence")
+                            directory.mkdir()
+                            path.write_bytes(raw)
+                    return data
+
+                with mock.patch.object(runner.os, "read", side_effect=read):
+                    with self.assertRaisesRegex(runner.SafetyError, "changed while reading"):
+                        runner._read_plan_file(str(path), self.fixture.root)
+                self.assertFalse(self.fixture.workspace.exists())
+
+    def test_evidence_io_failures_refuse_without_leaking_file_or_error_data(self):
+        with mock.patch.object(runner.os, "read", side_effect=OSError("private I/O detail")):
+            with self.assertRaisesRegex(runner.SafetyError, "^saved plan could not be safely read$"):
+                runner._read_plan_file(str(self.saved), self.fixture.root)
+        original_close = os.close
+        failed = False
+
+        def close(descriptor):
+            nonlocal failed
+            original_close(descriptor)
+            if not failed:
+                failed = True
+                raise OSError("private close detail")
+
+        with mock.patch.object(runner.os, "close", side_effect=close):
+            with self.assertRaisesRegex(
+                runner.SafetyError, "^saved plan descriptors could not be safely closed$"
+            ):
+                runner._read_plan_file(str(self.saved), self.fixture.root)
+        self.assertFalse(self.fixture.workspace.exists())
+
+    def test_release_lock_changes_require_new_planning(self):
+        lock_path = self.fixture.skill / "agent.lock"
+        original = lock_path.read_bytes()
+        for field in ("version", "locked-doc", "static"):
+            with self.subTest(field=field):
+                lock = json.loads(original)
+                if field == "version":
+                    lock["version"] = "changed-release"
+                elif field == "locked-doc":
+                    documentation = self.fixture.skill / "SKILL.md"
+                    documentation.write_text(
+                        documentation.read_text(encoding="utf-8") + "\nChanged documentation.\n",
+                        encoding="utf-8",
+                    )
+                    for entry in lock["files"]:
+                        if entry["path"] == "SKILL.md":
+                            entry["sha256"] = sha(documentation)
+                else:
+                    lock["static"]["commit"] = "4" * 40
+                    lock["static"]["api_base"] = runner._static_api_base("4" * 40)
+                lock_path.write_bytes(runner.canonical_bytes(lock))
+                value = self.assert_refused(self.apply())
+                self.assertIn("release lock differs", value["error"]["message"])
+                shutil.copyfile(SKILL / "SKILL.md", self.fixture.skill / "SKILL.md")
+        lock_path.write_bytes(original)
+
+    def test_current_qualified_sdk_change_does_not_reuse_old_evidence(self):
+        api = self.fixture.sdk / "src" / "rapp_work" / "api.py"
+        api.write_text(api.read_text(encoding="utf-8") + "\n# Changed fixture release.\n", encoding="utf-8")
+        self.fixture.commit_sdk_change()
+        value = self.assert_refused(self.apply())
+        self.assertIn("release lock differs", value["error"]["message"])
+        self.assertNotEqual(self.lock["sdk"]["commit"], self.fixture.sdk_commit)
+
+    def test_changed_or_dirty_protocol_authority_is_not_bypassed(self):
+        spec = self.fixture.rapp1 / "SPEC.md"
+        spec.write_text(spec.read_text(encoding="utf-8") + "\nChanged protocol.\n", encoding="utf-8")
+        dirty = self.assert_refused(self.apply())
+        self.assertIn("checkout must be clean", dirty["error"]["message"])
+        commit = self.fixture._commit(self.fixture.rapp1)
+        pin_path = self.fixture.sdk / "RAPP1_PIN.json"
+        pin = json.loads(pin_path.read_bytes())
+        pin.update(commit=commit, spec_sha256=sha(spec))
+        pin_path.write_bytes(runner.canonical_bytes(pin))
+        self.fixture.commit_sdk_change()
+        lock_path = self.fixture.skill / "agent.lock"
+        lock = json.loads(lock_path.read_bytes())
+        lock["protocol"].update(commit=commit, sha256=sha(spec))
+        lock_path.write_bytes(runner.canonical_bytes(lock))
+        value = self.assert_refused(self.apply())
+        self.assertIn("release lock differs", value["error"]["message"])
+
+    def test_target_and_staging_collisions_are_preserved(self):
+        target = self.fixture.workspace
+        for kind in ("empty-directory", "occupied-directory", "file", "symlink"):
+            with self.subTest(kind=kind):
+                if kind.endswith("directory"):
+                    target.mkdir()
+                    if kind == "occupied-directory":
+                        (target / "owner.txt").write_bytes(b"keep")
+                elif kind == "file":
+                    target.write_bytes(b"keep")
+                else:
+                    target.symlink_to(self.saved)
+                before = target.lstat()
+                self.assert_refused(self.apply(), target_absent=False)
+                self.assertEqual(target.lstat().st_ino, before.st_ino)
+                if kind == "occupied-directory":
+                    self.assertEqual((target / "owner.txt").read_bytes(), b"keep")
+                    (target / "owner.txt").unlink()
+                if kind.endswith("directory"):
+                    target.rmdir()
+                else:
+                    target.unlink()
+        staging = target.parent / f".{target.name}.rapp-work-{self.planned['plan_digest'][:24]}"
+        for kind in ("directory", "file", "symlink"):
+            with self.subTest(staging=kind):
+                if kind == "directory":
+                    staging.mkdir()
+                    (staging / "owner.txt").write_bytes(b"keep staging")
+                elif kind == "file":
+                    staging.write_bytes(b"keep staging")
+                else:
+                    staging.symlink_to(self.saved)
+                before = staging.lstat()
+                value = self.assert_refused(self.apply())
+                self.assertIn("REFUSE_RECOVERY_COLLISION", value["error"]["message"])
+                self.assertEqual(staging.lstat().st_ino, before.st_ino)
+                if kind == "directory":
+                    self.assertEqual((staging / "owner.txt").read_bytes(), b"keep staging")
+                    (staging / "owner.txt").unlink()
+                    staging.rmdir()
+                else:
+                    staging.unlink()
+
+    def test_save_inside_target_and_missing_parent_are_not_created_or_repaired(self):
+        self.fixture.workspace.mkdir()
+        inside = self.fixture.workspace / "review.json"
+        inside.write_bytes(self.saved.read_bytes())
+        self.assert_refused(self.apply(path=inside), target_absent=False)
+        self.assertEqual(inside.read_bytes(), self.saved.read_bytes())
+        absent_parent = self.fixture.root / "absent-parent"
+        result = self.fixture.run("scaffold", "--root", str(absent_parent / "target"))
+        self.assertEqual(result.returncode, 2, result.stderr)
+        self.assertFalse(absent_parent.exists())
+
+    def test_completed_replay_refuses_without_touching_existing_files_or_evidence(self):
+        first = self.apply()
+        self.assertEqual(first.returncode, 0, first.stdout + first.stderr)
+        before = {
+            path: (path.read_bytes(), path.stat().st_ino)
+            for path in self.fixture.workspace.rglob("*") if path.is_file()
+        }
+        self.assert_refused(self.apply(), target_absent=False)
+        self.assertEqual(
+            {path: (path.read_bytes(), path.stat().st_ino) for path in before}, before
+        )
+        self.assertFalse(list(self.fixture.root.glob("*.consumed*")))
+
+    def test_sdk_process_failures_and_malformed_success_do_not_retry(self):
+        native_result = fixture_sdk.envelope(
+            "scaffold", "applied",
+            {
+                "effects": True, "kind": "workspace",
+                "plan_sha256": self.planned["plan_digest"],
+                "rappid": self.planned["plan"]["subject"]["rappid"],
+                "root": str(self.fixture.workspace), "status": "created",
+            },
+        )
+        invalid = [
+            b"not JSON",
+            b'{"status":"applied","status":"applied"}',
+            runner.canonical_bytes(fixture_sdk.refused("scaffold", "REFUSE_TEST")),
+        ]
+        for key, value in (
+            ("schema", "unknown"), ("status", "ok"), ("status", "planned"),
+            ("profile", "unknown"), ("protocol", "unknown"), ("operation", "update"),
+            ("refusal", {}), ("extra", True), ("result", None),
+        ):
+            invalid.append(runner.canonical_bytes({**native_result, key: value}))
+        for key, value in (
+            ("effects", False), ("effects", 1), ("status", "applied"), ("kind", "organization"),
+            ("plan_sha256", "0" * 64), ("rappid", "other"),
+            ("root", str(self.fixture.root / "other")), ("extra", True),
+        ):
+            invalid.append(
+                runner.canonical_bytes(
+                    {**native_result, "result": {**native_result["result"], key: value}}
+                )
+            )
+        # A success-shaped reply without created files must also fail postconditions.
+        invalid.append(runner.canonical_bytes(native_result))
+        failures = [
+            subprocess.TimeoutExpired(["fixture"], 1),
+            OSError("fixture launch failed"),
+            subprocess.CompletedProcess([], 9, b""),
+            *(subprocess.CompletedProcess([], 0, raw) for raw in invalid),
+        ]
+        original_invoke = runner.invoke_sdk
+        before = self.evidence_signature()
+        for index, failure in enumerate(failures):
+            with self.subTest(failure=index):
+                def invoke(sdk, pin, request, timeout):
+                    options = (
+                        {"side_effect": failure}
+                        if isinstance(failure, Exception)
+                        else {"return_value": failure}
+                    )
+                    with mock.patch.object(runner.subprocess, "run", **options) as process:
+                        try:
+                            return original_invoke(sdk, pin, request, timeout)
+                        finally:
+                            process.assert_called_once()
+
+                code, result = self.run_in_process(invoke)
+                self.assertEqual((code, result["status"]), (2, "refused"))
+                self.assertFalse(self.fixture.workspace.exists())
+                self.assertEqual(self.evidence_signature(), before)
+
+    def test_actual_sdk_timeout_keeps_evidence_and_target_unchanged(self):
+        api = self.fixture.sdk / "src" / "rapp_work" / "api.py"
+        source = api.read_text(encoding="utf-8").replace(
+            "def execute(operation, inputs):\n",
+            "def execute(operation, inputs):\n"
+            "    if operation == 'scaffold' and inputs.get('apply'):\n"
+            "        import time\n"
+            "        time.sleep(5)\n",
+            1,
+        )
+        api.write_text(source, encoding="utf-8")
+        self.fixture.commit_sdk_change("slow scaffold apply fixture")
+        self.planned = self.plan()
+        self.fixture.save_plan(self.planned)
+        value = self.assert_refused(self.apply("--timeout", "1"))
+        self.assertEqual(value["error"]["code"], "local-execution-error")
+
+    def test_unconfirmed_native_success_is_not_retried_or_rolled_back(self):
+        def native(sdk, pin, request, timeout):
+            response = fixture_sdk.execute("scaffold", request)
+            response["result"]["rappid"] = "unconfirmed"
+            return response
+
+        before = self.evidence_signature()
+        code, result = self.run_in_process(native)
+        self.assertEqual((code, result["status"]), (2, "refused"))
+        self.assertTrue((self.fixture.workspace / "install.json").is_file())
+        self.assertEqual(self.evidence_signature(), before)
+        self.assert_refused(self.apply(), target_absent=False)
+
+    def test_native_success_still_requires_the_reviewed_file_postconditions(self):
+        def native(sdk, pin, request, timeout):
+            response = fixture_sdk.execute("scaffold", request)
+            (self.fixture.workspace / "install.json").write_bytes(b"unexpected bytes")
+            return response
+
+        before = self.evidence_signature()
+        code, result = self.run_in_process(native)
+        self.assertEqual((code, result["status"]), (2, "refused"))
+        self.assertIn("unexpected bytes", result["error"]["message"])
+        self.assertEqual(self.evidence_signature(), before)
+        self.assertEqual(
+            (self.fixture.workspace / "install.json").read_bytes(), b"unexpected bytes"
+        )
 
 
 class ProcessFailureTests(unittest.TestCase):

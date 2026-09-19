@@ -51,17 +51,32 @@ metadata failures, symlinks, special files, real hardlinks, or changed hashes ar
 For safe RAPP Work setup and maintenance, copy [`skills/rapp-work`](skills/rapp-work). It verifies
 exact local SDK and RAPP/1 checkouts, performs offline discovery, and makes scaffold, update, and
 migration plans. Nothing is cloned or installed, and a change runs only after the exact printed
-plan digest is approved. Approved files are replaced atomically, and hidden Git state, ignored
-code, mixed release pins, and multiply linked managed files are refused. Its protocol, SDK, and
-static index are locked to one fully finalized release:
+plan digest is approved. For scaffold, save and review the complete result: applying that saved
+plan preserves its original identity and file bytes rather than planning again. Hidden Git
+state, ignored code, mixed release pins, and multiply linked managed files are refused. Its
+protocol, SDK, and static index are locked to one fully finalized release:
 
 ```bash
 cd skills/rapp-work
 python3 scripts/run.py status
+(umask 077; set -C
+ python3 scripts/run.py scaffold --root /new/workspace \
+   --kind workspace --owner-label owner --slug project --world-id world \
+   > /trusted/private-review/scaffold.json)
+# Review that complete file, then approve its exact printed plan_digest.
 python3 scripts/run.py scaffold --root /new/workspace \
-  --kind workspace --owner-label owner --slug project --world-id world
-python3 scripts/run.py scaffold ... --apply <exact-plan-digest>
+  --kind workspace --owner-label owner --slug project --world-id world \
+  --plan /trusted/private-review/scaffold.json --apply '<exact-lowercase-plan-digest>'
 ```
+
+Choose an existing trusted private review directory outside the new destination. The destination
+must remain absent (even an empty directory refuses), and its parent must exist. The exact SDK
+validates and applies the saved scaffold without replacing a destination. Changed locked release
+context requires a new plan and review. Evidence stays unchanged; collisions, replay against an
+existing target, unsafe evidence, and unsupported safe-read/activation platforms refuse.
+Update/migrate keep their existing digest-only approval and per-file atomic writes, not native
+checkpoint/recovery. See the [skill instructions](skills/rapp-work/SKILL.md) for limits and
+interrupted-apply handling; do not automatically retry an uncertain result.
 
 ## Let your AI make and move skills
 
