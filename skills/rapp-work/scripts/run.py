@@ -277,14 +277,29 @@ def _bound_json(value: Any, maximum: int) -> None:
     visit(value, 0)
 
 
+def _reject_json_number(value: str) -> Any:
+    raise ValueError("JSON numbers must be integers")
+
+
 def parse_json_object(
-    raw: bytes, label: str, maximum: int = MAX_JSON_BYTES
+    raw: bytes,
+    label: str,
+    maximum: int = MAX_JSON_BYTES,
+    *,
+    integers_only: bool = False,
 ) -> dict[str, Any]:
     if len(raw) > maximum:
         raise ValueError(f"{label} exceeds {maximum} bytes")
     try:
-        value = json.loads(raw.decode("utf-8"), object_pairs_hook=_object_pairs)
-    except (UnicodeDecodeError, json.JSONDecodeError, ValueError) as exc:
+        options = (
+            {"parse_float": _reject_json_number, "parse_constant": _reject_json_number}
+            if integers_only
+            else {}
+        )
+        value = json.loads(
+            raw.decode("utf-8"), object_pairs_hook=_object_pairs, **options
+        )
+    except (UnicodeError, ValueError, RecursionError) as exc:
         raise ValueError(f"{label} is not strict JSON: {exc}") from exc
     if not isinstance(value, dict):
         raise ValueError(f"{label} must be a JSON object")  # noqa: TRY004
@@ -383,6 +398,13 @@ def _empty_destination(path: Path, label: str = "destination") -> None:
     except StopIteration:
         return
     raise SafetyError(f"{label} must be absent or empty: {path}")
+
+
+def _absent_destination(path: Path) -> None:
+    _refuse_symlink_components(path, "scaffold destination")
+    if os.path.lexists(path):
+        raise SafetyError(f"scaffold destination must be absent: {path}")
+    _directory(path.parent, "scaffold destination parent")
 
 
 def _strict_sha(value: Any, label: str) -> str:
@@ -1072,9 +1094,12 @@ def invoke_sdk(
     request: dict[str, Any],
     timeout: int,
 ) -> dict[str, Any]:
+    payload = canonical_bytes(request) + b"\n"
+    if len(payload) > MAX_JSON_BYTES:
+        raise SafetyError("canonical SDK request exceeds the one MiB input limit")
     result = _run_local_process(
         _sdk_command(sdk_root, sdk_pin),
-        input=canonical_bytes(request) + b"\n",
+        input=payload,
         stdout=subprocess.PIPE,
         stderr=subprocess.DEVNULL,
         cwd=sdk_root,
@@ -1123,7 +1148,7 @@ def _operation_paths(args: argparse.Namespace, cwd: Path) -> dict[str, Path]:
 
     root = _absolute_path(args.root, cwd, "root")
     if args.operation == "scaffold":
-        _empty_destination(root, "scaffold destination")
+        _absent_destination(root)
     else:
         _directory(root, "root")
     return {"root": root, "source": root, "target": root}
@@ -1178,6 +1203,169 @@ def _protected_component(path: Path) -> str | None:
     return None
 
 
+def _evidence_snapshot(info: os.stat_result) -> tuple[int, ...]:
+    return (
+        info.st_dev,
+        info.st_ino,
+        info.st_mode,
+        info.st_nlink,
+        info.st_uid,
+        info.st_gid,
+        info.st_size,
+        info.st_mtime_ns,
+        info.st_ctime_ns,
+    )
+
+
+def _read_plan_file(raw: str, cwd: Path) -> bytes:
+    if (
+        not isinstance(raw, str)
+        or not raw
+        or "\x00" in raw
+        or "\\" in raw
+        or ":" in raw
+        or _contains_traversal(raw)
+    ):
+        raise SafetyError("saved plan requires a non-traversing evidence path")
+    if (
+        os.name != "posix"
+        or not all(
+            hasattr(os, flag) for flag in ("O_NOFOLLOW", "O_DIRECTORY", "O_NONBLOCK")
+        )
+        or os.open not in os.supports_dir_fd
+        or os.stat not in os.supports_dir_fd
+        or os.stat not in os.supports_follow_symlinks
+    ):
+        raise SafetyError("saved plan reading requires no-follow descriptor support")
+
+    descriptors: list[int] = []
+    try:
+        path = Path(raw).expanduser()
+        path = Path(os.path.abspath(path if path.is_absolute() else cwd / path))
+        if _protected_component(path) is not None:
+            raise SafetyError("saved plan evidence path is protected")
+        flags = os.O_RDONLY | os.O_NOFOLLOW | os.O_DIRECTORY
+        descriptors.append(os.open(path.anchor, flags))
+        # Hold the ancestor chain and check it again before accepting the read.
+        ancestors: list[tuple[int, str, int]] = []
+        for part in path.parts[1:-1]:
+            parent = descriptors[-1]
+            child = os.open(part, flags, dir_fd=parent)
+            descriptors.append(child)
+            ancestors.append((parent, part, child))
+        parent = descriptors[-1]
+        named = os.stat(path.name, dir_fd=parent, follow_symlinks=False)
+        if (
+            not stat.S_ISREG(named.st_mode)
+            or named.st_nlink != 1
+            or not 0 < named.st_size <= MAX_JSON_BYTES
+        ):
+            raise SafetyError("saved plan must be one bounded, single-link regular file")
+        descriptor = os.open(
+            path.name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=parent
+        )
+        descriptors.append(descriptor)
+        before = _evidence_snapshot(os.fstat(descriptor))
+        if before != _evidence_snapshot(named):
+            raise SafetyError("saved plan file changed while opening")
+        chunks: list[bytes] = []
+        size = 0
+        while size <= MAX_JSON_BYTES:
+            chunk = os.read(descriptor, min(64 * 1024, MAX_JSON_BYTES + 1 - size))
+            if not chunk:
+                break
+            chunks.append(chunk)
+            size += len(chunk)
+        if (
+            size != named.st_size
+            or before != _evidence_snapshot(os.fstat(descriptor))
+            or before
+            != _evidence_snapshot(
+                os.stat(path.name, dir_fd=parent, follow_symlinks=False)
+            )
+        ):
+            raise SafetyError("saved plan file changed while reading")
+        for directory, name, opened in ancestors:
+            current = os.stat(name, dir_fd=directory, follow_symlinks=False)
+            held = os.fstat(opened)
+            if (
+                not stat.S_ISDIR(current.st_mode)
+                or (current.st_dev, current.st_ino, current.st_mode)
+                != (held.st_dev, held.st_ino, held.st_mode)
+            ):
+                raise SafetyError("saved plan ancestor changed while reading")
+        return b"".join(chunks)
+    except (OSError, ValueError, RuntimeError) as exc:
+        if isinstance(exc, SafetyError):
+            raise
+        raise SafetyError("saved plan could not be safely read") from None
+    finally:
+        close_failed = False
+        for descriptor in reversed(descriptors):
+            try:
+                os.close(descriptor)
+            except OSError:
+                close_failed = True
+        if close_failed:
+            raise SafetyError("saved plan descriptors could not be safely closed")
+
+
+def _validate_scaffold_request(plan: dict[str, Any], request: dict[str, Any]) -> None:
+    subject = plan.get("subject")
+    if (
+        not isinstance(subject, dict)
+        or not isinstance(subject.get("rappid"), str)
+        or not subject["rappid"]
+        or any(
+            not isinstance(subject.get(key), str) or subject[key] != request[key]
+            for key in ("kind", "mode", "owner_label", "slug", "world_id")
+        )
+    ):
+        raise SafetyError("saved scaffold subject differs from the current request")
+
+
+def _load_scaffold_plan(
+    raw: str,
+    cwd: Path,
+    request: dict[str, Any],
+    lock: dict[str, Any],
+    approved: str,
+) -> tuple[dict[str, Any], str]:
+    evidence = _read_plan_file(raw, cwd)
+    try:
+        envelope = parse_json_object(
+            evidence, "saved scaffold plan", integers_only=True
+        )
+    except (ValueError, UnicodeError, RecursionError):
+        raise SafetyError("saved plan must be one bounded strict JSON object") from None
+    if (
+        set(envelope)
+        != {
+            "schema", "operation", "status", "plan_digest",
+            "plan_sha256", "lock_sha256", "plan",
+        }
+        or envelope["schema"] != RESULT_SCHEMA
+        or envelope["operation"] != "scaffold"
+        or envelope["status"] != "planned"
+        or not isinstance(envelope["plan"], dict)
+    ):
+        raise SafetyError("saved plan must be a complete compatible scaffold planned result")
+    for key in ("plan_digest", "plan_sha256", "lock_sha256"):
+        value = envelope[key]
+        if not isinstance(value, str) or SHA256_RE.fullmatch(value) is None:
+            raise SafetyError("saved plan digests must be exact lowercase SHA-256 values")
+    if envelope["lock_sha256"] != digest(lock):
+        raise SafetyError("saved plan release lock differs; explicit new planning is required")
+    plan = envelope["plan"]
+    if not (
+        envelope["plan_digest"] == envelope["plan_sha256"] == approved == digest(plan)
+    ):
+        raise SafetyError("saved plan and exact approved digest do not agree")
+    _reject_sensitive_members(plan, "saved plan")
+    _validate_scaffold_request(plan, request)
+    return plan, approved
+
+
 def _plan_actions(plan: dict[str, Any]) -> list[dict[str, Any]]:
     actions = plan.get("actions")
     if not isinstance(actions, list):
@@ -1190,10 +1378,8 @@ def _plan_actions(plan: dict[str, Any]) -> list[dict[str, Any]]:
         if not isinstance(action, dict):
             raise SafetyError(f"plan actions[{index}] must be an object")
         operation = action.get("operation")
-        if operation not in {"create", "replace"}:
-            raise SafetyError(
-                f"plan actions[{index}] has unsafe operation {operation!r}"
-            )
+        if not isinstance(operation, str) or operation not in {"create", "replace"}:
+            raise SafetyError(f"plan actions[{index}] has an unsafe operation")
         relative = _relative_plan_path(
             action.get("path"), f"plan actions[{index}].path"
         )
@@ -1232,7 +1418,7 @@ def _plan_actions(plan: dict[str, Any]) -> list[dict[str, Any]]:
             raise SafetyError(f"plan actions[{index}] base64 is not canonical")
         if len(content) > 16 * 1024 * 1024:
             raise SafetyError(f"plan actions[{index}] content is too large")
-        if action.get("bytes") != len(content):
+        if type(action.get("bytes")) is not int or action["bytes"] != len(content):
             raise SafetyError(f"plan actions[{index}] byte count is invalid")
         if hashlib.sha256(content).hexdigest() != committed:
             raise SafetyError(f"plan actions[{index}] content hash is invalid")
@@ -1273,7 +1459,9 @@ def _validate_plan(
     if plan.get("target") != str(root):
         raise SafetyError("plan target differs from the requested destination")
     actions = _plan_actions(plan)
-    if operation in {"scaffold", "migrate"}:
+    if operation == "scaffold":
+        _absent_destination(root)
+    elif operation == "migrate":
         _empty_destination(root, "destination")
     for index, action in enumerate(actions):
         target = root / action["_relative"]
@@ -1438,7 +1626,13 @@ def _discover_request(roots: list[Path], maximum: int) -> dict[str, Any]:
 
 def _plan_from_response(response: dict[str, Any]) -> tuple[dict[str, Any], str]:
     result = response.get("result")
-    if not isinstance(result, dict) or not isinstance(result.get("plan"), dict):
+    if (
+        response.get("status") != "planned"
+        or not isinstance(result, dict)
+        or result.get("status") != "planned"
+        or result.get("effects") is not False
+        or not isinstance(result.get("plan"), dict)
+    ):
         raise SdkError("canonical SDK/CLI did not return one plan object")
     plan = result["plan"]
     claimed = result.get("plan_sha256")
@@ -1446,6 +1640,39 @@ def _plan_from_response(response: dict[str, Any]) -> tuple[dict[str, Any], str]:
     if claimed != actual:
         raise SdkError("canonical SDK/CLI plan SHA-256 does not match its plan")
     return plan, actual
+
+
+def _confirm_scaffold_applied(
+    response: dict[str, Any],
+    plan: dict[str, Any],
+    request: dict[str, Any],
+    approved: str,
+) -> None:
+    if (
+        set(response)
+        != {
+            "schema", "protocol", "profile", "operation", "status", "refusal", "result",
+        }
+        or response["schema"] != "rapp-work-result/1"
+        or response["protocol"] != "rapp-work/1"
+        or response["profile"] != "rapp-work-sdk/1"
+        or response["operation"] != "scaffold"
+        or response["status"] != "applied"
+        or response["refusal"] is not None
+    ):
+        raise SdkError("canonical SDK did not confirm scaffold apply")
+    result = response["result"]
+    if (
+        not isinstance(result, dict)
+        or set(result) != {"effects", "kind", "plan_sha256", "rappid", "root", "status"}
+        or result["effects"] is not True
+        or result["status"] != "created"
+        or result["plan_sha256"] != approved
+        or result["root"] != request["root"]
+        or result["kind"] != request["kind"]
+        or result["rappid"] != plan["subject"]["rappid"]
+    ):
+        raise SdkError("canonical SDK scaffold result differs from the approved plan")
 
 
 def _status(
@@ -1576,6 +1803,11 @@ def parser() -> argparse.ArgumentParser:
         metavar="PLAN_DIGEST",
         help="apply only this exact 64-character plan digest",
     )
+    root.add_argument(
+        "--plan",
+        metavar="FILE",
+        help="complete saved scaffold planned result; required with scaffold --apply",
+    )
     root.add_argument("--timeout", type=int, default=20)
     return root
 
@@ -1611,6 +1843,13 @@ def _require_sdk_paths(
 
 
 def _validate_operation_arguments(args: argparse.Namespace) -> None:
+    if args.plan is not None:
+        if args.operation != "scaffold":
+            raise SafetyError("--plan is only valid for scaffold")
+        if args.apply is None:
+            raise SafetyError("--plan requires explicit --apply approval")
+    if args.operation == "scaffold" and args.apply is not None and args.plan is None:
+        raise SafetyError("scaffold --apply requires the complete saved --plan")
     if args.operation == "scaffold":
         missing = [
             flag
@@ -1717,9 +1956,29 @@ def run(args: argparse.Namespace) -> tuple[int, dict[str, Any]]:
             },
         )
 
-    planned = invoke_sdk(
-        sdk_path, lock["sdk"], _request(args, paths), args.timeout
-    )
+    request = _request(args, paths)
+    if args.operation == "scaffold" and args.apply is not None:
+        plan, plan_digest = _load_scaffold_plan(
+            args.plan, cwd, request, lock, args.apply
+        )
+        actions = _validate_plan(plan, "scaffold", paths, before_apply=True)
+        request.update(apply=True, plan=plan, plan_sha256=plan_digest)
+        applied = invoke_sdk(sdk_path, lock["sdk"], request, args.timeout)
+        _confirm_scaffold_applied(applied, plan, request, plan_digest)
+        _validate_postconditions(actions, paths["target"])
+        return (
+            0,
+            {
+                "schema": RESULT_SCHEMA,
+                "operation": "scaffold",
+                "status": "applied",
+                "plan_digest": plan_digest,
+                "plan_sha256": plan_digest,
+                "result": applied,
+            },
+        )
+
+    planned = invoke_sdk(sdk_path, lock["sdk"], request, args.timeout)
     plan, plan_digest = _plan_from_response(planned)
     actions = _validate_plan(
         plan,
@@ -1728,17 +1987,20 @@ def run(args: argparse.Namespace) -> tuple[int, dict[str, Any]]:
         before_apply=args.apply is not None,
     )
     if args.apply is None:
-        return (
-            0,
-            {
-                "schema": RESULT_SCHEMA,
-                "operation": args.operation,
-                "status": "planned",
-                "plan_digest": plan_digest,
-                "plan_sha256": plan_digest,
-                "plan": plan,
-            },
-        )
+        result = {
+            "schema": RESULT_SCHEMA,
+            "operation": args.operation,
+            "status": "planned",
+            "plan_digest": plan_digest,
+            "plan_sha256": plan_digest,
+            "plan": plan,
+        }
+        if args.operation == "scaffold":
+            _validate_scaffold_request(plan, request)
+            result["lock_sha256"] = digest(lock)
+            if len(canonical_bytes(result)) + 1 > MAX_JSON_BYTES:
+                raise SafetyError("scaffold planned result exceeds the one MiB evidence limit")
+        return 0, result
     if args.apply != plan_digest:
         raise SafetyError(
             f"refusing apply: supplied digest {args.apply} "
