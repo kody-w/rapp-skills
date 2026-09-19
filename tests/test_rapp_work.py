@@ -73,6 +73,8 @@ def command(*args: str, cwd: Path, env: dict[str, str] | None = None):
 
 class AdapterFixture:
     def __init__(self, root: Path):
+        # macOS temp roots may use /var or /tmp aliases; accepted evidence must not.
+        root = root.resolve(strict=True)
         self.root = root
         self.skill = root / "rapp-work"
         self.sdk = root / "sdk"
@@ -1244,6 +1246,28 @@ class SavedScaffoldPlanTests(unittest.TestCase):
         invoked.assert_called_once()
         emitted.assert_called_once()
         return code, emitted.call_args.args[0]
+
+    def test_fixture_canonicalizes_temp_alias_without_weakening_plan_reads(self):
+        canonical = self.fixture.root / "canonical-fixture"
+        canonical.mkdir()
+        alias = self.fixture.root / "temp-root-alias"
+        alias.symlink_to(canonical, target_is_directory=True)
+        fixture = AdapterFixture(alias)
+        self.assertEqual(fixture.root, canonical)
+        planned_result = fixture.run("scaffold")
+        self.assertEqual(planned_result.returncode, 0, planned_result.stdout)
+        planned = json.loads(planned_result.stdout)
+        saved = fixture.save_plan(planned)
+        refused = fixture.run(
+            "scaffold", "--plan", str(alias / saved.name),
+            "--apply", planned["plan_digest"],
+        )
+        self.assertEqual(refused.returncode, 2, refused.stdout)
+        self.assertFalse(fixture.workspace.exists())
+        applied = fixture.run(
+            "scaffold", "--plan", str(saved), "--apply", planned["plan_digest"],
+        )
+        self.assertEqual(applied.returncode, 0, applied.stdout)
 
     def test_separate_processes_preserve_reviewed_identity_and_every_file_byte(self):
         for kind, mode in (("workspace", "solo"), ("organization", "hive")):
