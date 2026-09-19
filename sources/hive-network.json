@@ -1,0 +1,19 @@
+{
+  "schema": "rapp-skill-source/1",
+  "name": "hive-network",
+  "repository": "https://github.com/kody-w/hive-hub",
+  "ref": "refs/heads/main",
+  "commit": "68203b0c6940ee88b6246021a24f62dfd235dee7",
+  "path": "skills/hive-network",
+  "git_tree": "8b7f9e7b6e402ea2d9f5864693e8c277830e831d",
+  "folder_sha256": "940e8b0f56c491045c716f9ed0fdb916b043447318d4bfd71b7f24c220933075",
+  "files": [
+    {
+      "path": "SKILL.md",
+      "mode": "100644",
+      "bytes": 13633,
+      "sha256": "cac94774096b729cfdc7340b85baa62a5aac96ee7329d37db8e35beed277acf8",
+      "git_blob": "c8dcccd1ed8978dd97c5fd16db97016272e870b1"
+    }
+  ]
+}

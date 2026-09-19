@@ -35,8 +35,15 @@ python3 -I -B scripts/run.py decode --locator 'owner/repository at main'
 python3 -I -B scripts/run.py join --locator 'owner/repository at main'
 ```
 
+For the complete network workflow, give your AI just
+[`skills/hive-network/SKILL.md`](skills/hive-network/SKILL.md). It helps choose a
+real organization starter, plan local setup with the trusted RAPP Work tools,
+complete scoped work, and prepare reviewed public contributions. A web-only AI
+can inspect the catalog; it cannot pretend to create local files or submit
+changes. The file adds no server, background process, or access grant.
+
 The folder is copied byte-for-byte from `kody-w/hive-hub` main commit
-`668f990e45a3c1a0ae9f25ca96d1fcc3cc20c8d5`. [`sources/hive-hub.json`](sources/hive-hub.json)
+`68203b0c6940ee88b6246021a24f62dfd235dee7`. [`sources/hive-hub.json`](sources/hive-hub.json)
 records its exact Git tree, every file size, Git blob, and SHA-256 value. On Windows the true link
 count comes from a no-follow operating-system handle; every platform requires exactly one, and
 metadata failures, symlinks, special files, real hardlinks, or changed hashes are refused.

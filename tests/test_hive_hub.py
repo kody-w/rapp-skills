@@ -21,10 +21,10 @@ ROOT = Path(__file__).resolve().parents[1]
 SKILL = ROOT / "skills" / "hive-hub"
 RUNNER = SKILL / "scripts" / "run.py"
 SOURCE = ROOT / "sources" / "hive-hub.json"
-EXPECTED_COMMIT = "da2fddccbb079cb857a64180db4877a9da22d433"
-EXPECTED_GIT_TREE = "6c73c52013746c05fefad1560371c120b9396622"
+EXPECTED_COMMIT = "68203b0c6940ee88b6246021a24f62dfd235dee7"
+EXPECTED_GIT_TREE = "62da34d05e5ffbd1ebbbadfc31e9fe95862c40b3"
 EXPECTED_FOLDER_SHA256 = (
-    "e8fbbd24563e25a0f5e8567efb5c622d03105401be0e8e1bad2f7cedd2c5f221"
+    "c4d2bd36a52b4e0da75515e7c388899f613917cb5db9fdc36163426bd30cfc4b"
 )
 DENIED_PRIVATE_IDENTIFIER_SHA256 = frozenset(
     {
