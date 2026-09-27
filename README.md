@@ -1,5 +1,9 @@
 # rapp-skills
 
+<!-- rapp1:network-header:start -->
+[![RAPP/1](https://kody-w.github.io/rapp-hive-public/portfolio/badges/rapp-skills.svg)](https://github.com/kody-w/rapp-hive-public/blob/main/portfolio/repos/rapp-skills.md) · **New to RAPP?** [Start here: get your Brainstem →](https://github.com/kody-w/rapp-installer#start-here)
+<!-- rapp1:network-header:end -->
+
 Skills you can use, share as one file, and take anywhere. Why: [CHARTER.md](CHARTER.md).
 
 - **Use one.** Put a skill's folder, or just its `SKILL.md`, where your AI tool reads skills, then
