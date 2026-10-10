@@ -16,6 +16,9 @@ Works in Claude Code and GitHub Copilot CLI today, and in anything else that rea
 [Agent Skills](https://agentskills.io). There is nothing to install, and nothing to uninstall:
 delete a skill's folder and your AI is back to exactly how it was.
 
+- **Carry the skill and its agent in one file.** A `<name>.agent.md` is a normal skill that also holds its agent's
+  code, inert until a host checks it. Any tool that reads skills can use it as-is: [what it is and how to check it](AGENT-MD.md).
+
 ## Use a skill
 
 | Your tool | Put the skill here |
