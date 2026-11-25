@@ -39,7 +39,7 @@ the block below.
 
 ## The code
 
-<!-- code sha256=bad500377311eb23e127416bff548bf1fc810b7e862c6cedbc4e616114c63759 -->
+<!-- code sha256=5af8dcc95068abd44c82ce883f8801a474f1675e57385ad902cbab67c3c36588 -->
 ````python
 #!/usr/bin/env python3
 """rapp-skills: the seam between Agent Skills and RAPP single-file agents.
@@ -676,6 +676,11 @@ def _toast(agent_path: Path, skills_dir: Path, origin: str | None, license_name:
         out = skills_dir / fields["name"]
         out.mkdir(parents=True, exist_ok=True)
         write_text(out / "SKILL.md", skill_md)
+        for rel, entry in (getattr(module, "SKILL_FILES", None) or {}).items():
+            if Path(rel).is_absolute() or ".." in Path(rel).parts:
+                raise RuntimeError(f"{agent_path.name}: refuses to write outside the skill folder: {rel}")
+            (out / rel).parent.mkdir(parents=True, exist_ok=True)
+            (out / rel).write_bytes(_unpack_file(entry))
         return [out]
 
     several = len(agents) > 1
@@ -899,6 +904,83 @@ def _skill_md(path: Path) -> tuple[Path, Path]:
     return (path.parent, path) if path.is_file() else (path, path / "SKILL.md")
 
 
+CARRY_LIMIT = 2 * 1024 * 1024      # a skill's own files ride inside its one agent file; past this, say so
+CARRY_SKIP = {"__pycache__", ".DS_Store", ".git"}
+
+
+def carried_files(skill_dir: Path) -> dict[str, bytes]:
+    """Every file a hand-written skill keeps beside its SKILL.md (scripts, references, anything), by path."""
+    skill_dir = Path(skill_dir)
+    found: dict[str, bytes] = {}
+    for f in sorted(skill_dir.rglob("*")):
+        rel = f.relative_to(skill_dir)
+        if set(rel.parts) & CARRY_SKIP or f.suffix == ".pyc" or rel.as_posix() == "SKILL.md" or f.is_dir():
+            continue
+        if f.is_symlink():
+            raise RuntimeError(f"{skill_dir.name}: {rel.as_posix()} is a link; a skill's files must be real files to travel")
+        found[rel.as_posix()] = f.read_bytes()
+    total = sum(len(b) for b in found.values())
+    if total > CARRY_LIMIT:
+        big = ", ".join(f"{n} ({len(b) // 1024} KB)" for n, b in sorted(found.items(), key=lambda kv: -len(kv[1]))[:3])
+        raise RuntimeError(f"{skill_dir.name}: its files total {total // 1024} KB, over the {CARRY_LIMIT // 1024} KB one file can "
+                           f"carry. Largest: {big}. Move data and models out of the skill folder.")
+    return found
+
+
+def _pack_files(files: dict[str, bytes]) -> dict:
+    import base64
+    packed = {}
+    for rel, data in files.items():
+        try:
+            text = data.decode("utf-8")
+            if "\r" in text:
+                raise ValueError
+            packed[rel] = {"sha256": sha256(data), "text": text}
+        except ValueError:
+            packed[rel] = {"sha256": sha256(data), "base64": base64.b64encode(data).decode("ascii")}
+    return packed
+
+
+def _unpack_file(entry: dict) -> bytes:
+    import base64
+    data = entry["text"].encode("utf-8") if "text" in entry else base64.b64decode(entry["base64"])
+    if sha256(data) != entry["sha256"]:
+        raise RuntimeError("a carried file does not match its fingerprint")
+    return data
+
+
+CARRY_METHOD = """    def _carried(self, kwargs):
+        import base64, hashlib, pathlib
+
+        def data(e):
+            b = e["text"].encode("utf-8") if "text" in e else base64.b64decode(e["base64"])
+            if hashlib.sha256(b).hexdigest() != e["sha256"]:
+                raise ValueError("a carried file does not match its fingerprint")
+            return b
+
+        one, folder = kwargs.pop("skill_file", None), kwargs.pop("skill_files_to", None)
+        if one is not None:
+            if one not in SKILL_FILES:
+                return "No such file. This skill carries: " + ", ".join(sorted(SKILL_FILES))
+            return data(SKILL_FILES[one]).decode("utf-8", "replace")
+        if folder is not None:
+            root = pathlib.Path(folder).expanduser()
+            for rel, e in SKILL_FILES.items():
+                target = root / rel
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_bytes(data(e))
+            return "Wrote " + str(len(SKILL_FILES)) + " files to " + str(root) + ": " + ", ".join(sorted(SKILL_FILES))
+        return None
+
+    def perform(self, **kwargs):
+        carried = self._carried(kwargs)
+        if carried is not None:
+            return carried
+"""
+CARRY_NOTE = ("\n\n## Files this skill carries\n\n{listing}\n\nCall again with {{\"skill_file\": \"<path>\"}} to read one, "
+              "or {{\"skill_files_to\": \"<folder>\"}} to write them all out before running any script.")
+
+
 def compile_skill(skill_dir: Path, out_dir: Path) -> Path:
     """<skill>/ or SKILL.md -> out_dir/<snake>_agent.py."""
     skill_dir, md = _skill_md(skill_dir)
@@ -971,6 +1053,17 @@ class {class_name}(BasicAgent):
             + "\\n\\n## Inputs\\n\\n```json\\n" + inputs + "\\n```"
         )
 '''
+    carried = _pack_files(carried_files(skill_dir)) if md.name == "SKILL.md" else {}
+    if carried:      # the skill's own files ride inside the one file; a skill with none is written exactly as before
+        note = CARRY_NOTE.format(listing="\n".join(f"- {rel} (sha256 {e['sha256'][:12]})" for rel, e in carried.items()))
+        tail = '            + "\\n\\n## Inputs\\n\\n```json\\n" + inputs + "\\n```"\n'
+        parts = [("\nimport json\n", f"\nSKILL_FILES = {carried!r}\n\nimport json\n"),
+                 ("    def perform(self, **kwargs):\n", CARRY_METHOD),
+                 (tail, tail + f"            + {note!r}\n")]
+        for find, put in parts:
+            if source.count(find) != 1:
+                raise RuntimeError(f"{md}: could not place the skill's files in the agent; {tool_name}_agent.py not written")
+            source = source.replace(find, put, 1)
     target = out_dir / f"{tool_name}_agent.py"
     # Never ship a file that cannot load: try it the way a server would, first.
     import tempfile
@@ -1549,6 +1642,13 @@ def roundtrip(path: Path, tmp: Path) -> tuple[bool, str]:
         if script.is_file():
             same = script.read_bytes() == (toasted / "scripts" / "agent.py").read_bytes()
             return same, "the code came back unchanged" if same else "the code changed on the way back"
+        # Only a hand-written skill carries its files in the agent; a skill made from an agent has its own layout.
+        before, after = (carried_files(path), carried_files(toasted)) if extract_agent(source) is None else ({}, {})
+        if before or after:
+            changed = sorted(n for n in set(before) | set(after) if before.get(n) != after.get(n))
+            same = a == b and not changed
+            return same, (f"SKILL.md and all {len(before)} of its files came back byte-identical" if same else
+                          "changed on the way back: " + ", ".join((["SKILL.md"] if a != b else []) + changed))
         return a == b, "SKILL.md came back byte-identical" if a == b else "SKILL.md changed on the way back"
     # A file with several agents becomes several skills; each must give the file back.
     same = all(path.read_bytes() == compile_skill(skill, tmp / "agents").read_bytes()
